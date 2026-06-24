@@ -1,0 +1,144 @@
+services:
+  # 后端服务（FastAPI + 静态前端）
+  backend:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    container_name: pvops-backend
+    ports:
+      - "8000:8000"
+    env_file:
+      - ../.env
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=${REDIS_URL}
+      - TSDB_BACKEND=${TSDB_BACKEND:-tdengine}
+    volumes:
+      - ../backend:/app
+      - ../frontend/dist:/app/static
+    depends_on:
+      postgres:
+        condition: service_healthy
+      tdengine:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    restart: unless-stopped
+
+  # Celery Worker
+  worker:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    container_name: pvops-worker
+    env_file:
+      - ../.env
+    volumes:
+      - ../backend:/app
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: celery -A app.tasks worker --loglevel=info
+    restart: unless-stopped
+
+  # Celery Beat 定时任务
+  scheduler:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    container_name: pvops-scheduler
+    env_file:
+      - ../.env
+    volumes:
+      - ../backend:/app
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: celery -A app.tasks beat --loglevel=info
+    restart: unless-stopped
+
+  # PostgreSQL 业务数据库
+  postgres:
+    image: postgres:16-alpine
+    container_name: pvops-postgres
+    ports:
+      - "5432:5432"
+    env_file:
+      - ../.env
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-pvops} -d ${POSTGRES_DB:-pvops}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  # TDengine 时序数据库
+  tdengine:
+    image: tdengine/tdengine:3.3.0.0
+    container_name: pvops-tdengine
+    ports:
+      - "6030:6030"
+      - "6041:6041"
+    env_file:
+      - ../.env
+    volumes:
+      - tdengine_data:/var/lib/taos
+    healthcheck:
+      test: ["CMD-SHELL", "taos -s 'SHOW DATABASES;'"]
+      interval: 5s
+      timeout: 5s
+      retries: 15
+    restart: unless-stopped
+
+  # Redis 缓存/队列
+  redis:
+    image: redis:7-alpine
+    container_name: pvops-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  # Mosquitto MQTT Broker
+  mosquitto:
+    image: eclipse-mosquitto:2
+    container_name: pvops-mosquitto
+    ports:
+      - "1883:1883"
+      - "9001:9001"
+    volumes:
+      - ../deploy/mosquitto.conf:/mosquitto/config/mosquitto.conf
+      - mosquitto_data:/mosquitto/data
+      - mosquitto_logs:/mosquitto/log
+    restart: unless-stopped
+
+  # Cloudflare Tunnel（可选）
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: pvops-cloudflared
+    env_file:
+      - ../.env
+    command: tunnel --no-autoupdate run --token ${CF_TUNNEL_TOKEN}
+    restart: unless-stopped
+    profiles:
+      - tunnel
+
+volumes:
+  postgres_data:
+  tdengine_data:
+  redis_data:
+  mosquitto_data:
+  mosquitto_logs:
