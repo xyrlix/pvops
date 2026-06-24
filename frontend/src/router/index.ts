@@ -54,6 +54,12 @@ const router = createRouter({
       meta: { requiresAuth: true },
     },
     {
+      path: '/knowledge',
+      name: 'knowledge',
+      component: () => import('@/views/KnowledgeBaseView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
       path: '/devices',
       name: 'devices',
       component: () => import('@/views/DeviceAnalysisView.vue'),

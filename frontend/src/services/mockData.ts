@@ -319,3 +319,24 @@ export const diagnosisMock = {
   exportReportPdf: async () => new Blob(['PDF'], { type: 'application/pdf' }),
   createFeedback: async () => ({ success: true }),
 }
+
+export const knowledgeMock = {
+  listDocuments: async () => [
+    { id: 1, filename: '逆变器故障处理手册.pdf', station_id: null, status: 'active', created_at: new Date().toISOString() },
+    { id: 2, filename: '光伏电站运维SOP.txt', station_id: null, status: 'active', created_at: new Date().toISOString() },
+  ],
+  uploadDocument: async (_file: File, _stationId?: number) => ({
+    id: Date.now(),
+    filename: _file.name,
+    station_id: _stationId || null,
+    status: 'active',
+    created_at: new Date().toISOString(),
+  }),
+  deleteDocument: async (_id: number) => ({ success: true }),
+  ask: async (question: string, _stationId?: number) => ({
+    answer: `这是关于“${question}”的模拟回答。真实环境下会从知识库检索相关内容并返回。`,
+    sources: [
+      { content: '示例知识片段：逆变器绝缘阻抗低通常由组件或直流线缆受潮、破损引起。', metadata: { filename: '逆变器故障处理手册.pdf' } },
+    ],
+  }),
+}

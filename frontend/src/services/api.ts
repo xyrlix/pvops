@@ -154,8 +154,11 @@ export const chatApi = {
 
 export const knowledgeApi = {
   listDocuments: (stationId?: number) =>
-    apiClient.get('/kb/documents', { params: { station_id: stationId } }),
+    USE_MOCK
+      ? mockData.knowledgeMock.listDocuments()
+      : apiClient.get('/kb/documents', { params: { station_id: stationId } }),
   uploadDocument: (file: File, stationId?: number) => {
+    if (USE_MOCK) return mockData.knowledgeMock.uploadDocument(file, stationId)
     const formData = new FormData()
     formData.append('file', file)
     if (stationId) formData.append('station_id', String(stationId))
@@ -163,9 +166,12 @@ export const knowledgeApi = {
       headers: { 'Content-Type': 'multipart/form-data' },
     })
   },
-  deleteDocument: (id: number) => apiClient.delete(`/kb/documents/${id}`),
+  deleteDocument: (id: number) =>
+    USE_MOCK ? mockData.knowledgeMock.deleteDocument(id) : apiClient.delete(`/kb/documents/${id}`),
   ask: (question: string, stationId?: number, topK?: number) =>
-    apiClient.post('/kb/ask', { question, station_id: stationId, top_k: topK }),
+    USE_MOCK
+      ? mockData.knowledgeMock.ask(question, stationId)
+      : apiClient.post('/kb/ask', { question, station_id: stationId, top_k: topK }),
 }
 
 export const workOrderApi = {

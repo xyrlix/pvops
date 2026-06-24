@@ -27,6 +27,10 @@
       <el-icon><Document /></el-icon>
       <span>报告中心</span>
     </el-menu-item>
+    <el-menu-item index="/knowledge">
+      <el-icon><Collection /></el-icon>
+      <span>知识库</span>
+    </el-menu-item>
     <el-sub-menu index="/devices">
       <template #title>
         <el-icon><SetUp /></el-icon>
@@ -40,7 +44,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { Odometer, OfficeBuilding, Warning, Tickets, Document, SetUp } from '@element-plus/icons-vue'
+import { Odometer, OfficeBuilding, Warning, Tickets, Document, SetUp, Collection } from '@element-plus/icons-vue'
 import { useTheme } from '@/composables/useTheme'
 
 const { resolvedTheme } = useTheme()
