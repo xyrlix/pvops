@@ -3,6 +3,8 @@
     :default-active="$route.path"
     router
     class="menu"
+    :collapse="collapse"
+    collapse-transition
     background-color="transparent"
     :text-color="menuText"
     :active-text-color="menuActive"
@@ -46,6 +48,8 @@
 import { computed } from 'vue'
 import { Odometer, OfficeBuilding, Warning, Tickets, Document, SetUp, Collection } from '@element-plus/icons-vue'
 import { useTheme } from '@/composables/useTheme'
+
+withDefaults(defineProps<{ collapse?: boolean }>(), { collapse: false })
 
 const { resolvedTheme } = useTheme()
 

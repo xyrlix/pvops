@@ -7,7 +7,9 @@
       <div class="orb orb-3" />
       <div class="scanline" />
     </div>
-    <aside class="sidebar">
+
+    <!-- 桌面端侧边栏 -->
+    <aside class="sidebar" :class="{ collapsed: isCollapsed, mobile: isMobile, open: mobileOpen }">
       <div class="logo">
         <div class="logo-icon">
           <el-icon size="32" color="#fff"><Sunny /></el-icon>
@@ -17,15 +19,26 @@
           <div class="logo-subtitle">PVOps</div>
         </div>
       </div>
-      <SidebarMenu />
+      <SidebarMenu :collapse="isCollapsed && !isMobile" />
       <div class="sidebar-footer">
         <div class="version">v0.1.0</div>
         <div class="env-tag">DEMO</div>
       </div>
     </aside>
+
+    <!-- 移动端遮罩 -->
+    <div
+      v-if="isMobile && mobileOpen"
+      class="sidebar-overlay"
+      @click="mobileOpen = false"
+    />
+
     <div class="main-area">
       <header class="top-header">
         <div class="header-left">
+          <el-button text class="menu-toggle" @click="toggleSidebar">
+            <el-icon :size="22"><Fold v-if="!isMobile && !isCollapsed" /><Expand v-else /></el-icon>
+          </el-button>
           <div class="breadcrumb">
             <slot name="breadcrumb" />
           </div>
@@ -51,14 +64,35 @@
 
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref } from 'vue'
-import { Sunny } from '@element-plus/icons-vue'
+import { Sunny, Fold, Expand } from '@element-plus/icons-vue'
 import SidebarMenu from '@/components/SidebarMenu.vue'
 import UserInfo from '@/components/UserInfo.vue'
 import AiCopilot from '@/components/AiCopilot.vue'
 import ThemeSwitcher from '@/components/ThemeSwitcher.vue'
 
+const MOBILE_BREAKPOINT = 768
+
 const currentTime = ref('')
 let timer: ReturnType<typeof setInterval> | null = null
+
+const isCollapsed = ref(false)
+const isMobile = ref(false)
+const mobileOpen = ref(false)
+
+const checkScreen = () => {
+  isMobile.value = window.innerWidth <= MOBILE_BREAKPOINT
+  if (!isMobile.value) {
+    mobileOpen.value = false
+  }
+}
+
+const toggleSidebar = () => {
+  if (isMobile.value) {
+    mobileOpen.value = !mobileOpen.value
+  } else {
+    isCollapsed.value = !isCollapsed.value
+  }
+}
 
 const updateTime = () => {
   currentTime.value = new Date().toLocaleString('zh-CN', {
@@ -73,10 +107,13 @@ const updateTime = () => {
 onMounted(() => {
   updateTime()
   timer = setInterval(updateTime, 1000)
+  checkScreen()
+  window.addEventListener('resize', checkScreen)
 })
 
 onUnmounted(() => {
   if (timer) clearInterval(timer)
+  window.removeEventListener('resize', checkScreen)
 })
 </script>
 
@@ -178,6 +215,44 @@ html.dark .grid-overlay {
   -webkit-backdrop-filter: blur(20px);
   position: relative;
   z-index: 10;
+  transition: width 0.25s ease;
+}
+
+.sidebar.collapsed {
+  width: 72px;
+}
+
+.sidebar.collapsed .logo-text,
+.sidebar.collapsed .sidebar-footer {
+  display: none;
+}
+
+.sidebar.collapsed .logo {
+  justify-content: center;
+  padding: 26px 12px;
+}
+
+.sidebar.mobile {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 260px;
+  transform: translateX(-100%);
+  transition: transform 0.25s ease;
+  z-index: 200;
+}
+
+.sidebar.mobile.open {
+  transform: translateX(0);
+}
+
+.sidebar-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(2px);
+  z-index: 150;
 }
 
 .logo {
@@ -186,6 +261,7 @@ html.dark .grid-overlay {
   gap: 14px;
   padding: 26px 24px;
   border-bottom: 1px solid var(--pv-border);
+  flex-shrink: 0;
 }
 
 .logo-icon {
@@ -198,6 +274,7 @@ html.dark .grid-overlay {
   background: linear-gradient(135deg, #00f0ff, #0066ff);
   box-shadow: 0 0 24px rgba(0, 240, 255, 0.45);
   animation: icon-glow 2.5s ease-in-out infinite;
+  flex-shrink: 0;
 }
 
 @keyframes icon-glow {
@@ -211,6 +288,7 @@ html.dark .grid-overlay {
   color: var(--pv-text-primary);
   letter-spacing: 0.5px;
   text-shadow: 0 0 16px rgba(0, 240, 255, 0.4);
+  white-space: nowrap;
 }
 
 .logo-subtitle {
@@ -229,6 +307,7 @@ html.dark .grid-overlay {
   justify-content: space-between;
   color: var(--pv-text-tertiary);
   font-size: 12px;
+  flex-shrink: 0;
 }
 
 .env-tag {
@@ -270,6 +349,20 @@ html.dark .grid-overlay {
   display: flex;
   flex-direction: column;
   gap: 6px;
+  min-width: 0;
+}
+
+.menu-toggle {
+  display: none;
+  align-self: flex-start;
+  color: var(--pv-text-secondary);
+  padding: 6px;
+  border-radius: 8px;
+}
+
+.menu-toggle:hover {
+  color: var(--pv-primary);
+  background: var(--el-fill-color-light);
 }
 
 .breadcrumb {
@@ -330,5 +423,40 @@ html.dark .grid-overlay {
   flex: 1;
   padding: 28px;
   overflow: auto;
+}
+
+@media (max-width: 768px) {
+  .sidebar:not(.mobile) {
+    display: none;
+  }
+
+  .menu-toggle {
+    display: inline-flex;
+  }
+
+  .top-header {
+    height: 64px;
+    padding: 0 16px;
+  }
+
+  .header-left {
+    gap: 4px;
+  }
+
+  .breadcrumb {
+    font-size: 16px;
+  }
+
+  .header-status {
+    display: none;
+  }
+
+  .header-actions {
+    gap: 8px;
+  }
+
+  .main-content {
+    padding: 16px;
+  }
 }
 </style>
