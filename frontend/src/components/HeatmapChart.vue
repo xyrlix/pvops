@@ -5,6 +5,7 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref, watch } from 'vue'
 import * as echarts from 'echarts'
+import { useChartTheme } from '@/composables/useChartTheme'
 
 interface HeatPoint {
   date: string
@@ -18,6 +19,7 @@ const props = defineProps<{
 
 const chartRef = ref<HTMLElement>()
 let chart: echarts.ECharts | null = null
+const { resolvedTheme, colors } = useChartTheme()
 
 const initChart = () => {
   if (!chartRef.value) return
@@ -26,12 +28,13 @@ const initChart = () => {
   const xData = props.data.map((d) => d.date.slice(5)) // MM-DD
   const values = props.data.map((d) => [d.date.slice(5), '健康度', Math.round(d.health_score)])
 
+  const c = colors.value
   chart.setOption({
     tooltip: {
       position: 'top',
-      backgroundColor: 'rgba(5, 9, 20, 0.92)',
-      borderColor: 'rgba(0, 240, 255, 0.2)',
-      textStyle: { color: '#e0faff' },
+      backgroundColor: c.tooltipBg,
+      borderColor: c.tooltipBorder,
+      textStyle: { color: c.tooltipText },
       formatter: (params: any) => `${params.value[0]}<br/>健康度: ${params.value[2]} 分`,
     },
     grid: { top: '10%', bottom: '15%', left: '12%', right: '4%' },
@@ -39,13 +42,13 @@ const initChart = () => {
       type: 'category',
       data: xData,
       splitArea: { show: false },
-      axisLabel: { color: '#94a3b8', rotate: 45, fontSize: 10 },
-      axisLine: { lineStyle: { color: 'rgba(148,163,184,0.2)' } },
+      axisLabel: { color: c.textSecondary, rotate: 45, fontSize: 10 },
+      axisLine: { lineStyle: { color: c.grid } },
     },
     yAxis: {
       type: 'category',
       data: ['健康度'],
-      axisLabel: { color: '#94a3b8' },
+      axisLabel: { color: c.textSecondary },
       axisLine: { show: false },
       splitArea: { show: false },
     },
@@ -59,7 +62,7 @@ const initChart = () => {
       inRange: {
         color: ['#ff2a6d', '#ffcc00', '#00ff9d'],
       },
-      textStyle: { color: '#94a3b8' },
+      textStyle: { color: c.textSecondary },
     },
     series: [
       {
@@ -69,7 +72,7 @@ const initChart = () => {
         label: { show: true, color: '#050914', fontSize: 10, fontWeight: 'bold' },
         itemStyle: {
           borderRadius: 4,
-          borderColor: 'rgba(5,9,20,0.8)',
+          borderColor: c.tooltipBg,
           borderWidth: 2,
         },
         emphasis: {
@@ -94,6 +97,7 @@ onUnmounted(() => {
 })
 
 watch(() => props.data, initChart, { deep: true })
+watch(resolvedTheme, initChart)
 </script>
 
 <style scoped>

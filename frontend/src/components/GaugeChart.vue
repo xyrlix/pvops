@@ -5,6 +5,7 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref, watch } from 'vue'
 import * as echarts from 'echarts'
+import { useChartTheme } from '@/composables/useChartTheme'
 
 const props = defineProps<{
   value: number
@@ -16,6 +17,7 @@ const props = defineProps<{
 
 const chartRef = ref<HTMLElement>()
 let chart: echarts.ECharts | null = null
+const { resolvedTheme, colors: themeColors } = useChartTheme()
 
 const getColor = (value: number, max: number) => {
   const ratio = value / max
@@ -30,6 +32,7 @@ const initChart = () => {
 
   const max = props.max || 100
   const color = getColor(props.value, max)
+  const c = themeColors.value
 
   chart.setOption({
     series: [
@@ -58,7 +61,7 @@ const initChart = () => {
           width: 8,
           offsetCenter: [0, '5%'],
           itemStyle: {
-            color: '#fff',
+            color: c.textPrimary,
             shadowColor: color,
             shadowBlur: 15,
           },
@@ -67,7 +70,7 @@ const initChart = () => {
           roundCap: true,
           lineStyle: {
             width: 14,
-            color: [[1, 'rgba(148,163,184,0.12)']],
+            color: [[1, c.splitLine]],
           },
         },
         axisTick: { show: false },
@@ -75,18 +78,18 @@ const initChart = () => {
           length: 8,
           lineStyle: {
             width: 2,
-            color: 'rgba(148,163,184,0.2)',
+            color: c.grid,
           },
         },
         axisLabel: {
           distance: 22,
-          color: '#94a3b8',
+          color: c.textSecondary,
           fontSize: 11,
         },
         title: {
           offsetCenter: [0, '82%'],
           fontSize: 13,
-          color: '#94a3b8',
+          color: c.textSecondary,
         },
         detail: {
           valueAnimation: true,
@@ -94,7 +97,7 @@ const initChart = () => {
           fontWeight: 'bold',
           offsetCenter: [0, '35%'],
           formatter: `{value}${props.unit || ''}`,
-          color: '#f0f9ff',
+          color: c.textPrimary,
           textShadowBlur: 10,
           textShadowColor: color,
         },
@@ -115,6 +118,7 @@ onUnmounted(() => {
 })
 
 watch(() => props.value, initChart)
+watch(resolvedTheme, initChart)
 </script>
 
 <style scoped>

@@ -37,6 +37,7 @@
         </div>
         <div class="header-actions">
           <slot name="actions" />
+          <ThemeSwitcher />
           <UserInfo />
         </div>
       </header>
@@ -54,6 +55,7 @@ import { Sunny } from '@element-plus/icons-vue'
 import SidebarMenu from '@/components/SidebarMenu.vue'
 import UserInfo from '@/components/UserInfo.vue'
 import AiCopilot from '@/components/AiCopilot.vue'
+import ThemeSwitcher from '@/components/ThemeSwitcher.vue'
 
 const currentTime = ref('')
 let timer: ReturnType<typeof setInterval> | null = null
@@ -98,11 +100,17 @@ onUnmounted(() => {
   position: absolute;
   inset: 0;
   background-image:
-    linear-gradient(rgba(0, 240, 255, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0, 240, 255, 0.03) 1px, transparent 1px);
+    linear-gradient(rgba(8, 145, 178, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(8, 145, 178, 0.04) 1px, transparent 1px);
   background-size: 40px 40px;
   mask-image: radial-gradient(ellipse at center, black 30%, transparent 80%);
   -webkit-mask-image: radial-gradient(ellipse at center, black 30%, transparent 80%);
+}
+
+html.dark .grid-overlay {
+  background-image:
+    linear-gradient(rgba(0, 240, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 240, 255, 0.03) 1px, transparent 1px);
 }
 
 .orb {
@@ -164,7 +172,7 @@ onUnmounted(() => {
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
-  background: rgba(5, 9, 20, 0.82);
+  background: var(--pv-surface);
   border-right: 1px solid var(--pv-border);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
@@ -249,7 +257,7 @@ onUnmounted(() => {
   align-items: center;
   justify-content: space-between;
   padding: 0 30px;
-  background: rgba(5, 9, 20, 0.65);
+  background: var(--pv-surface);
   border-bottom: 1px solid var(--pv-border);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);

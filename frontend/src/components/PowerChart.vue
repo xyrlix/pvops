@@ -6,6 +6,7 @@
 import { onMounted, onUnmounted, ref, watch } from 'vue'
 import * as echarts from 'echarts'
 import { metricApi } from '@/services/api'
+import { useChartTheme } from '@/composables/useChartTheme'
 
 const props = defineProps<{
   stationId: number
@@ -16,6 +17,7 @@ const props = defineProps<{
 
 const chartRef = ref<HTMLElement>()
 let chart: echarts.ECharts | null = null
+const { resolvedTheme, colors } = useChartTheme()
 
 const generateMockData = () => {
   const data = []
@@ -59,12 +61,13 @@ const initChart = (data: { time: string; value: number }[], title?: string) => {
   const metricName = title || '实时功率'
   const unit = props.metric === 'daily_energy_kwh' ? 'kWh' : 'kW'
 
+  const c = colors.value
   chart.setOption({
     tooltip: {
       trigger: 'axis',
-      backgroundColor: 'rgba(15, 23, 42, 0.92)',
-      borderColor: 'rgba(148, 163, 184, 0.15)',
-      textStyle: { color: '#e2e8f0' },
+      backgroundColor: c.tooltipBg,
+      borderColor: c.tooltipBorder,
+      textStyle: { color: c.tooltipText },
       formatter: `{b}<br/>${metricName}: {c} ${unit}`,
     },
     grid: {
@@ -78,17 +81,17 @@ const initChart = (data: { time: string; value: number }[], title?: string) => {
       type: 'category',
       boundaryGap: false,
       data: data.map((item) => item.time),
-      axisLine: { lineStyle: { color: 'rgba(148, 163, 184, 0.2)' } },
-      axisLabel: { color: '#94a3b8' },
+      axisLine: { lineStyle: { color: c.grid } },
+      axisLabel: { color: c.textSecondary },
     },
     yAxis: {
       type: 'value',
       name: `${metricName}(${unit})`,
-      nameTextStyle: { color: '#64748b' },
+      nameTextStyle: { color: c.textTertiary },
       axisLine: { show: false },
       axisTick: { show: false },
-      splitLine: { lineStyle: { color: 'rgba(148, 163, 184, 0.08)' } },
-      axisLabel: { color: '#94a3b8' },
+      splitLine: { lineStyle: { color: c.splitLine } },
+      axisLabel: { color: c.textSecondary },
     },
     series: [
       {
@@ -109,7 +112,7 @@ const initChart = (data: { time: string; value: number }[], title?: string) => {
         symbolSize: 8,
         emphasis: {
           itemStyle: {
-            color: '#fff',
+            color: c.textPrimary,
             borderColor: '#00f0ff',
             borderWidth: 2,
           },
@@ -162,6 +165,8 @@ onUnmounted(() => {
 watch(() => props.stationId, () => {
   loadData()
 })
+
+watch(resolvedTheme, loadData)
 </script>
 
 <style scoped>

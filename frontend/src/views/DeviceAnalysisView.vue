@@ -144,6 +144,7 @@ import { SetUp } from '@element-plus/icons-vue'
 import * as echarts from 'echarts'
 import { useStationStore } from '@/stores/station'
 import { metricApi } from '@/services/api'
+import { useChartTheme } from '@/composables/useChartTheme'
 import DashboardLayout from '@/components/DashboardLayout.vue'
 import MetricCard from '@/components/MetricCard.vue'
 import PvCard from '@/components/PvCard.vue'
@@ -177,6 +178,7 @@ const inverters = ref<InverterItem[]>([])
 const strings = ref<StringItem[]>([])
 const stringChartRef = ref<HTMLElement>()
 let stringChart: echarts.ECharts | null = null
+const { resolvedTheme: chartResolvedTheme, colors: chartColors } = useChartTheme()
 
 const avgUtilization = computed(() => {
   if (!inverters.value.length) return 0
@@ -204,6 +206,7 @@ const initStringChart = () => {
   if (!stringChartRef.value) return
   if (!stringChart) stringChart = echarts.init(stringChartRef.value)
 
+  const c = chartColors.value
   const names = strings.value.map((s) => s.name || s.string_id)
   const currents = strings.value.map((s) => s.current_a)
   const avg = strings.value.length ? strings.value[0].avg_current_a : 0
@@ -211,23 +214,23 @@ const initStringChart = () => {
   stringChart.setOption({
     tooltip: {
       trigger: 'axis',
-      backgroundColor: 'rgba(5, 9, 20, 0.92)',
-      borderColor: 'rgba(0, 240, 255, 0.2)',
-      textStyle: { color: '#e0faff' },
+      backgroundColor: c.tooltipBg,
+      borderColor: c.tooltipBorder,
+      textStyle: { color: c.tooltipText },
     },
     grid: { left: '3%', right: '4%', bottom: '3%', top: '10%', containLabel: true },
     xAxis: {
       type: 'category',
       data: names,
-      axisLine: { lineStyle: { color: 'rgba(148,163,184,0.2)' } },
-      axisLabel: { color: '#94a3b8', rotate: 30 },
+      axisLine: { lineStyle: { color: c.grid } },
+      axisLabel: { color: c.textSecondary, rotate: 30 },
     },
     yAxis: {
       type: 'value',
       name: '电流(A)',
-      nameTextStyle: { color: '#64748b' },
-      splitLine: { lineStyle: { color: 'rgba(148,163,184,0.08)' } },
-      axisLabel: { color: '#94a3b8' },
+      nameTextStyle: { color: c.textTertiary },
+      splitLine: { lineStyle: { color: c.splitLine } },
+      axisLabel: { color: c.textSecondary },
     },
     series: [
       {
@@ -299,6 +302,7 @@ onUnmounted(() => {
 })
 
 watch(() => strings.value, initStringChart, { deep: true })
+watch(chartResolvedTheme, initStringChart)
 </script>
 
 <style scoped>

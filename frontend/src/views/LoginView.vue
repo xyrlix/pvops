@@ -99,7 +99,7 @@ const handleLogin = async () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: radial-gradient(ellipse at 20% 0%, #111827 0%, #020617 60%);
+  background: radial-gradient(ellipse at 20% 0%, var(--pv-bg-deep) 0%, var(--pv-bg) 60%);
   position: relative;
   overflow: hidden;
 }
@@ -124,18 +124,26 @@ const handleLogin = async () => {
 .login-bg-effect::before {
   width: 600px;
   height: 600px;
-  background: radial-gradient(circle, rgba(0, 240, 255, 0.25) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(8, 145, 178, 0.16) 0%, transparent 70%);
   top: -150px;
   right: -150px;
+}
+
+html.dark .login-bg-effect::before {
+  background: radial-gradient(circle, rgba(0, 240, 255, 0.25) 0%, transparent 70%);
 }
 
 .login-bg-effect::after {
   width: 500px;
   height: 500px;
-  background: radial-gradient(circle, rgba(189, 52, 254, 0.25) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(139, 92, 246, 0.16) 0%, transparent 70%);
   bottom: -150px;
   left: -100px;
   animation-delay: -5s;
+}
+
+html.dark .login-bg-effect::after {
+  background: radial-gradient(circle, rgba(189, 52, 254, 0.25) 0%, transparent 70%);
 }
 
 @keyframes float-orb {
@@ -148,10 +156,10 @@ const handleLogin = async () => {
   position: relative;
   width: 420px;
   padding: 44px;
-  background: linear-gradient(145deg, rgba(16, 24, 40, 0.85), rgba(8, 12, 22, 0.75));
-  border: 1px solid rgba(0, 240, 255, 0.15);
+  background: var(--pv-surface);
+  border: 1px solid var(--pv-border);
   border-radius: 24px;
-  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.45), 0 0 40px rgba(0, 240, 255, 0.08);
+  box-shadow: var(--pv-shadow);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
 }
@@ -168,20 +176,20 @@ const handleLogin = async () => {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #00f0ff, #0066ff);
-  box-shadow: 0 0 32px rgba(0, 240, 255, 0.45);
+  background: linear-gradient(135deg, var(--pv-primary), #0066ff);
+  box-shadow: var(--pv-glow-primary);
   margin-bottom: 20px;
   animation: icon-glow 2.5s ease-in-out infinite;
 }
 
 @keyframes icon-glow {
-  0%, 100% { box-shadow: 0 0 32px rgba(0, 240, 255, 0.45); }
-  50% { box-shadow: 0 0 48px rgba(0, 240, 255, 0.7); }
+  0%, 100% { box-shadow: var(--pv-glow-primary); }
+  50% { box-shadow: 0 0 48px rgba(8, 145, 178, 0.35); }
 }
 
 .login-header h1 {
   margin: 0 0 10px;
-  color: #f8fafc;
+  color: var(--pv-text-primary);
   font-size: 28px;
   font-weight: 800;
   letter-spacing: 1px;
@@ -196,11 +204,11 @@ const handleLogin = async () => {
 .login-footer {
   margin-top: 28px;
   text-align: center;
-  color: #64748b;
+  color: var(--pv-text-tertiary);
   font-size: 13px;
 }
 
 :deep(.el-form-item__label) {
-  color: #94a3b8;
+  color: var(--pv-text-secondary);
 }
 </style>

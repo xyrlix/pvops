@@ -73,7 +73,7 @@ const handleCommand = (command: string) => {
 }
 
 .user-trigger:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--el-fill-color-light);
 }
 
 .avatar {
@@ -86,8 +86,8 @@ const handleCommand = (command: string) => {
   font-weight: 800;
   font-size: 15px;
   color: #fff;
-  background: linear-gradient(135deg, #00f0ff, #0066ff);
-  box-shadow: 0 0 16px rgba(0, 240, 255, 0.35);
+  background: linear-gradient(135deg, var(--pv-primary), #0066ff);
+  box-shadow: 0 0 16px var(--pv-glow-primary);
 }
 
 .user-meta {

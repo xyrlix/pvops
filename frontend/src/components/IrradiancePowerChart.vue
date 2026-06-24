@@ -6,6 +6,7 @@
 import { onMounted, onUnmounted, ref, watch } from 'vue'
 import * as echarts from 'echarts'
 import { metricApi } from '@/services/api'
+import { useChartTheme } from '@/composables/useChartTheme'
 
 const props = defineProps<{
   stationId: number
@@ -14,6 +15,7 @@ const props = defineProps<{
 
 const chartRef = ref<HTMLElement>()
 let chart: echarts.ECharts | null = null
+const { resolvedTheme, colors } = useChartTheme()
 
 const formatTime = (date: Date) => {
   return `${date.getMonth() + 1}/${date.getDate()} ${date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}`
@@ -42,38 +44,39 @@ const initChart = (times: string[], power: number[], irradiance: number[]) => {
   if (!chartRef.value) return
   if (!chart) chart = echarts.init(chartRef.value)
 
+  const c = colors.value
   chart.setOption({
     tooltip: {
       trigger: 'axis',
-      backgroundColor: 'rgba(5, 9, 20, 0.92)',
-      borderColor: 'rgba(0, 240, 255, 0.2)',
-      textStyle: { color: '#e0faff' },
+      backgroundColor: c.tooltipBg,
+      borderColor: c.tooltipBorder,
+      textStyle: { color: c.tooltipText },
     },
-    legend: { data: ['实时功率', '辐照度'], textStyle: { color: '#94a3b8' }, top: 0 },
+    legend: { data: ['实时功率', '辐照度'], textStyle: { color: c.textSecondary }, top: 0 },
     grid: { left: '3%', right: '3%', bottom: '3%', top: '12%', containLabel: true },
     xAxis: {
       type: 'category',
       boundaryGap: false,
       data: times,
-      axisLine: { lineStyle: { color: 'rgba(148,163,184,0.2)' } },
-      axisLabel: { color: '#94a3b8' },
+      axisLine: { lineStyle: { color: c.grid } },
+      axisLabel: { color: c.textSecondary },
     },
     yAxis: [
       {
         type: 'value',
         name: '功率(kW)',
-        nameTextStyle: { color: '#64748b' },
+        nameTextStyle: { color: c.textTertiary },
         position: 'left',
-        splitLine: { lineStyle: { color: 'rgba(148,163,184,0.08)' } },
-        axisLabel: { color: '#94a3b8' },
+        splitLine: { lineStyle: { color: c.splitLine } },
+        axisLabel: { color: c.textSecondary },
       },
       {
         type: 'value',
         name: '辐照(W/m²)',
-        nameTextStyle: { color: '#64748b' },
+        nameTextStyle: { color: c.textTertiary },
         position: 'right',
         splitLine: { show: false },
-        axisLabel: { color: '#94a3b8' },
+        axisLabel: { color: c.textSecondary },
       },
     ],
     series: [
@@ -116,6 +119,7 @@ onUnmounted(() => {
 })
 
 watch(() => props.stationId, loadData)
+watch(resolvedTheme, loadData)
 </script>
 
 <style scoped>

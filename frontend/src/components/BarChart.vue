@@ -5,6 +5,7 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref, watch } from 'vue'
 import * as echarts from 'echarts'
+import { useChartTheme } from '@/composables/useChartTheme'
 
 interface BarData {
   name: string
@@ -21,21 +22,23 @@ const props = defineProps<{
 
 const chartRef = ref<HTMLElement>()
 let chart: echarts.ECharts | null = null
+const { resolvedTheme, colors } = useChartTheme()
 
 const initChart = () => {
   if (!chartRef.value) return
   if (!chart) chart = echarts.init(chartRef.value)
 
   const color = props.color || '#00f0ff'
+  const c = colors.value
   const sorted = [...props.data].sort((a, b) => a.value - b.value)
 
   chart.setOption({
     tooltip: {
       trigger: 'axis',
       axisPointer: { type: 'shadow' },
-      backgroundColor: 'rgba(5, 9, 20, 0.92)',
-      borderColor: 'rgba(0, 240, 255, 0.2)',
-      textStyle: { color: '#e0faff' },
+      backgroundColor: c.tooltipBg,
+      borderColor: c.tooltipBorder,
+      textStyle: { color: c.tooltipText },
       formatter: `{b}: {c} ${props.unit || ''}`,
     },
     grid: {
@@ -47,15 +50,15 @@ const initChart = () => {
     },
     xAxis: {
       type: 'value',
-      splitLine: { lineStyle: { color: 'rgba(148, 163, 184, 0.08)' } },
-      axisLabel: { color: '#64748b', fontSize: 11 },
+      splitLine: { lineStyle: { color: c.splitLine } },
+      axisLabel: { color: c.textTertiary, fontSize: 11 },
     },
     yAxis: {
       type: 'category',
       data: sorted.map((d) => d.name),
       axisLine: { show: false },
       axisTick: { show: false },
-      axisLabel: { color: '#94a3b8' },
+      axisLabel: { color: c.textSecondary },
     },
     series: [
       {
@@ -74,7 +77,7 @@ const initChart = () => {
         label: {
           show: true,
           position: 'right',
-          color: '#e0faff',
+          color: c.textPrimary,
           formatter: `{c}`,
         },
       },
@@ -93,6 +96,7 @@ onUnmounted(() => {
 })
 
 watch(() => props.data, initChart, { deep: true })
+watch(resolvedTheme, initChart)
 </script>
 
 <style scoped>

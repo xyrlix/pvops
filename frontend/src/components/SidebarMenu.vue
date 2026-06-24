@@ -4,8 +4,8 @@
     router
     class="menu"
     background-color="transparent"
-    text-color="#94a3b8"
-    active-text-color="#00f0ff"
+    :text-color="menuText"
+    :active-text-color="menuActive"
   >
     <el-menu-item index="/">
       <el-icon><Odometer /></el-icon>
@@ -39,7 +39,14 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import { Odometer, OfficeBuilding, Warning, Tickets, Document, SetUp } from '@element-plus/icons-vue'
+import { useTheme } from '@/composables/useTheme'
+
+const { resolvedTheme } = useTheme()
+
+const menuText = computed(() => (resolvedTheme.value === 'dark' ? '#94a3b8' : '#64748b'))
+const menuActive = computed(() => (resolvedTheme.value === 'dark' ? '#00f0ff' : '#0891b2'))
 </script>
 
 <style scoped>
@@ -55,18 +62,31 @@ import { Odometer, OfficeBuilding, Warning, Tickets, Document, SetUp } from '@el
   border-radius: 14px;
   font-size: 14px;
   font-weight: 600;
-  color: #94a3b8;
+  color: var(--pv-text-tertiary);
   transition: all 0.25s ease;
 }
 
 .menu :deep(.el-menu-item:hover) {
+  background: rgba(8, 145, 178, 0.06);
+  color: var(--pv-text-primary);
+}
+
+html.dark .menu :deep(.el-menu-item:hover) {
   background: rgba(0, 240, 255, 0.06);
   color: #e0faff;
 }
 
 .menu :deep(.el-menu-item.is-active) {
+  background: linear-gradient(90deg, rgba(8, 145, 178, 0.14), rgba(8, 145, 178, 0.03));
+  color: var(--pv-primary);
+  box-shadow:
+    inset 3px 0 0 var(--pv-primary),
+    0 0 20px rgba(8, 145, 178, 0.1);
+  text-shadow: 0 0 12px rgba(8, 145, 178, 0.3);
+}
+
+html.dark .menu :deep(.el-menu-item.is-active) {
   background: linear-gradient(90deg, rgba(0, 240, 255, 0.18), rgba(0, 240, 255, 0.03));
-  color: #00f0ff;
   box-shadow:
     inset 3px 0 0 #00f0ff,
     0 0 20px rgba(0, 240, 255, 0.15);
@@ -83,17 +103,26 @@ import { Odometer, OfficeBuilding, Warning, Tickets, Document, SetUp } from '@el
   border-radius: 14px;
   font-size: 14px;
   font-weight: 600;
-  color: #94a3b8;
+  color: var(--pv-text-tertiary);
   transition: all 0.25s ease;
 }
 
 .menu :deep(.el-sub-menu__title:hover) {
+  background: rgba(8, 145, 178, 0.06);
+  color: var(--pv-text-primary);
+}
+
+html.dark .menu :deep(.el-sub-menu__title:hover) {
   background: rgba(0, 240, 255, 0.06);
   color: #e0faff;
 }
 
 .menu :deep(.el-sub-menu.is-active .el-sub-menu__title) {
-  color: #00f0ff;
+  color: var(--pv-primary);
+  text-shadow: 0 0 12px rgba(8, 145, 178, 0.25);
+}
+
+html.dark .menu :deep(.el-sub-menu.is-active .el-sub-menu__title) {
   text-shadow: 0 0 12px rgba(0, 240, 255, 0.4);
 }
 
@@ -104,6 +133,10 @@ import { Odometer, OfficeBuilding, Warning, Tickets, Document, SetUp } from '@el
 }
 
 .menu :deep(.el-sub-menu .el-menu-item.is-active) {
+  box-shadow: inset 3px 0 0 var(--pv-primary), 0 0 16px rgba(8, 145, 178, 0.08);
+}
+
+html.dark .menu :deep(.el-sub-menu .el-menu-item.is-active) {
   box-shadow: inset 3px 0 0 #00f0ff, 0 0 16px rgba(0, 240, 255, 0.12);
 }
 </style>

@@ -23,12 +23,12 @@ defineProps<{
 
 .station-info h3 {
   margin: 0 0 8px 0;
-  color: #303133;
+  color: var(--pv-text-primary);
 }
 
 .station-info p {
   margin: 4px 0;
-  color: #606266;
+  color: var(--pv-text-secondary);
   font-size: 14px;
 }
 </style>

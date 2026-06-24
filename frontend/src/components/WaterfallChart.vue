@@ -5,6 +5,7 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref, watch } from 'vue'
 import * as echarts from 'echarts'
+import { useChartTheme } from '@/composables/useChartTheme'
 
 interface LossItem {
   name: string
@@ -19,6 +20,7 @@ const props = defineProps<{
 
 const chartRef = ref<HTMLElement>()
 let chart: echarts.ECharts | null = null
+const { resolvedTheme, colors: themeColors } = useChartTheme()
 
 const colors = ['#00f0ff', '#ffcc00', '#ff2a6d', '#bd34fe']
 
@@ -29,13 +31,14 @@ const initChart = () => {
   const names = props.data.map((d) => d.name)
   const values = props.data.map((d) => d.kwh)
 
+  const c = themeColors.value
   chart.setOption({
     tooltip: {
       trigger: 'axis',
       axisPointer: { type: 'shadow' },
-      backgroundColor: 'rgba(5, 9, 20, 0.92)',
-      borderColor: 'rgba(0, 240, 255, 0.2)',
-      textStyle: { color: '#e0faff' },
+      backgroundColor: c.tooltipBg,
+      borderColor: c.tooltipBorder,
+      textStyle: { color: c.tooltipText },
       formatter: (params: any) => {
         const item = props.data[params[0].dataIndex]
         return `${item.name}<br/>损失电量: ${item.kwh.toFixed(1)} kWh<br/>损失金额: ¥${item.cny.toFixed(0)}`
@@ -45,15 +48,15 @@ const initChart = () => {
     xAxis: {
       type: 'category',
       data: names,
-      axisLabel: { color: '#94a3b8' },
-      axisLine: { lineStyle: { color: 'rgba(148,163,184,0.2)' } },
+      axisLabel: { color: c.textSecondary },
+      axisLine: { lineStyle: { color: c.grid } },
     },
     yAxis: {
       type: 'value',
       name: '损失电量 (kWh)',
-      nameTextStyle: { color: '#64748b' },
-      splitLine: { lineStyle: { color: 'rgba(148,163,184,0.08)' } },
-      axisLabel: { color: '#94a3b8' },
+      nameTextStyle: { color: c.textTertiary },
+      splitLine: { lineStyle: { color: c.splitLine } },
+      axisLabel: { color: c.textSecondary },
     },
     series: [
       {
@@ -87,6 +90,7 @@ onUnmounted(() => {
 })
 
 watch(() => props.data, initChart, { deep: true })
+watch(resolvedTheme, initChart)
 </script>
 
 <style scoped>

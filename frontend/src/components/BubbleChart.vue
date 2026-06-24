@@ -5,6 +5,7 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref, watch } from 'vue'
 import * as echarts from 'echarts'
+import { useChartTheme } from '@/composables/useChartTheme'
 
 interface BubbleData {
   name: string
@@ -18,6 +19,7 @@ const props = defineProps<{
 
 const chartRef = ref<HTMLElement>()
 let chart: echarts.ECharts | null = null
+const { resolvedTheme, colors } = useChartTheme()
 
 const getColor = (health: number) => {
   if (health >= 80) return '#00ff9d'
@@ -39,11 +41,12 @@ const initChart = () => {
     },
   }))
 
+  const c = colors.value
   chart.setOption({
     tooltip: {
-      backgroundColor: 'rgba(5, 9, 20, 0.92)',
-      borderColor: 'rgba(0, 240, 255, 0.2)',
-      textStyle: { color: '#e0faff' },
+      backgroundColor: c.tooltipBg,
+      borderColor: c.tooltipBorder,
+      textStyle: { color: c.tooltipText },
       formatter: (params: any) => {
         const v = params.value
         return `${params.name}<br/>
@@ -57,17 +60,17 @@ const initChart = () => {
     xAxis: {
       type: 'value',
       name: '装机容量 (kW)',
-      nameTextStyle: { color: '#64748b' },
-      splitLine: { lineStyle: { color: 'rgba(148,163,184,0.08)' } },
-      axisLabel: { color: '#94a3b8' },
+      nameTextStyle: { color: c.textTertiary },
+      splitLine: { lineStyle: { color: c.splitLine } },
+      axisLabel: { color: c.textSecondary },
     },
     yAxis: {
       type: 'value',
       name: '发电完成率',
-      nameTextStyle: { color: '#64748b' },
-      splitLine: { lineStyle: { color: 'rgba(148,163,184,0.08)' } },
+      nameTextStyle: { color: c.textTertiary },
+      splitLine: { lineStyle: { color: c.splitLine } },
       axisLabel: {
-        color: '#94a3b8',
+        color: c.textSecondary,
         formatter: (v: number) => `${(v * 100).toFixed(0)}%`,
       },
     },
@@ -80,7 +83,7 @@ const initChart = () => {
           focus: 'self',
           itemStyle: {
             shadowBlur: 30,
-            shadowColor: '#fff',
+            shadowColor: c.textPrimary,
           },
         },
       },
@@ -99,6 +102,7 @@ onUnmounted(() => {
 })
 
 watch(() => props.data, initChart, { deep: true })
+watch(resolvedTheme, initChart)
 </script>
 
 <style scoped>

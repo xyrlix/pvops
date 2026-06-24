@@ -5,6 +5,7 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref, watch } from 'vue'
 import * as echarts from 'echarts'
+import { useChartTheme } from '@/composables/useChartTheme'
 
 const props = defineProps<{
   data: { name: string; value: number }[]
@@ -13,24 +14,26 @@ const props = defineProps<{
 
 const chartRef = ref<HTMLElement>()
 let chart: echarts.ECharts | null = null
+const { resolvedTheme, colors } = useChartTheme()
 
 const initChart = () => {
   if (!chartRef.value) return
   if (!chart) chart = echarts.init(chartRef.value)
 
+  const c = colors.value
   chart.setOption({
     tooltip: {
       trigger: 'item',
-      backgroundColor: 'rgba(5, 9, 20, 0.92)',
-      borderColor: 'rgba(0, 240, 255, 0.2)',
-      textStyle: { color: '#e0faff' },
+      backgroundColor: c.tooltipBg,
+      borderColor: c.tooltipBorder,
+      textStyle: { color: c.tooltipText },
       formatter: '{b}: {c} ({d}%)',
     },
     legend: {
       orient: 'vertical',
       right: 10,
       top: 'center',
-      textStyle: { color: '#94a3b8' },
+      textStyle: { color: c.textSecondary },
     },
     series: [
       {
@@ -40,7 +43,7 @@ const initChart = () => {
         avoidLabelOverlap: false,
         itemStyle: {
           borderRadius: 8,
-          borderColor: 'rgba(5, 9, 20, 0.9)',
+          borderColor: c.tooltipBg,
           borderWidth: 2,
         },
         label: { show: false },
@@ -49,7 +52,7 @@ const initChart = () => {
             show: true,
             fontSize: 14,
             fontWeight: 'bold',
-            color: '#fff',
+            color: c.textPrimary,
           },
         },
         data: props.data,
@@ -69,6 +72,7 @@ onUnmounted(() => {
 })
 
 watch(() => props.data, initChart, { deep: true })
+watch(resolvedTheme, initChart)
 </script>
 
 <style scoped>

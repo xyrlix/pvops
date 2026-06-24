@@ -5,6 +5,7 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref, watch } from 'vue'
 import * as echarts from 'echarts'
+import { useChartTheme } from '@/composables/useChartTheme'
 
 interface PieData {
   name: string
@@ -19,6 +20,7 @@ const props = defineProps<{
 
 const chartRef = ref<HTMLElement>()
 let chart: echarts.ECharts | null = null
+const { resolvedTheme, colors: themeColors } = useChartTheme()
 
 const colors = ['#00f0ff', '#00ff9d', '#ffcc00', '#ff2a6d', '#bd34fe', '#0066ff']
 
@@ -26,18 +28,19 @@ const initChart = () => {
   if (!chartRef.value) return
   if (!chart) chart = echarts.init(chartRef.value)
 
+  const c = themeColors.value
   chart.setOption({
     tooltip: {
       trigger: 'item',
-      backgroundColor: 'rgba(5, 9, 20, 0.92)',
-      borderColor: 'rgba(0, 240, 255, 0.2)',
-      textStyle: { color: '#e0faff' },
+      backgroundColor: c.tooltipBg,
+      borderColor: c.tooltipBorder,
+      textStyle: { color: c.tooltipText },
       formatter: '{b}: {c} ({d}%)',
     },
     legend: {
       bottom: '0',
       left: 'center',
-      textStyle: { color: '#94a3b8' },
+      textStyle: { color: c.textSecondary },
       itemWidth: 12,
       itemHeight: 12,
     },
@@ -49,7 +52,7 @@ const initChart = () => {
         avoidLabelOverlap: false,
         itemStyle: {
           borderRadius: 8,
-          borderColor: 'rgba(5,9,20,0.8)',
+          borderColor: c.tooltipBg,
           borderWidth: 2,
         },
         label: {
@@ -61,7 +64,7 @@ const initChart = () => {
             show: true,
             fontSize: 18,
             fontWeight: 'bold',
-            color: '#f0f9ff',
+            color: c.textPrimary,
             formatter: '{b}\n{d}%',
           },
           itemStyle: {
@@ -91,6 +94,7 @@ onUnmounted(() => {
 })
 
 watch(() => props.data, initChart, { deep: true })
+watch(resolvedTheme, initChart)
 </script>
 
 <style scoped>

@@ -1,14 +1,45 @@
-/* 高端暗色科技风主题 */
+/* PVOps 主题系统：默认浅色，html.dark 覆盖为深色科技风 */
 
 :root {
-  --pv-bg: #050914;
-  --pv-bg-deep: #02040a;
-  --pv-surface: rgba(16, 24, 40, 0.72);
-  --pv-surface-solid: #0c1220;
-  --pv-border: rgba(96, 165, 250, 0.12);
-  --pv-text-primary: #f0f9ff;
-  --pv-text-secondary: #94a3b8;
-  --pv-text-tertiary: #64748b;
+  color-scheme: light;
+
+  /* 品牌色（浅色下使用更稳重的饱和度） */
+  --pv-primary: #0891b2;
+  --pv-primary-light: #22d3ee;
+  --pv-primary-dark: #0e7490;
+  --pv-success: #10b981;
+  --pv-warning: #f59e0b;
+  --pv-danger: #ef4444;
+  --pv-info: #0ea5e9;
+  --pv-purple: #8b5cf6;
+
+  /* 浅色背景 */
+  --pv-bg: #f8fafc;
+  --pv-bg-deep: #f1f5f9;
+  --pv-surface: rgba(255, 255, 255, 0.78);
+  --pv-surface-solid: #ffffff;
+  --pv-border: rgba(2, 132, 199, 0.12);
+  --pv-text-primary: #0f172a;
+  --pv-text-secondary: #475569;
+  --pv-text-tertiary: #94a3b8;
+
+  --pv-radius: 16px;
+  --pv-radius-sm: 10px;
+  --pv-radius-lg: 20px;
+  --pv-transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+
+  --pv-shadow: 0 8px 32px rgba(15, 23, 42, 0.08);
+  --pv-glow-primary: 0 0 24px rgba(8, 145, 178, 0.18);
+  --pv-glow-danger: 0 0 24px rgba(239, 68, 68, 0.18);
+  --pv-glow-success: 0 0 24px rgba(16, 185, 129, 0.18);
+
+  --pv-font-display: 'DIN Alternate', 'Roboto Mono', 'Helvetica Neue', sans-serif;
+  --pv-font-body: 'Helvetica Neue', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+}
+
+html.dark {
+  color-scheme: dark;
+
   --pv-primary: #00f0ff;
   --pv-primary-light: #60f7ff;
   --pv-primary-dark: #00a8b3;
@@ -17,23 +48,21 @@
   --pv-danger: #ff2a6d;
   --pv-info: #00a8ff;
   --pv-purple: #bd34fe;
-  --pv-radius: 16px;
+
+  --pv-bg: #050914;
+  --pv-bg-deep: #02040a;
+  --pv-surface: rgba(16, 24, 40, 0.72);
+  --pv-surface-solid: #0c1220;
+  --pv-border: rgba(96, 165, 250, 0.12);
+  --pv-text-primary: #f0f9ff;
+  --pv-text-secondary: #94a3b8;
+  --pv-text-tertiary: #64748b;
+
   --pv-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
   --pv-glow-primary: 0 0 24px rgba(0, 240, 255, 0.35);
   --pv-glow-danger: 0 0 24px rgba(255, 42, 109, 0.4);
   --pv-glow-success: 0 0 24px rgba(0, 255, 157, 0.35);
 
-  /* 高端化补充 */
-  --pv-font-display: 'DIN Alternate', 'Roboto Mono', 'Helvetica Neue', sans-serif;
-  --pv-font-body: 'Helvetica Neue', 'PingFang SC', 'Microsoft YaHei', sans-serif;
-  --pv-radius-sm: 10px;
-  --pv-radius-lg: 20px;
-  --pv-transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-html.dark,
-html {
-  color-scheme: dark;
   --el-color-primary: #00f0ff;
   --el-color-primary-light-3: #60f7ff;
   --el-color-primary-light-5: #93fbff;
@@ -75,9 +104,10 @@ html {
 }
 
 body {
-  background: radial-gradient(ellipse at top, #111827 0%, #020617 60%);
+  background: var(--pv-bg);
   color: var(--pv-text-primary);
   min-height: 100vh;
+  transition: background 0.3s ease, color 0.3s ease;
 }
 
 /* 卡片 */
@@ -88,10 +118,15 @@ body {
   box-shadow: var(--pv-shadow) !important;
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease, background 0.3s ease;
 }
 
 .el-card:hover {
+  border-color: rgba(8, 145, 178, 0.25) !important;
+  box-shadow: 0 12px 40px rgba(15, 23, 42, 0.12), var(--pv-glow-primary) !important;
+}
+
+html.dark .el-card:hover {
   border-color: rgba(0, 240, 255, 0.25) !important;
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5), var(--pv-glow-primary) !important;
 }
@@ -106,14 +141,22 @@ body {
   inset: -1px;
   border-radius: inherit;
   padding: 1px;
-  background: linear-gradient(135deg, rgba(0, 240, 255, 0.4), transparent 40%, transparent 60%, rgba(189, 52, 254, 0.35));
+  background: linear-gradient(135deg, rgba(8, 145, 178, 0.35), transparent 40%, transparent 60%, rgba(139, 92, 246, 0.3));
   -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
   pointer-events: none;
 }
 
+html.dark .pv-card-glow::before {
+  background: linear-gradient(135deg, rgba(0, 240, 255, 0.4), transparent 40%, transparent 60%, rgba(189, 52, 254, 0.35));
+}
+
 .pv-text-glow {
+  text-shadow: 0 0 12px rgba(8, 145, 178, 0.35);
+}
+
+html.dark .pv-text-glow {
   text-shadow: 0 0 12px rgba(0, 240, 255, 0.6);
 }
 
@@ -122,6 +165,15 @@ body {
 }
 
 @keyframes pv-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.35); }
+  50% { box-shadow: 0 0 0 12px rgba(239, 68, 68, 0); }
+}
+
+html.dark .pv-pulse {
+  animation: pv-pulse-dark 2s ease-in-out infinite;
+}
+
+@keyframes pv-pulse-dark {
   0%, 100% { box-shadow: 0 0 0 0 rgba(255, 42, 109, 0.4); }
   50% { box-shadow: 0 0 0 12px rgba(255, 42, 109, 0); }
 }
@@ -138,9 +190,13 @@ body {
   left: 0;
   right: 0;
   height: 8px;
-  background: linear-gradient(180deg, transparent, rgba(0, 240, 255, 0.15), transparent);
+  background: linear-gradient(180deg, transparent, rgba(8, 145, 178, 0.12), transparent);
   animation: pv-scan 4s linear infinite;
   pointer-events: none;
+}
+
+html.dark .pv-scanline::after {
+  background: linear-gradient(180deg, transparent, rgba(0, 240, 255, 0.15), transparent);
 }
 
 @keyframes pv-scan {
@@ -178,11 +234,16 @@ body {
 /* 表格 */
 .el-table {
   background: transparent !important;
-  --el-table-header-bg-color: rgba(15, 23, 42, 0.7);
-  --el-table-row-hover-bg-color: rgba(59, 130, 246, 0.08);
+  --el-table-header-bg-color: rgba(241, 245, 249, 0.85);
+  --el-table-row-hover-bg-color: rgba(14, 165, 233, 0.06);
   --el-table-border-color: var(--pv-border);
   --el-table-text-color: var(--pv-text-secondary);
   --el-table-header-text-color: var(--pv-text-primary);
+}
+
+html.dark .el-table {
+  --el-table-header-bg-color: rgba(15, 23, 42, 0.7);
+  --el-table-row-hover-bg-color: rgba(59, 130, 246, 0.08);
 }
 
 .el-table th.el-table__cell {
@@ -195,6 +256,10 @@ body {
 }
 
 .el-table--striped .el-table__body tr.el-table__row--striped td.el-table__cell {
+  background: rgba(15, 23, 42, 0.02) !important;
+}
+
+html.dark .el-table--striped .el-table__body tr.el-table__row--striped td.el-table__cell {
   background: rgba(255, 255, 255, 0.02) !important;
 }
 
@@ -206,18 +271,30 @@ body {
 }
 
 .el-button--primary {
-  box-shadow: 0 4px 14px rgba(59, 130, 246, 0.35);
+  box-shadow: 0 4px 14px rgba(8, 145, 178, 0.25);
 }
 
 .el-button--primary:hover {
+  box-shadow: 0 6px 20px rgba(8, 145, 178, 0.35);
+}
+
+html.dark .el-button--primary {
+  box-shadow: 0 4px 14px rgba(59, 130, 246, 0.35);
+}
+
+html.dark .el-button--primary:hover {
   box-shadow: 0 6px 20px rgba(59, 130, 246, 0.5);
 }
 
 /* 输入框 */
 .el-input__wrapper {
-  background: rgba(15, 23, 42, 0.6) !important;
+  background: rgba(241, 245, 249, 0.7) !important;
   border-radius: 10px !important;
   box-shadow: 0 0 0 1px var(--pv-border) inset !important;
+}
+
+html.dark .el-input__wrapper {
+  background: rgba(15, 23, 42, 0.6) !important;
 }
 
 .el-input__wrapper:hover,
@@ -239,6 +316,10 @@ body {
 
 .el-descriptions__label {
   color: var(--pv-text-secondary) !important;
+  background: rgba(15, 23, 42, 0.04) !important;
+}
+
+html.dark .el-descriptions__label {
   background: rgba(255, 255, 255, 0.04) !important;
 }
 
@@ -248,6 +329,10 @@ body {
 
 /* 时间线 */
 .el-timeline-item__node {
+  box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.12);
+}
+
+html.dark .el-timeline-item__node {
   box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
 }
 
@@ -275,16 +360,28 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(15, 23, 42, 0.04);
   border-radius: 4px;
 }
 
+html.dark ::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.03);
+}
+
 ::-webkit-scrollbar-thumb {
-  background: rgba(148, 163, 184, 0.2);
+  background: rgba(148, 163, 184, 0.3);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.5);
+}
+
+html.dark ::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.2);
+}
+
+html.dark ::-webkit-scrollbar-thumb:hover {
   background: rgba(148, 163, 184, 0.35);
 }
 
@@ -322,6 +419,10 @@ body {
 }
 
 .pv-glow-text {
+  text-shadow: 0 0 12px rgba(8, 145, 178, 0.3);
+}
+
+html.dark .pv-glow-text {
   text-shadow: 0 0 12px rgba(0, 240, 255, 0.6);
 }
 
@@ -349,10 +450,14 @@ body {
 
 /* 加载脉冲 */
 .pv-skeleton {
-  background: linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.04) 75%);
+  background: linear-gradient(90deg, rgba(15,23,42,0.04) 25%, rgba(15,23,42,0.1) 50%, rgba(15,23,42,0.04) 75%);
   background-size: 200% 100%;
   animation: pv-skeleton-flow 1.5s infinite;
   border-radius: var(--pv-radius-sm);
+}
+
+html.dark .pv-skeleton {
+  background: linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.04) 75%);
 }
 
 @keyframes pv-skeleton-flow {
@@ -368,13 +473,25 @@ body {
 
 /* 按钮光晕 */
 .el-button--primary {
-  box-shadow: 0 4px 16px rgba(0, 240, 255, 0.25);
+  box-shadow: 0 4px 16px rgba(8, 145, 178, 0.18);
 }
 
 .el-button--danger {
-  box-shadow: 0 4px 16px rgba(255, 42, 109, 0.25);
+  box-shadow: 0 4px 16px rgba(239, 68, 68, 0.18);
 }
 
 .el-button--success {
+  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.14);
+}
+
+html.dark .el-button--primary {
+  box-shadow: 0 4px 16px rgba(0, 240, 255, 0.25);
+}
+
+html.dark .el-button--danger {
+  box-shadow: 0 4px 16px rgba(255, 42, 109, 0.25);
+}
+
+html.dark .el-button--success {
   box-shadow: 0 4px 16px rgba(0, 255, 157, 0.2);
 }
