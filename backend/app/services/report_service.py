@@ -145,6 +145,12 @@ async def _calculate_avg_pr(
         return sum(pr_values) / len(pr_values) if pr_values else 0.0
 
 
+async def get_report(session: AsyncSession, report_id: int) -> Optional[Report]:
+    """获取单条报告."""
+    result = await session.execute(select(Report).where(Report.id == report_id))
+    return result.scalar_one_or_none()
+
+
 async def list_reports(
     session: AsyncSession,
     station_id: Optional[int] = None,

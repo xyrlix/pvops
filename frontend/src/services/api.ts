@@ -213,4 +213,8 @@ export const reportApi = {
     USE_MOCK
       ? mockData.reportMock.generate()
       : apiClient.post(`/reports/generate/${reportType}`, { station_id: stationId }),
+  exportPdf: (id: number) =>
+    USE_MOCK
+      ? mockData.reportMock.exportPdf()
+      : apiClient.get(`/reports/${id}/pdf`, { responseType: 'blob' }),
 }

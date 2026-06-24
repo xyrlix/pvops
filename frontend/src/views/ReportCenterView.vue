@@ -62,9 +62,12 @@
             {{ formatTime(row.created_at) }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="120">
+        <el-table-column label="操作" width="190">
           <template #default="{ row }">
             <el-button size="small" type="primary" plain @click="viewReport(row)">查看</el-button>
+            <el-button size="small" type="success" plain :icon="Download" @click="exportPdf(row)">
+              PDF
+            </el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -99,7 +102,7 @@
 
 <script setup lang="ts">
 import { onMounted, ref, watch } from 'vue'
-import { Document, DocumentChecked, DocumentCopy } from '@element-plus/icons-vue'
+import { Document, DocumentChecked, DocumentCopy, Download } from '@element-plus/icons-vue'
 import DashboardLayout from '@/components/DashboardLayout.vue'
 import PvCard from '@/components/PvCard.vue'
 import PvTag from '@/components/PvTag.vue'
@@ -151,6 +154,23 @@ const generateReport = async (type: string) => {
 const viewReport = (row: any) => {
   selectedReport.value = row
   showDetail.value = true
+}
+
+const exportPdf = async (row: any) => {
+  try {
+    const blob = (await reportApi.exportPdf(row.id)) as unknown as Blob
+    const url = window.URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `${row.report_type}_report_${row.id}.pdf`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    window.URL.revokeObjectURL(url)
+    ElMessage.success('PDF 导出成功')
+  } catch (err) {
+    ElMessage.error('PDF 导出失败')
+  }
 }
 
 watch(filterType, fetchReports)

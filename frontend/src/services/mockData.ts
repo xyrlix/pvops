@@ -310,6 +310,7 @@ export const metricMock = {
 export const reportMock = {
   list: async () => [],
   generate: async () => ({ id: 1, report_type: 'daily', created_at: new Date().toISOString() }),
+  exportPdf: async () => new Blob(['PDF'], { type: 'application/pdf' }),
 }
 
 export const diagnosisMock = {

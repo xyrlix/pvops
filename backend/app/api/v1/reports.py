@@ -2,14 +2,14 @@
 
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.deps import get_current_user
 from app.models.user import User
 from app.schemas.report import ReportCreate, ReportResponse
-from app.services import report_service
+from app.services import pdf_service, report_service
 
 router = APIRouter()
 
@@ -36,4 +36,21 @@ async def generate_report(
         raise HTTPException(status_code=400, detail="报告类型必须是 daily/weekly/monthly")
     return await report_service.generate_report(
         report_type, data.station_id, created_by=current_user.username
+    )
+
+
+@router.get("/{report_id}/pdf")
+async def export_report_pdf(report_id: int, db: AsyncSession = Depends(get_db)):
+    """导出运维报告 PDF."""
+    report = await report_service.get_report(db, report_id)
+    if not report:
+        raise HTTPException(status_code=404, detail="报告不存在")
+
+    report_dict = ReportResponse.from_orm(report).dict()
+    pdf_bytes = pdf_service.generate_operation_report_pdf(report_dict)
+    filename = f"{report.report_type}_report_{report.id}.pdf"
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
     )
