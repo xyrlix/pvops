@@ -1,11 +1,13 @@
 <template>
-  <div ref="chartRef" class="bubble-chart" :style="{ height: height + 'px' }"></div>
+  <PvSkeleton v-if="loading" variant="chart" />
+  <div v-else ref="chartRef" class="bubble-chart" :style="{ height: height + 'px' }"></div>
 </template>
 
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref, watch } from 'vue'
 import * as echarts from 'echarts'
 import { useChartTheme } from '@/composables/useChartTheme'
+import PvSkeleton from './PvSkeleton.vue'
 
 interface BubbleData {
   name: string
@@ -15,6 +17,7 @@ interface BubbleData {
 const props = defineProps<{
   data: BubbleData[]
   height?: number
+  loading?: boolean
 }>()
 
 const chartRef = ref<HTMLElement>()

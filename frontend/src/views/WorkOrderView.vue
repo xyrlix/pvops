@@ -15,25 +15,37 @@
     <el-row :gutter="20" class="stats-row">
       <el-col :xs="12" :sm="6">
         <div class="stat-card pending">
-          <div class="stat-value">{{ pendingCount }}</div>
+          <div class="stat-value">
+            <PvSkeleton v-if="statsLoading" variant="text" :rows="1" />
+            <template v-else>{{ pendingCount }}</template>
+          </div>
           <div class="stat-label">待处理</div>
         </div>
       </el-col>
       <el-col :xs="12" :sm="6">
         <div class="stat-card inprogress">
-          <div class="stat-value">{{ inProgressCount }}</div>
+          <div class="stat-value">
+            <PvSkeleton v-if="statsLoading" variant="text" :rows="1" />
+            <template v-else>{{ inProgressCount }}</template>
+          </div>
           <div class="stat-label">处理中</div>
         </div>
       </el-col>
       <el-col :xs="12" :sm="6">
         <div class="stat-card completed">
-          <div class="stat-value">{{ completedCount }}</div>
+          <div class="stat-value">
+            <PvSkeleton v-if="statsLoading" variant="text" :rows="1" />
+            <template v-else>{{ completedCount }}</template>
+          </div>
           <div class="stat-label">已完成</div>
         </div>
       </el-col>
       <el-col :xs="12" :sm="6">
         <div class="stat-card rate">
-          <div class="stat-value">{{ completionRate }}%</div>
+          <div class="stat-value">
+            <PvSkeleton v-if="statsLoading" variant="text" :rows="1" />
+            <template v-else>{{ completionRate }}%</template>
+          </div>
           <div class="stat-label">本周完成率</div>
         </div>
       </el-col>
@@ -42,8 +54,8 @@
     <!-- 工单列表 -->
     <el-row class="list-row">
       <el-col :span="24">
-        <PvCard title="工单列表" icon="Tickets" glow>
-          <el-table :data="workOrders" stripe v-loading="loading">
+        <PvCard title="工单列表" icon="Tickets" glow :loading="statsLoading">
+          <el-table :data="workOrders" stripe>
             <el-table-column prop="id" label="ID" width="60" />
             <el-table-column prop="title" label="标题" min-width="180" />
             <el-table-column prop="priority" label="优先级" width="90">
@@ -172,6 +184,7 @@ import { Tickets, Plus } from '@element-plus/icons-vue'
 import DashboardLayout from '@/components/DashboardLayout.vue'
 import PvCard from '@/components/PvCard.vue'
 import PvTag from '@/components/PvTag.vue'
+import PvSkeleton from '@/components/PvSkeleton.vue'
 import WorkOrderTimeline from '@/components/WorkOrderTimeline.vue'
 import { workOrderApi } from '@/services/api'
 import { ElMessage } from 'element-plus'
@@ -179,6 +192,7 @@ import { ElMessage } from 'element-plus'
 const route = useRoute()
 const workOrders = ref<any[]>([])
 const loading = ref(false)
+const statsLoading = ref(false)
 const showCreate = ref(false)
 const showDetail = ref(false)
 const selectedOrder = ref<any>(null)
@@ -223,6 +237,7 @@ const statusText = (s: string) => {
 
 const fetchWorkOrders = async () => {
   loading.value = true
+  statsLoading.value = true
   try {
     const data = (await workOrderApi.list()) as unknown as any[]
     workOrders.value = data
@@ -230,6 +245,7 @@ const fetchWorkOrders = async () => {
     console.error('获取工单失败:', err)
   } finally {
     loading.value = false
+    statsLoading.value = false
   }
 }
 

@@ -1,5 +1,6 @@
 <template>
-  <div ref="chartRef" class="power-chart" :style="{ height: height + 'px' }"></div>
+  <PvSkeleton v-if="loading" variant="chart" />
+  <div v-else ref="chartRef" class="power-chart" :style="{ height: height + 'px' }"></div>
 </template>
 
 <script setup lang="ts">
@@ -7,12 +8,14 @@ import { onMounted, onUnmounted, ref, watch } from 'vue'
 import * as echarts from 'echarts'
 import { metricApi } from '@/services/api'
 import { useChartTheme } from '@/composables/useChartTheme'
+import PvSkeleton from './PvSkeleton.vue'
 
 const props = defineProps<{
   stationId: number
   height?: number
   metric?: string
   title?: string
+  loading?: boolean
 }>()
 
 const chartRef = ref<HTMLElement>()

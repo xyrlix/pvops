@@ -1,11 +1,13 @@
 <template>
-  <div ref="chartRef" class="gauge-chart" :style="{ height: height + 'px' }"></div>
+  <PvSkeleton v-if="loading" variant="chart" />
+  <div v-else ref="chartRef" class="gauge-chart" :style="{ height: height + 'px' }"></div>
 </template>
 
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref, watch } from 'vue'
 import * as echarts from 'echarts'
 import { useChartTheme } from '@/composables/useChartTheme'
+import PvSkeleton from './PvSkeleton.vue'
 
 const props = defineProps<{
   value: number
@@ -13,6 +15,7 @@ const props = defineProps<{
   title?: string
   unit?: string
   max?: number
+  loading?: boolean
 }>()
 
 const chartRef = ref<HTMLElement>()

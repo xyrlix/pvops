@@ -1,11 +1,13 @@
 <template>
-  <div ref="chartRef" class="waterfall-chart" :style="{ height: height + 'px' }"></div>
+  <PvSkeleton v-if="loading" variant="chart" />
+  <div v-else ref="chartRef" class="waterfall-chart" :style="{ height: height + 'px' }"></div>
 </template>
 
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref, watch } from 'vue'
 import * as echarts from 'echarts'
 import { useChartTheme } from '@/composables/useChartTheme'
+import PvSkeleton from './PvSkeleton.vue'
 
 interface LossItem {
   name: string
@@ -16,6 +18,7 @@ interface LossItem {
 const props = defineProps<{
   data: LossItem[]
   height?: number
+  loading?: boolean
 }>()
 
 const chartRef = ref<HTMLElement>()

@@ -72,7 +72,9 @@
     <el-row :gutter="20" class="chart-row">
       <el-col :span="24">
         <PvCard title="逆变器运行状态" icon="SetUp" glow>
-          <div class="inverter-grid">
+          <PvSkeleton v-if="loadingInverters" variant="card" :rows="3" />
+          <PvEmpty v-else-if="!inverters.length" description="暂无逆变器" />
+          <div v-else class="inverter-grid">
             <InverterCard
               v-for="inv in inverters"
               :key="inv.inverter_id"
@@ -104,7 +106,7 @@
     <!-- 组串离散 -->
     <el-row :gutter="20" class="chart-row">
       <el-col :xs="24" :lg="12">
-        <PvCard title="组串电流离散" icon="Connection" glow>
+        <PvCard title="组串电流离散" icon="Connection" glow :loading="loadingStrings" :empty="!strings.length" empty-text="暂无组串数据" skeleton-variant="chart">
           <template #actions>
             <el-select v-model="selectedInverterId" clearable placeholder="全部逆变器" size="small" @change="loadStrings">
               <el-option
@@ -119,7 +121,7 @@
         </PvCard>
       </el-col>
       <el-col :xs="24" :lg="12">
-        <PvCard title="组串离散率分析" icon="DataLine" glow>
+        <PvCard title="组串离散率分析" icon="DataLine" glow :loading="loadingStrings" :empty="!strings.length" empty-text="暂无组串数据">
           <el-table :data="strings" stripe height="340">
             <el-table-column prop="inverter_id" label="逆变器" width="110" />
             <el-table-column prop="string_id" label="组串" width="110" />
@@ -149,6 +151,8 @@ import DashboardLayout from '@/components/DashboardLayout.vue'
 import MetricCard from '@/components/MetricCard.vue'
 import PvCard from '@/components/PvCard.vue'
 import PvTag from '@/components/PvTag.vue'
+import PvSkeleton from '@/components/PvSkeleton.vue'
+import PvEmpty from '@/components/PvEmpty.vue'
 import InverterCard from '@/components/InverterCard.vue'
 import BarChart from '@/components/BarChart.vue'
 
@@ -176,6 +180,8 @@ const selectedStationId = ref<number | null>(null)
 const selectedInverterId = ref<string | null>(null)
 const inverters = ref<InverterItem[]>([])
 const strings = ref<StringItem[]>([])
+const loadingInverters = ref(false)
+const loadingStrings = ref(false)
 const stringChartRef = ref<HTMLElement>()
 let stringChart: echarts.ECharts | null = null
 const { resolvedTheme: chartResolvedTheme, colors: chartColors } = useChartTheme()
@@ -260,16 +266,20 @@ const initStringChart = () => {
 
 const loadInverters = async () => {
   if (!selectedStationId.value) return
+  loadingInverters.value = true
   try {
     const data = (await metricApi.getStationInverters(selectedStationId.value)) as unknown as InverterItem[]
     inverters.value = data
   } catch (err) {
     console.error('加载逆变器失败:', err)
+  } finally {
+    loadingInverters.value = false
   }
 }
 
 const loadStrings = async () => {
   if (!selectedStationId.value) return
+  loadingStrings.value = true
   try {
     const data = (await metricApi.getStationStrings(
       selectedStationId.value,
@@ -279,6 +289,8 @@ const loadStrings = async () => {
     initStringChart()
   } catch (err) {
     console.error('加载组串失败:', err)
+  } finally {
+    loadingStrings.value = false
   }
 }
 

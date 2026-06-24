@@ -7,32 +7,32 @@
 
     <el-row :gutter="20" class="action-row">
       <el-col :span="8">
-        <el-card shadow="hover" class="report-card" @click="generateReport('daily')">
+        <PvCard shadow="hover" class="report-card" :loading="generating === 'daily'" @click="generateReport('daily')">
           <div class="report-icon daily"><el-icon :size="36"><Document /></el-icon></div>
           <h3>日报</h3>
           <p>生成昨日电站运行日报</p>
           <el-button type="primary" :loading="generating === 'daily'">生成日报</el-button>
-        </el-card>
+        </PvCard>
       </el-col>
       <el-col :span="8">
-        <el-card shadow="hover" class="report-card" @click="generateReport('weekly')">
+        <PvCard shadow="hover" class="report-card" :loading="generating === 'weekly'" @click="generateReport('weekly')">
           <div class="report-icon weekly"><el-icon :size="36"><DocumentChecked /></el-icon></div>
           <h3>周报</h3>
           <p>生成本周电站运行周报</p>
           <el-button type="success" :loading="generating === 'weekly'">生成周报</el-button>
-        </el-card>
+        </PvCard>
       </el-col>
       <el-col :span="8">
-        <el-card shadow="hover" class="report-card" @click="generateReport('monthly')">
+        <PvCard shadow="hover" class="report-card" :loading="generating === 'monthly'" @click="generateReport('monthly')">
           <div class="report-icon monthly"><el-icon :size="36"><DocumentCopy /></el-icon></div>
           <h3>月报</h3>
           <p>生成本月电站运行月报</p>
           <el-button type="warning" :loading="generating === 'monthly'">生成月报</el-button>
-        </el-card>
+        </PvCard>
       </el-col>
     </el-row>
 
-    <PvCard class="reports-list" title="报告历史" icon="DocumentCopy" :loading="loading" glow>
+    <PvCard class="reports-list" title="报告历史" icon="DocumentCopy" :loading="loading" :empty="!reports.length" glow>
       <template #actions>
         <el-radio-group v-model="filterType" size="small">
           <el-radio-button label="">全部</el-radio-button>

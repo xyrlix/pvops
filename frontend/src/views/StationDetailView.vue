@@ -111,12 +111,12 @@
       <!-- 功率曲线 + 辐照对照 -->
       <el-row :gutter="20" class="chart-row">
         <el-col :xs="24" :lg="12">
-          <PvCard title="功率曲线" icon="TrendCharts" glow>
+          <PvCard title="功率曲线" icon="TrendCharts" glow :loading="stationLoading">
             <PowerChart :station-id="stationId" :height="340" title="实时功率" />
           </PvCard>
         </el-col>
         <el-col :xs="24" :lg="12">
-          <PvCard title="辐照-功率对照" icon="MostlyCloudy" glow>
+          <PvCard title="辐照-功率对照" icon="MostlyCloudy" glow :loading="stationLoading">
             <IrradiancePowerChart :station-id="stationId" :height="340" />
           </PvCard>
         </el-col>
@@ -125,12 +125,12 @@
       <!-- 损失瀑布 + 逆变器排名 -->
       <el-row :gutter="20" class="chart-row">
         <el-col :xs="24" :lg="12">
-          <PvCard title="损失分解瀑布" subtitle="单位：kWh / 元" icon="DataLine" glow>
+          <PvCard title="损失分解瀑布" subtitle="单位：kWh / 元" icon="DataLine" glow :loading="stationLoading">
             <WaterfallChart :data="losses.breakdown" :height="340" />
           </PvCard>
         </el-col>
         <el-col :xs="24" :lg="12">
-          <PvCard title="逆变器日发电量排名" icon="Histogram" glow>
+          <PvCard title="逆变器日发电量排名" icon="Histogram" glow :loading="stationLoading">
             <BarChart :data="inverterBars" :height="340" color="#00f0ff" unit="kWh" />
           </PvCard>
         </el-col>
@@ -139,7 +139,7 @@
       <!-- 健康度趋势 + 最近告警 -->
       <el-row :gutter="20" class="chart-row">
         <el-col :xs="24" :lg="16">
-          <PvCard title="健康度趋势（近30天）" icon="Grid" glow>
+          <PvCard title="健康度趋势（近30天）" icon="Grid" glow :loading="stationLoading">
             <HeatmapChart :data="healthTrend" :height="220" />
           </PvCard>
         </el-col>
@@ -236,6 +236,7 @@ const losses = ref({
 const inverterBars = ref<{ name: string; value: number }[]>([])
 const healthTrend = ref<{ date: string; health_score: number }[]>([])
 const recentAlarms = ref<any[]>([])
+const stationLoading = ref(true)
 
 const prPercent = computed(() => {
   const pr = metrics.value.pr
@@ -271,28 +272,33 @@ const formatTime = (timeStr: string) => {
 }
 
 const loadData = async () => {
-  await stationStore.fetchStation(stationId.value)
-  await stationStore.fetchMetrics(stationId.value)
-  if (stationStore.currentMetrics) {
-    metrics.value = stationStore.currentMetrics
-  }
-
+  stationLoading.value = true
   try {
-    const [effRes, lossRes, invRes, trendRes, alarmRes] = await Promise.all([
-      metricApi.getStationEfficiency(stationId.value),
-      metricApi.getStationLosses(stationId.value),
-      metricApi.getStationInverters(stationId.value),
-      metricApi.getStationHealthTrend(stationId.value, 30),
-      alarmApi.list(stationId.value),
-    ])
-    efficiency.value = effRes as unknown as typeof efficiency.value
-    losses.value = lossRes as unknown as typeof losses.value
-    const invData = invRes as unknown as { inverter_id: string; daily_energy_kwh: number }[]
-    inverterBars.value = invData.map((d) => ({ name: d.inverter_id, value: d.daily_energy_kwh }))
-    healthTrend.value = trendRes as unknown as typeof healthTrend.value
-    recentAlarms.value = (alarmRes as unknown as any[]).slice(0, 5)
-  } catch (err) {
-    console.error('加载高级指标失败:', err)
+    await stationStore.fetchStation(stationId.value)
+    await stationStore.fetchMetrics(stationId.value)
+    if (stationStore.currentMetrics) {
+      metrics.value = stationStore.currentMetrics
+    }
+
+    try {
+      const [effRes, lossRes, invRes, trendRes, alarmRes] = await Promise.all([
+        metricApi.getStationEfficiency(stationId.value),
+        metricApi.getStationLosses(stationId.value),
+        metricApi.getStationInverters(stationId.value),
+        metricApi.getStationHealthTrend(stationId.value, 30),
+        alarmApi.list(stationId.value),
+      ])
+      efficiency.value = effRes as unknown as typeof efficiency.value
+      losses.value = lossRes as unknown as typeof losses.value
+      const invData = invRes as unknown as { inverter_id: string; daily_energy_kwh: number }[]
+      inverterBars.value = invData.map((d) => ({ name: d.inverter_id, value: d.daily_energy_kwh }))
+      healthTrend.value = trendRes as unknown as typeof healthTrend.value
+      recentAlarms.value = (alarmRes as unknown as any[]).slice(0, 5)
+    } catch (err) {
+      console.error('加载高级指标失败:', err)
+    }
+  } finally {
+    stationLoading.value = false
   }
 }
 

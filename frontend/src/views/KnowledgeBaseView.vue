@@ -111,7 +111,10 @@
             </div>
           </div>
 
-          <div v-if="answer" class="answer-panel">
+          <div v-if="loading.ask" class="answer-panel">
+            <PvSkeleton variant="paragraph" :rows="4" />
+          </div>
+          <div v-else-if="answer" class="answer-panel">
             <div class="answer-label">回答</div>
             <div class="answer-content">{{ answer }}</div>
 
@@ -132,7 +135,7 @@
             </div>
           </div>
 
-          <el-empty v-else description="输入问题后点击提问，即可从知识库获取答案" />
+          <PvEmpty v-else description="输入问题后点击提问，即可从知识库获取答案" />
         </PvCard>
       </el-col>
     </el-row>
@@ -146,6 +149,8 @@ import type { UploadFile, UploadUserFile } from 'element-plus'
 import DashboardLayout from '@/components/DashboardLayout.vue'
 import PvCard from '@/components/PvCard.vue'
 import PvTag from '@/components/PvTag.vue'
+import PvSkeleton from '@/components/PvSkeleton.vue'
+import PvEmpty from '@/components/PvEmpty.vue'
 import { knowledgeApi } from '@/services/api'
 import { useStationStore } from '@/stores/station'
 import { ElMessage, ElMessageBox } from 'element-plus'

@@ -9,25 +9,37 @@
     <el-row :gutter="20" class="stats-row">
       <el-col :xs="12" :sm="6">
         <div class="stat-card danger">
-          <div class="stat-value">{{ stats.open }}</div>
+          <div class="stat-value">
+            <PvSkeleton v-if="statsLoading" variant="text" :rows="1" />
+            <template v-else>{{ stats.open }}</template>
+          </div>
           <div class="stat-label">未处理</div>
         </div>
       </el-col>
       <el-col :xs="12" :sm="6">
         <div class="stat-card warning">
-          <div class="stat-value">{{ stats.acknowledged }}</div>
+          <div class="stat-value">
+            <PvSkeleton v-if="statsLoading" variant="text" :rows="1" />
+            <template v-else>{{ stats.acknowledged }}</template>
+          </div>
           <div class="stat-label">已确认</div>
         </div>
       </el-col>
       <el-col :xs="12" :sm="6">
         <div class="stat-card success">
-          <div class="stat-value">{{ stats.closed }}</div>
+          <div class="stat-value">
+            <PvSkeleton v-if="statsLoading" variant="text" :rows="1" />
+            <template v-else>{{ stats.closed }}</template>
+          </div>
           <div class="stat-label">已关闭</div>
         </div>
       </el-col>
       <el-col :xs="12" :sm="6">
         <div class="stat-card info">
-          <div class="stat-value">{{ stats.total }}</div>
+          <div class="stat-value">
+            <PvSkeleton v-if="statsLoading" variant="text" :rows="1" />
+            <template v-else>{{ stats.total }}</template>
+          </div>
           <div class="stat-label">今日告警</div>
         </div>
       </el-col>
@@ -36,7 +48,7 @@
     <!-- 分布图 + 聚合 -->
     <el-row :gutter="20" class="section-row">
       <el-col :xs="24" :lg="8">
-        <PvCard title="告警等级分布" icon="PieChart" glow>
+        <PvCard title="告警等级分布" icon="PieChart" glow :loading="statsLoading">
           <AlarmDonutChart :data="levelDistribution" :height="260" />
         </PvCard>
       </el-col>
@@ -157,6 +169,7 @@ import { Warning } from '@element-plus/icons-vue'
 import DashboardLayout from '@/components/DashboardLayout.vue'
 import PvCard from '@/components/PvCard.vue'
 import PvTag from '@/components/PvTag.vue'
+import PvSkeleton from '@/components/PvSkeleton.vue'
 import AlarmDonutChart from '@/components/AlarmDonutChart.vue'
 import { alarmApi } from '@/services/api'
 import { useCopilotStore } from '@/stores/copilot'
@@ -166,6 +179,7 @@ const copilotStore = useCopilotStore()
 const alarms = ref<any[]>([])
 const summary = ref<any[]>([])
 const loading = ref(false)
+const statsLoading = ref(false)
 const filterStatus = ref('')
 const selectedAlarms = ref<any[]>([])
 
@@ -208,6 +222,7 @@ const formatTime = (timeStr: string) => {
 
 const fetchAlarms = async () => {
   loading.value = true
+  statsLoading.value = true
   try {
     const [data, sumData] = await Promise.all([
       alarmApi.list(undefined, filterStatus.value || undefined),
@@ -219,6 +234,7 @@ const fetchAlarms = async () => {
     console.error('获取告警失败:', err)
   } finally {
     loading.value = false
+    statsLoading.value = false
   }
 }
 

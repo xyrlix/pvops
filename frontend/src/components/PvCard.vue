@@ -21,7 +21,7 @@
       </div>
     </template>
     <div v-if="loading" class="pv-card-loading">
-      <div class="pv-skeleton" style="height: 120px; width: 100%" />
+      <PvSkeleton :variant="skeletonVariant" :rows="skeletonRows" />
     </div>
     <div v-else-if="empty" class="pv-card-empty">
       <PvEmpty :description="emptyText" />
@@ -32,23 +32,32 @@
 
 <script setup lang="ts">
 import PvEmpty from './PvEmpty.vue'
+import PvSkeleton from './PvSkeleton.vue'
 
-defineProps<{
-  title?: string
-  subtitle?: string
-  icon?: string
-  glow?: boolean
-  loading?: boolean
-  empty?: boolean
-  emptyText?: string
-  bodyStyle?: Record<string, string>
-}>()
+withDefaults(
+  defineProps<{
+    title?: string
+    subtitle?: string
+    icon?: string
+    glow?: boolean
+    loading?: boolean
+    empty?: boolean
+    emptyText?: string
+    skeletonVariant?: 'text' | 'paragraph' | 'card' | 'chart' | 'table'
+    skeletonRows?: number
+    bodyStyle?: Record<string, string>
+  }>(),
+  {
+    skeletonVariant: 'chart',
+    skeletonRows: 3,
+  }
+)
 </script>
 
 <style scoped>
 .pv-card {
   border-radius: var(--pv-radius-lg);
-  background: linear-gradient(145deg, rgba(16, 24, 40, 0.9), rgba(8, 12, 22, 0.8));
+  background: var(--pv-surface);
   border: 1px solid var(--pv-border);
   transition: var(--pv-transition);
 }

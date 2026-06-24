@@ -88,7 +88,7 @@
     <!-- 气泡图 + 高风险 TOP -->
     <el-row :gutter="20" class="chart-row">
       <el-col :xs="24" :lg="16">
-        <PvCard title="集团场站分布" subtitle="气泡大小 = 损失金额，颜色 = 健康度" icon="Coordinate" glow>
+        <PvCard title="集团场站分布" subtitle="气泡大小 = 损失金额，颜色 = 健康度" icon="Coordinate" glow :loading="dashboardLoading">
           <BubbleChart :data="bubbleData" :height="400" />
         </PvCard>
       </el-col>
@@ -118,12 +118,12 @@
     <!-- 实时功率 + 健康度 + 告警 -->
     <el-row :gutter="20" class="chart-row">
       <el-col :xs="24" :lg="13">
-        <PvCard title="集团实时功率" icon="TrendCharts" glow>
+        <PvCard title="集团实时功率" icon="TrendCharts" glow :loading="dashboardLoading">
           <PowerChart :station-id="1" :height="360" title="实时功率" />
         </PvCard>
       </el-col>
       <el-col :xs="24" :lg="5">
-        <PvCard title="系统健康" icon="FirstAidKit" glow>
+        <PvCard title="系统健康" icon="FirstAidKit" glow :loading="dashboardLoading">
           <GaugeChart :value="overallHealth" title="健康度" unit="分" :height="300" />
         </PvCard>
       </el-col>
@@ -135,17 +135,17 @@
     <!-- 排名 + 容量分布 + 健康度热力图 -->
     <el-row :gutter="20" class="chart-row">
       <el-col :xs="24" :lg="8">
-        <PvCard title="电站功率排名" icon="Rank" glow>
+        <PvCard title="电站功率排名" icon="Rank" glow :loading="dashboardLoading">
           <BarChart :data="stationPowerData" unit="kWh" color="#00f0ff" :height="300" />
         </PvCard>
       </el-col>
       <el-col :xs="24" :lg="8">
-        <PvCard title="装机容量分布" icon="PieChart" glow>
+        <PvCard title="装机容量分布" icon="PieChart" glow :loading="dashboardLoading">
           <DonutChart :data="capacityData" :height="300" />
         </PvCard>
       </el-col>
       <el-col :xs="24" :lg="8">
-        <PvCard title="月度健康度热力图" icon="Grid" glow>
+        <PvCard title="月度健康度热力图" icon="Grid" glow :loading="dashboardLoading">
           <HeatmapChart :data="healthTrend" :height="300" />
         </PvCard>
       </el-col>
@@ -154,7 +154,7 @@
     <!-- 电站列表 -->
     <el-row class="station-row">
       <el-col :span="24">
-        <PvCard title="电站运行状态" icon="OfficeBuilding" glow>
+        <PvCard title="电站运行状态" icon="OfficeBuilding" glow :loading="dashboardLoading" :empty="!overview.length">
           <template #actions>
             <el-button type="primary" size="small" @click="$router.push('/stations')">查看全部</el-button>
           </template>
@@ -246,6 +246,7 @@ const riskStations = ref<OverviewItem[]>([])
 const healthTrend = ref<{ date: string; health_score: number }[]>([])
 const aiInsight = ref('正在分析集团电站运行数据...')
 const kpiLoading = ref(true)
+const dashboardLoading = ref(true)
 const overviewKpi = ref<KpiData>({
   station_count: 0,
   online_count: 0,
@@ -315,6 +316,8 @@ const fetchAlarms = async () => {
 }
 
 const fetchDashboard = async () => {
+  dashboardLoading.value = true
+  kpiLoading.value = true
   try {
     const [overviewData, riskData, insightData, kpiData] = await Promise.all([
       dashboardApi.stationsOverview(),
@@ -326,9 +329,11 @@ const fetchDashboard = async () => {
     riskStations.value = riskData as unknown as OverviewItem[]
     aiInsight.value = (insightData as any).insight || aiInsight.value
     overviewKpi.value = kpiData as unknown as KpiData
-    kpiLoading.value = false
   } catch (err) {
     console.error('获取总览失败:', err)
+  } finally {
+    dashboardLoading.value = false
+    kpiLoading.value = false
   }
 }
 

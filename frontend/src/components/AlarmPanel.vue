@@ -10,7 +10,8 @@
         <el-tag v-else type="success" effect="dark">运行正常</el-tag>
       </div>
     </template>
-    <el-timeline v-if="alarms.length > 0">
+    <PvSkeleton v-if="loading" variant="chart" />
+    <el-timeline v-else-if="alarms.length > 0">
       <el-timeline-item
         v-for="alarm in alarms"
         :key="alarm.id"
@@ -23,12 +24,14 @@
         </div>
       </el-timeline-item>
     </el-timeline>
-    <el-empty v-else description="暂无告警" />
+    <PvEmpty v-else description="暂无告警" />
   </el-card>
 </template>
 
 <script setup lang="ts">
 import { Warning } from '@element-plus/icons-vue'
+import PvEmpty from './PvEmpty.vue'
+import PvSkeleton from './PvSkeleton.vue'
 
 interface Alarm {
   id: number
@@ -38,9 +41,12 @@ interface Alarm {
   type: 'primary' | 'success' | 'warning' | 'danger'
 }
 
-defineProps<{
+withDefaults(defineProps<{
   alarms: Alarm[]
-}>()
+  loading?: boolean
+}>(), {
+  loading: false,
+})
 </script>
 
 <style scoped>
