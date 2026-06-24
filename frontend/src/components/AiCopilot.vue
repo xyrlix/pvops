@@ -76,7 +76,7 @@
 </template>
 
 <script setup lang="ts">
-import { nextTick, ref, watch } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
 import { ChatDotRound, Promotion } from '@element-plus/icons-vue'
 import { chatApi } from '@/services/api'
 import { useCopilotStore } from '@/stores/copilot'
@@ -99,12 +99,26 @@ const loading = ref(false)
 const sessionId = ref('')
 const messagesRef = ref<HTMLElement>()
 
-const quickQuestions = [
-  '当前电站健康度如何？',
-  'INV001 最近有什么异常？',
-  '组串离散率过高怎么处理？',
-  '查看相似案例',
-]
+const quickQuestions = computed(() => {
+  const ctx = copilotStore.context
+  const type = ctx?.type
+  const base = [
+    '当前电站健康度如何？',
+    'INV001 最近有什么异常？',
+    '组串离散率过高怎么处理？',
+    '查看相似案例',
+  ]
+  if (type === 'alarm') {
+    return [`诊断这条告警：${ctx?.alarm_title || ''}`, '这条告警可能是什么原因？', '查看相似案例']
+  }
+  if (type === 'device') {
+    return ['立即诊断该电站/设备', '该设备健康度如何？', '查看相似案例']
+  }
+  if (type === 'station' || type === 'overview') {
+    return ['当前电站整体运行如何？', '有哪些潜在风险？', '查看相似案例']
+  }
+  return base
+})
 
 const scrollToBottom = () => {
   nextTick(() => {
