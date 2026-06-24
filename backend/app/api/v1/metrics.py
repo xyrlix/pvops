@@ -1,0 +1,105 @@
+"""指标接口."""
+
+import asyncio
+import json
+from datetime import datetime, timedelta
+from typing import AsyncGenerator, Dict, List, Optional
+
+from fastapi import APIRouter, Query
+from fastapi.responses import StreamingResponse
+
+from app.schemas.metric import StationMetrics
+from app.services import metrics_service
+
+router = APIRouter()
+
+
+@router.get("/station/{station_id}", response_model=StationMetrics)
+async def get_station_metrics(station_id: int) -> dict:
+    """获取电站实时指标."""
+    return await metrics_service.get_latest_station_metrics(station_id)
+
+
+@router.get("/station/{station_id}/history")
+async def get_station_history(
+    station_id: int,
+    metric: str = Query(..., description="指标名: active_power_kw, daily_energy_kwh 等"),
+    start: Optional[str] = Query(None),
+    end: Optional[str] = Query(None),
+) -> List[Dict]:
+    """获取电站历史指标."""
+    start_dt = datetime.fromisoformat(start) if start else datetime.now() - timedelta(days=1)
+    end_dt = datetime.fromisoformat(end) if end else datetime.now()
+
+    return await metrics_service.get_metric_history(station_id, metric, start_dt, end_dt)
+
+
+async def metrics_stream_generator(station_id: int) -> AsyncGenerator[str, None]:
+    """SSE 实时指标流."""
+    while True:
+        try:
+            metrics = await metrics_service.get_latest_station_metrics(station_id)
+            yield f"data: {json.dumps(metrics, default=str)}\n\n"
+        except Exception as e:
+            yield f"data: {json.dumps({'error': str(e)})}\n\n"
+        await asyncio.sleep(5)
+
+
+@router.get("/station/{station_id}/stream")
+async def get_metrics_stream(station_id: int) -> StreamingResponse:
+    """获取电站实时指标 SSE 流."""
+    return StreamingResponse(
+        metrics_stream_generator(station_id),
+        media_type="text/event-stream",
+    )
+
+
+@router.get("/stations/overview")
+async def get_stations_overview() -> List[Dict]:
+    """集团总览指标（气泡图/TOP榜）."""
+    return await metrics_service.get_stations_overview()
+
+
+@router.get("/stations/ranking")
+async def get_stations_ranking(
+    metric: str = Query("health_score", description="排序指标"),
+    limit: int = Query(10),
+) -> List[Dict]:
+    """电站排名."""
+    return await metrics_service.get_stations_ranking(metric, limit)
+
+
+@router.get("/station/{station_id}/efficiency")
+async def get_station_efficiency(station_id: int) -> Dict:
+    """电站效率指标（等效小时/PR/系统效率）."""
+    return await metrics_service.get_station_efficiency(station_id)
+
+
+@router.get("/station/{station_id}/losses")
+async def get_station_losses(station_id: int) -> Dict:
+    """电站损失分解."""
+    return await metrics_service.get_station_losses(station_id)
+
+
+@router.get("/station/{station_id}/health-trend")
+async def get_station_health_trend(
+    station_id: int,
+    days: int = Query(30),
+) -> List[Dict]:
+    """健康度趋势（热力图）."""
+    return await metrics_service.get_health_trend(station_id, days)
+
+
+@router.get("/station/{station_id}/inverters")
+async def get_station_inverters(station_id: int) -> List[Dict]:
+    """逆变器群组对比."""
+    return await metrics_service.get_inverter_comparison(station_id)
+
+
+@router.get("/station/{station_id}/strings")
+async def get_station_strings(
+    station_id: int,
+    inverter_id: Optional[str] = Query(None),
+) -> List[Dict]:
+    """组串离散率."""
+    return await metrics_service.get_string_dispersion(station_id, inverter_id)
