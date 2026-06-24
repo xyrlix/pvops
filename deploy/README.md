@@ -2,21 +2,36 @@
 
 ## 快速启动（Docker Compose）
 
+推荐直接使用一键脚本：
+
 ```bash
 cd /path/to/pvops
 
 # 1. 复制环境变量文件并修改
 cp .env.example .env
 
-# 2. 构建并启动核心服务（首次需要拉取镜像，约 3-5 分钟）
-docker compose -f deploy/docker-compose.yml up -d
+# 2. 一键启动（自动构建前端、拉取镜像、启动核心服务）
+./deploy/start.sh
 
-# 3. 查看日志
-docker compose -f deploy/docker-compose.yml logs -f backend
-
-# 4. 访问
+# 3. 访问
 # Web UI: http://localhost:8000
 # API Docs: http://localhost:8000/docs
+
+# 4. 停止
+./deploy/stop.sh
+```
+
+如需手动控制，也可直接操作 docker compose：
+
+```bash
+# 构建并启动核心服务（首次需要拉取镜像，约 3-5 分钟）
+docker compose -f deploy/docker-compose.yml up -d
+
+# 查看日志
+docker compose -f deploy/docker-compose.yml logs -f backend
+
+# 停止并移除容器
+docker compose -f deploy/docker-compose.yml down
 ```
 
 ## 服务说明
