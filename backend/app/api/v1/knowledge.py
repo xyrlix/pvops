@@ -6,8 +6,6 @@ from fastapi import APIRouter, File, Form, HTTPException, UploadFile
 
 from app.schemas.knowledge import KnowledgeAskRequest, KnowledgeAskResponse, KnowledgeDocResponse
 from app.services import knowledge_service
-from app.vectorstore.base import Document
-from app.vectorstore.factory import get_vector_store
 
 router = APIRouter()
 
@@ -28,19 +26,8 @@ async def upload_document(
     content = await file.read()
     doc = await knowledge_service.save_upload(file.filename, content, station_id)
 
-    # 创建文本块
-    chunks = await knowledge_service.create_chunks(doc.id, doc.content_text or "")
-
-    # 写入向量存储
-    store = await get_vector_store()
-    documents = [
-        Document(
-            page_content=chunk.content,
-            metadata={"doc_id": doc.id, "filename": doc.filename, "chunk_index": chunk.chunk_index},
-        )
-        for chunk in chunks
-    ]
-    await store.add_documents(documents)
+    # 创建文本块并写入向量库（metadata 中携带 station_id）
+    await knowledge_service.create_chunks(doc.id, doc.content_text or "", station_id=station_id)
 
     return doc
 

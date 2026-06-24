@@ -28,6 +28,7 @@ class KnowledgeChunk(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     doc_id = Column(Integer, ForeignKey("knowledge_docs.id"), nullable=False, index=True)
+    vector_id = Column(String(64), nullable=True, index=True, comment="向量库中的唯一 ID")
     content = Column(Text, nullable=False, comment="文本块内容")
     chunk_index = Column(Integer, default=0, comment="块序号")
     created_at = Column(String(50), server_default=func.now())

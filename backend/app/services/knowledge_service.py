@@ -8,6 +8,8 @@ from typing import List, Optional
 
 from app.core.database import AsyncSessionLocal
 from app.models.knowledge import KnowledgeChunk, KnowledgeDoc
+from app.vectorstore.base import Document
+from app.vectorstore.factory import get_vector_store
 
 logger = logging.getLogger(__name__)
 
@@ -115,9 +117,19 @@ async def save_upload(
         return doc
 
 
-async def create_chunks(doc_id: int, text: str, chunk_size: int = 800) -> List[KnowledgeChunk]:
-    """为文档创建文本块并入库."""
+async def create_chunks(
+    doc_id: int, text: str, chunk_size: int = 800, station_id: Optional[int] = None
+) -> List[KnowledgeChunk]:
+    """为文档创建文本块并入库，同时写入向量库."""
     chunks = _chunk_text(text, chunk_size)
+    if not chunks:
+        async with AsyncSessionLocal() as session:
+            doc = await session.get(KnowledgeDoc, doc_id)
+            if doc:
+                doc.chunk_count = 0
+                await session.commit()
+        return []
+
     async with AsyncSessionLocal() as session:
         db_chunks = []
         for idx, content in enumerate(chunks):
@@ -129,6 +141,32 @@ async def create_chunks(doc_id: int, text: str, chunk_size: int = 800) -> List[K
             session.add(chunk)
             db_chunks.append(chunk)
         await session.commit()
+        for chunk in db_chunks:
+            await session.refresh(chunk)
+
+        # 写入向量库
+        doc = await session.get(KnowledgeDoc, doc_id)
+        store = await get_vector_store()
+        vector_ids = [f"doc_{doc_id}_chunk_{chunk.chunk_index}" for chunk in db_chunks]
+        documents = [
+            Document(
+                page_content=chunk.content,
+                metadata={
+                    "doc_id": doc_id,
+                    "chunk_index": chunk.chunk_index,
+                    "station_id": station_id,
+                    "filename": doc.filename if doc else "",
+                },
+            )
+            for chunk in db_chunks
+        ]
+        try:
+            await store.add_documents(documents, ids=vector_ids)
+            for chunk, vid in zip(db_chunks, vector_ids):
+                chunk.vector_id = vid
+            await session.commit()
+        except Exception as e:
+            logger.error(f"写入向量库失败: {e}")
 
         # 更新文档块数
         doc = await session.get(KnowledgeDoc, doc_id)
@@ -156,10 +194,28 @@ async def get_document(doc_id: int) -> Optional[KnowledgeDoc]:
 
 
 async def delete_document(doc_id: int) -> bool:
+    from sqlalchemy import select
+
     async with AsyncSessionLocal() as session:
         doc = await session.get(KnowledgeDoc, doc_id)
         if not doc:
             return False
+
+        # 同步删除向量库中的文本块
+        result = await session.execute(
+            select(KnowledgeChunk.vector_id).where(
+                KnowledgeChunk.doc_id == doc_id,
+                KnowledgeChunk.vector_id.isnot(None),
+            )
+        )
+        vector_ids = [row[0] for row in result.all() if row[0]]
+        if vector_ids:
+            try:
+                store = await get_vector_store()
+                await store.delete(vector_ids)
+            except Exception as e:
+                logger.error(f"删除向量库文档失败: {e}")
+
         doc.status = "deleted"
         await session.commit()
         return True
@@ -180,5 +236,5 @@ async def save_case_document(title: str, content: str, station_id: Optional[int]
         await session.commit()
         await session.refresh(doc)
 
-    await create_chunks(doc.id, content)
+    await create_chunks(doc.id, content, station_id=station_id)
     return doc
