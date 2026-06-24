@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter
 
-from app.api.v1 import alarms, auth, chat, dashboard, devices, diagnosis, health, knowledge, metrics, reports, simulator, stations, work_orders
+from app.api.v1 import alarms, auth, chat, dashboard, devices, diagnosis, health, ingest, knowledge, metrics, reports, simulator, stations, work_orders
 
 api_router = APIRouter()
 api_router.include_router(health.router, prefix="/health", tags=["health"])
@@ -18,3 +18,4 @@ api_router.include_router(diagnosis.router, prefix="/diagnosis", tags=["diagnosi
 api_router.include_router(knowledge.router, prefix="/kb", tags=["knowledge"])
 api_router.include_router(chat.router, prefix="/chat", tags=["chat"])
 api_router.include_router(simulator.router, prefix="/simulator", tags=["simulator"])
+api_router.include_router(ingest.router, prefix="/ingest", tags=["ingest"])

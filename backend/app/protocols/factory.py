@@ -30,4 +30,9 @@ def create_adapter(
 
         return ModbusRTUAdapter(device_code, config)
 
+    if protocol == "mqtt_source":
+        from app.protocols.mqtt_source import MqttSourceAdapter
+
+        return MqttSourceAdapter(device_code, config)
+
     raise ValueError(f"不支持的协议类型: {protocol}")
