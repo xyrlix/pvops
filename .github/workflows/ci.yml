@@ -27,6 +27,11 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements-dev.txt
 
+      - name: Generate test secret
+        run: |
+          echo "SECRET_KEY=$(python -c 'import secrets; print(secrets.token_urlsafe(48))')" >> $GITHUB_ENV
+          echo "PVOPS_SKIP_STARTUP_VALIDATION=1" >> $GITHUB_ENV
+
       - name: Lint with ruff
         run: ruff check .
 
@@ -40,6 +45,9 @@ jobs:
         run: bandit -r app/ -f json -o bandit-report.json || true
 
       - name: Run tests
+        env:
+          SECRET_KEY: ${{ env.SECRET_KEY }}
+          PVOPS_SKIP_STARTUP_VALIDATION: ${{ env.PVOPS_SKIP_STARTUP_VALIDATION }}
         run: pytest tests/ -v --cov=app --cov-report=xml
 
   frontend:

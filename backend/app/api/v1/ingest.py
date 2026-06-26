@@ -1,20 +1,26 @@
 """设备遥测数据接入接口.
 
 支持边缘网关通过 HTTP POST 推送设备数据，写入时序数据库。
+
+认证：所有 ingest 端点要求请求头携带 `X-Gateway-Token`，
+与 .env 中的 `INGEST_GATEWAY_TOKEN` 常量时间比较（hmac.compare_digest）。
+网关侧应在反代/边缘 SDK 配置此 token，避免在公网裸奔。
 """
 
-from typing import Any, Dict
+from typing import Any, Dict, List
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request, status
 
 from app.collector.runner import CollectorRunner
+from app.core.config import get_settings
+from app.core.security import verify_gateway_token
 from app.repositories import get_repository
 
 router = APIRouter()
 
 
 @router.post("/telemetry")
-async def ingest_telemetry(payload: Dict[str, Any]):
+async def ingest_telemetry(payload: Dict[str, Any], request: Request):
     """接收单条或多条设备遥测数据.
 
     请求体示例:
@@ -30,13 +36,18 @@ async def ingest_telemetry(payload: Dict[str, Any]):
         }
     }
     """
+    verify_gateway_token(request)
+
     station_id = payload.get("station_id")
     device_code = payload.get("device_code")
     device_type = payload.get("device_type")
     data = payload.get("data")
 
     if not station_id or not device_code or not device_type or not data:
-        raise HTTPException(status_code=422, detail="缺少必要字段: station_id, device_code, device_type, data")
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="缺少必要字段: station_id, device_code, device_type, data",
+        )
 
     runner = CollectorRunner(station_id=station_id)
     await runner.init()
@@ -58,8 +69,10 @@ async def ingest_telemetry(payload: Dict[str, Any]):
 
 
 @router.post("/telemetry/batch")
-async def ingest_telemetry_batch(payloads: list[Dict[str, Any]]):
+async def ingest_telemetry_batch(payloads: List[Dict[str, Any]], request: Request):
     """批量接收遥测数据."""
+    verify_gateway_token(request)
+
     if not payloads:
         return {"success": True, "count": 0}
 
@@ -69,6 +82,7 @@ async def ingest_telemetry_batch(payloads: list[Dict[str, Any]]):
     try:
         for payload in payloads:
             try:
+                await payload_guard(payload)
                 await runner._write_payload(payload)
             except Exception as e:
                 failed.append({"payload": payload, "error": str(e)})
@@ -76,6 +90,17 @@ async def ingest_telemetry_batch(payloads: list[Dict[str, Any]]):
         await runner.close()
 
     if failed:
-        raise HTTPException(status_code=207, detail={"success": len(payloads) - len(failed), "failed": failed})
+        raise HTTPException(
+            status_code=status.HTTP_207_MULTI_STATUS,
+            detail={"success": len(payloads) - len(failed), "failed": failed},
+        )
 
     return {"success": True, "count": len(payloads)}
+
+
+def payload_guard(payload: Dict[str, Any]) -> None:
+    """最小化 payload 形状校验."""
+    required = {"station_id", "device_code", "device_type", "data"}
+    missing = required - payload.keys()
+    if missing:
+        raise ValueError(f"missing keys: {sorted(missing)}")

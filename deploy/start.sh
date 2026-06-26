@@ -14,6 +14,23 @@ echo "🚀 PVOps 一键启动"
 if [ ! -f .env ]; then
   echo "📋 复制环境变量模板 .env.example -> .env"
   cp .env.example .env
+  # 自动生成高熵 SECRET_KEY / INGEST_GATEWAY_TOKEN，
+  # 避免启动器（backend.main.validate_settings_on_startup）fail-fast。
+  if command -v python3 >/dev/null 2>&1; then
+    NEW_SECRET=$(python3 -c "import secrets; print(secrets.token_urlsafe(48))")
+    NEW_INGEST=$(python3 -c "import secrets; print(secrets.token_urlsafe(24))")
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+      sed -i '' "s|^SECRET_KEY=.*|SECRET_KEY=$NEW_SECRET|" .env
+      sed -i '' "s|^INGEST_GATEWAY_TOKEN=.*|INGEST_GATEWAY_TOKEN=$NEW_INGEST|" .env
+    else
+      sed -i "s|^SECRET_KEY=.*|SECRET_KEY=$NEW_SECRET|" .env
+      sed -i "s|^INGEST_GATEWAY_TOKEN=.*|INGEST_GATEWAY_TOKEN=$NEW_INGEST|" .env
+    fi
+    echo "🔐 已生成高熵 SECRET_KEY / INGEST_GATEWAY_TOKEN"
+  else
+    echo "❌ 需要 python3 来生成 SECRET_KEY"
+    exit 1
+  fi
   echo "⚠️  请根据实际环境编辑 .env 后再次运行本脚本"
   exit 1
 fi

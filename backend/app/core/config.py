@@ -48,6 +48,10 @@ def _build_settings_cls():
             # 启动时自动 seed 演示数据（生产环境应为 false）
             seed_demo_on_startup: bool = True
 
+            # 边缘网关 token（/ingest/telemetry 头 X-Gateway-Token）。
+            # 空 = 跳过校验（仅推荐开发）。生产必须显式设置，建议 32+ 字符高熵随机。
+            ingest_gateway_token: str = ""
+
             # Database - 默认使用 SQLite 便于本地演示
             database_url: str = "sqlite+aiosqlite:///./pvops.db"
 
@@ -94,6 +98,9 @@ def _build_settings_cls():
         use_mock_data: bool = True
         seed_demo_on_startup: bool = True
 
+        # 边缘网关 token（/ingest/telemetry 头 X-Gateway-Token）
+        ingest_gateway_token: str = ""
+
         database_url: str = "sqlite+aiosqlite:///./pvops.db"
 
         tsdb_backend: str = "sqlite"
@@ -135,3 +142,47 @@ def get_settings() -> Settings:
     if db_url:
         return Settings(database_url=db_url)
     return Settings()
+
+
+# 启动时强制检查：secret_key 不得使用默认值；debug=True 时警告。
+# 仅在主入口导入时执行一次，避免 unit-test 反复触发。
+_DEFAULT_SECRET_KEYS = frozenset({"change-me-in-production", "secret", "changeme", ""})
+
+
+def validate_settings_on_startup(settings: Settings | None = None) -> None:
+    """应用启动时执行安全检查.
+
+    - secret_key 不得为开发默认 / 空 / 常见弱口令。
+    - debug=True 触发 WARNING。
+    - seed_demo_on_startup=True 在生产模式 (debug=False) 触发 ERROR，
+      防止演示数据混入生产数据库。
+    """
+    import logging
+    import sys
+
+    logger = logging.getLogger(__name__)
+    settings = settings or get_settings()
+
+    if settings.secret_key in _DEFAULT_SECRET_KEYS:
+        msg = (
+            "FATAL: secret_key 仍为默认值，必须在 .env 中显式设置一个高熵值。\n"
+            "       生成方式: python -c \"import secrets; print(secrets.token_urlsafe(64))\""
+        )
+        logger.critical(msg)
+        print(msg, file=sys.stderr)
+        raise SystemExit(1)
+
+    if len(settings.secret_key) < 32:
+        msg = f"FATAL: secret_key 太短 (len={len(settings.secret_key)})，至少需要 32 字符。"
+        logger.critical(msg)
+        print(msg, file=sys.stderr)
+        raise SystemExit(1)
+
+    if settings.debug:
+        logger.warning("debug=True：仅推荐开发环境使用，生产请设为 false。")
+
+    if settings.seed_demo_on_startup and not settings.debug:
+        msg = "FATAL: 生产模式 (debug=False) 下不得开启 seed_demo_on_startup。"
+        logger.critical(msg)
+        print(msg, file=sys.stderr)
+        raise SystemExit(1)

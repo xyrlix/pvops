@@ -9,13 +9,29 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from app.api.v1 import api_router
-from app.core.config import get_settings
+from app.core.config import get_settings, validate_settings_on_startup
 from app.core.migrate import run_migrations
 from app.core.seed import seed_initial_data
 from app.repositories import close_all_repositories, initialize_repository
 from app.vectorstore import close_all_vector_stores, get_vector_store
 
 settings = get_settings()
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """应用生命周期管理."""
+    # 0) 启动安全校验：在 uvicorn worker fork 之后、replica 启动之前 fail-fast。
+    #    设置 PVOPS_SKIP_STARTUP_VALIDATION=1 可跳过（用于单元测试环境）。
+    import os
+
+    if os.getenv("PVOPS_SKIP_STARTUP_VALIDATION") != "1":
+        validate_settings_on_startup(settings)
+
+    # 1) 业务库 schema 由 Alembic 管理（alembic upgrade head）。
+    #    任何 schema 变更都应通过 alembic revision --autogenerate 增量生成迁移，
+    #    不再使用 Base.metadata.create_all。
+    await run_migrations()
 
 
 @asynccontextmanager
