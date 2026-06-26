@@ -1,9 +1,9 @@
 <template>
   <DashboardLayout>
-    <template #breadcrumb>
-      <el-icon class="back-icon" :size="22"><OfficeBuilding /></el-icon>
-      <span>电站管理</span>
+    <template #title>
+      <span class="pv-page-title">电站管理</span>
     </template>
+    <template #subtitle>STATION REGISTRY · {{ stationStore.stations.length }} UNITS</template>
 
     <PvCard title="电站列表" icon="OfficeBuilding" :loading="stationStore.loading" glow>
       <template #actions>
@@ -58,7 +58,7 @@
 <script setup lang="ts">
 import { onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { OfficeBuilding, Plus } from '@element-plus/icons-vue'
+import { Plus } from '@element-plus/icons-vue'
 import { useStationStore } from '@/stores/station'
 import { stationApi } from '@/services/api'
 import DashboardLayout from '@/components/DashboardLayout.vue'

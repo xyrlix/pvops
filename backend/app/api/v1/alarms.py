@@ -2,11 +2,12 @@
 
 from typing import List, Optional
 
-from fastapi import APIRouter, Body, Query
+from fastapi import APIRouter, Body, Depends, Query
 
+from app.core.deps import get_current_user
 from app.services import alarm_service
 
-router = APIRouter()
+router = APIRouter(dependencies=[Depends(get_current_user)])
 
 
 @router.get("")

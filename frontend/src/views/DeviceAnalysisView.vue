@@ -1,9 +1,9 @@
 <template>
   <DashboardLayout>
-    <template #breadcrumb>
-      <el-icon class="back-icon" :size="22"><SetUp /></el-icon>
-      <span>设备分析</span>
+    <template #title>
+      <span class="pv-page-title">设备分析</span>
     </template>
+    <template #subtitle>DEVICE ANALYSIS</template>
 
     <template #actions>
       <el-select v-model="selectedStationId" placeholder="选择电站" style="width: 200px" @change="loadData">
@@ -142,7 +142,6 @@
 
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
-import { SetUp } from '@element-plus/icons-vue'
 import * as echarts from 'echarts'
 import { useStationStore } from '@/stores/station'
 import { metricApi } from '@/services/api'

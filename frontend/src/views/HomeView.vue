@@ -1,23 +1,32 @@
 <template>
   <DashboardLayout>
-    <template #breadcrumb>
-      <el-icon class="back-icon" :size="22"><Odometer /></el-icon>
-      <span>总览大屏</span>
+    <template #title>
+      <span class="pv-page-title">运营总览</span>
+    </template>
+    <template #subtitle>
+      GROUP COMMAND · {{ currentTimeLabel }}
     </template>
 
     <!-- AI 洞察 -->
-    <el-row :gutter="20" class="insight-row">
-      <el-col :span="24">
-        <div class="ai-insight-bar" @click="copilotStore.open({ type: 'overview' })">
-          <el-icon class="insight-icon" :size="24"><Cpu /></el-icon>
-          <div class="insight-content">
-            <span class="insight-label">AI 洞察</span>
-            <span class="insight-text">{{ aiInsight }}</span>
-          </div>
-          <el-icon class="insight-arrow"><ArrowRight /></el-icon>
-        </div>
-      </el-col>
-    </el-row>
+    <div class="ai-insight-bar" @click="copilotStore.open({ type: 'overview' })">
+      <el-icon class="insight-icon" :size="20"><Cpu /></el-icon>
+      <div class="insight-content">
+        <span class="insight-label">AI INSIGHT</span>
+        <span class="insight-text">{{ aiInsight }}</span>
+      </div>
+      <el-icon class="insight-arrow"><ArrowRight /></el-icon>
+    </div>
+
+    <!-- 信号条 -->
+    <div class="pv-strip" style="margin-bottom: 22px;">
+      <span><strong class="pv-text-glow">{{ overviewKpi.online_count }}</strong> 座在线</span>
+      <span>·</span>
+      <span><strong>{{ overviewKpi.offline_count }}</strong> 离线</span>
+      <span>·</span>
+      <span>采集频率 <strong class="pv-number">5s</strong></span>
+      <span>·</span>
+      <span>数据延迟 <strong class="pv-number">&lt; 1.5s</strong></span>
+    </div>
 
     <!-- 顶部 KPI -->
     <el-row :gutter="20" class="metrics-row">
@@ -200,7 +209,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from 'vue'
-import { Odometer, Cpu, ArrowRight } from '@element-plus/icons-vue'
+import { Cpu, ArrowRight } from '@element-plus/icons-vue'
 import { useCopilotStore } from '@/stores/copilot'
 import { alarmApi, dashboardApi, metricApi } from '@/services/api'
 import DashboardLayout from '@/components/DashboardLayout.vue'
@@ -214,6 +223,12 @@ import DonutChart from '@/components/DonutChart.vue'
 import BubbleChart from '@/components/BubbleChart.vue'
 import HeatmapChart from '@/components/HeatmapChart.vue'
 import AlarmPanel from '@/components/AlarmPanel.vue'
+
+const currentTimeLabel = computed(() => {
+  const d = new Date()
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`
+})
 
 interface OverviewItem {
   station_id: number
@@ -375,18 +390,18 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: 14px;
-  padding: 16px 22px;
-  border-radius: 14px;
-  background: linear-gradient(90deg, rgba(0, 240, 255, 0.12), rgba(189, 52, 254, 0.08));
-  border: 1px solid rgba(0, 240, 255, 0.18);
-  box-shadow: 0 0 24px rgba(0, 240, 255, 0.1);
+  padding: 14px 20px;
+  border-radius: 12px;
+  background: linear-gradient(90deg, rgba(34, 211, 238, 0.1), rgba(129, 140, 248, 0.06));
+  border: 1px solid var(--pv-border-strong);
   cursor: pointer;
   transition: var(--pv-transition);
+  margin-bottom: 22px;
 }
 
 .ai-insight-bar:hover {
-  border-color: rgba(0, 240, 255, 0.35);
-  box-shadow: 0 0 32px rgba(0, 240, 255, 0.18);
+  border-color: var(--pv-primary);
+  box-shadow: var(--pv-glow-primary);
 }
 
 .insight-icon {
@@ -395,8 +410,8 @@ onUnmounted(() => {
 }
 
 @keyframes pulse {
-  0%, 100% { filter: drop-shadow(0 0 4px rgba(0, 240, 255, 0.5)); }
-  50% { filter: drop-shadow(0 0 12px rgba(0, 240, 255, 0.9)); }
+  0%, 100% { filter: drop-shadow(0 0 4px rgba(34, 211, 238, 0.5)); }
+  50% { filter: drop-shadow(0 0 12px rgba(34, 211, 238, 0.9)); }
 }
 
 .insight-content {
@@ -409,12 +424,19 @@ onUnmounted(() => {
 
 .insight-label {
   font-weight: 800;
+  font-family: var(--pv-font-mono);
+  font-size: 11px;
+  letter-spacing: 0.12em;
   color: var(--pv-primary);
-  text-shadow: 0 0 10px rgba(0, 240, 255, 0.4);
+  padding: 3px 8px;
+  border: 1px solid rgba(34, 211, 238, 0.3);
+  border-radius: 4px;
+  background: rgba(34, 211, 238, 0.08);
 }
 
 .insight-text {
   color: var(--pv-text-secondary);
+  font-size: 13px;
 }
 
 .insight-arrow {
@@ -426,9 +448,9 @@ onUnmounted(() => {
 }
 
 .alarm-stat-card {
-  padding: 18px;
-  border-radius: 14px;
-  background: linear-gradient(145deg, rgba(16, 24, 40, 0.9), rgba(8, 12, 22, 0.8));
+  padding: 16px 18px;
+  border-radius: 12px;
+  background: var(--pv-surface);
   border: 1px solid var(--pv-border);
   cursor: pointer;
   transition: var(--pv-transition);
@@ -437,8 +459,8 @@ onUnmounted(() => {
 }
 
 .alarm-stat-card:hover {
-  transform: translateY(-3px);
-  border-color: rgba(255, 255, 255, 0.15);
+  transform: translateY(-2px);
+  border-color: var(--pv-border-strong);
 }
 
 .alarm-stat-card::before {
@@ -447,7 +469,7 @@ onUnmounted(() => {
   bottom: 0;
   left: 0;
   right: 0;
-  height: 3px;
+  height: 2px;
 }
 
 .alarm-stat-card.urgent::before { background: var(--pv-danger); box-shadow: 0 0 12px var(--pv-danger); }
@@ -456,16 +478,22 @@ onUnmounted(() => {
 .alarm-stat-card.low::before { background: var(--pv-success); box-shadow: 0 0 12px var(--pv-success); }
 
 .alarm-stat-value {
+  font-family: var(--pv-font-mono);
+  font-variant-numeric: tabular-nums;
   font-size: 28px;
-  font-weight: 900;
-  font-family: var(--pv-font-display);
+  font-weight: 600;
   color: var(--pv-text-primary);
-  margin-bottom: 6px;
+  margin-bottom: 4px;
+  line-height: 1.1;
 }
 
 .alarm-stat-label {
-  font-size: 13px;
-  color: var(--pv-text-secondary);
+  font-size: 11px;
+  font-weight: 600;
+  font-family: var(--pv-font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--pv-text-tertiary);
 }
 
 .chart-row {
@@ -475,57 +503,66 @@ onUnmounted(() => {
 .risk-list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
 }
 
 .risk-item {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 14px;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.03);
+  gap: 14px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: var(--pv-stripe);
   border: 1px solid var(--pv-border);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: var(--pv-transition);
 }
 
 .risk-item:hover {
-  background: rgba(0, 240, 255, 0.06);
-  border-color: rgba(0, 240, 255, 0.25);
+  background: rgba(34, 211, 238, 0.06);
+  border-color: var(--pv-border-strong);
 }
 
 .risk-rank {
-  width: 28px;
-  height: 28px;
-  border-radius: 8px;
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 800;
+  font-weight: 700;
+  font-family: var(--pv-font-mono);
+  font-size: 12px;
   color: var(--pv-text-tertiary);
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--pv-stripe);
+  flex-shrink: 0;
 }
 
 .risk-rank.top3 {
   color: #fff;
-  background: linear-gradient(135deg, #ff2a6d, #ff5c8a);
-  box-shadow: 0 0 12px rgba(255, 42, 109, 0.4);
+  background: linear-gradient(135deg, var(--pv-danger), #fb7185);
+  box-shadow: 0 0 10px rgba(244, 63, 94, 0.4);
 }
 
 .risk-info {
   flex: 1;
+  min-width: 0;
 }
 
 .risk-name {
-  font-weight: 700;
+  font-weight: 600;
   color: var(--pv-text-primary);
-  margin-bottom: 4px;
+  margin-bottom: 3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .risk-meta {
-  font-size: 12px;
+  font-size: 11px;
+  font-family: var(--pv-font-mono);
   color: var(--pv-text-tertiary);
+  letter-spacing: 0.02em;
 }
 
 .station-row {

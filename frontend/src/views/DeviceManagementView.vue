@@ -1,9 +1,9 @@
 <template>
   <DashboardLayout>
-    <template #breadcrumb>
-      <el-icon class="back-icon" :size="22"><SetUp /></el-icon>
-      <span>设备管理</span>
+    <template #title>
+      <span class="pv-page-title">设备管理</span>
     </template>
+    <template #subtitle>DEVICE MANAGEMENT</template>
 
     <template #actions>
       <el-select v-model="selectedStationId" placeholder="选择电站" style="width: 200px" @change="loadData">
@@ -78,7 +78,6 @@
 
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
-import { SetUp } from '@element-plus/icons-vue'
 import { useStationStore } from '@/stores/station'
 import { deviceApi } from '@/services/api'
 import DashboardLayout from '@/components/DashboardLayout.vue'

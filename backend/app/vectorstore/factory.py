@@ -1,35 +1,55 @@
-"""向量存储工厂."""
+"""向量存储工厂.
 
+按事件循环缓存实例，与 `app.repositories.factory` 保持一致语义。
+优先探测 PGVector；不可用时回退本地 SQLite 关键词检索。
+"""
+
+from __future__ import annotations
+
+import asyncio
 import logging
+import weakref
 
 from app.vectorstore.base import VectorStore
-from app.vectorstore.local import LocalVectorStore
-from app.vectorstore.pgvector import PGVectorStore
 
 logger = logging.getLogger(__name__)
 
-_vector_store_instance: VectorStore | None = None
+_loop_stores: "weakref.WeakKeyDictionary[asyncio.AbstractEventLoop, VectorStore]" = (
+    weakref.WeakKeyDictionary()
+)
 
 
-async def get_vector_store() -> VectorStore:
-    """获取当前可用的向量存储（PGVector 优先，不可用则 fallback 到本地）."""
-    global _vector_store_instance
-    if _vector_store_instance is not None:
-        return _vector_store_instance
+async def _build() -> VectorStore:
+    """探测可用后端，构造实例."""
+    from app.vectorstore.pgvector import PGVectorStore
+    from app.vectorstore.local import LocalVectorStore
 
     pg = PGVectorStore()
     if await pg.is_available():
-        _vector_store_instance = pg
         logger.info("使用向量存储: PGVector")
-    else:
-        local = LocalVectorStore()
-        await local.init()
-        _vector_store_instance = local
-        logger.info("使用向量存储: Local SQLite fallback")
-    return _vector_store_instance
+        return pg
+    local = LocalVectorStore()
+    await local.init()
+    logger.info("使用向量存储: Local SQLite fallback")
+    return local
+
+
+async def get_vector_store() -> VectorStore:
+    """获取当前事件循环对应的向量存储."""
+    loop = asyncio.get_running_loop()
+    store = _loop_stores.get(loop)
+    if store is None:
+        store = await _build()
+        _loop_stores[loop] = store
+    return store
+
+
+async def close_all_vector_stores() -> None:
+    """关闭所有缓存实例（应用 shutdown 时调用）."""
+    _loop_stores.clear()
+    # 多数实现无 close；保留扩展点
 
 
 def reset_vector_store() -> None:
-    """重置向量存储单例（主要用于测试）."""
-    global _vector_store_instance
-    _vector_store_instance = None
+    """重置缓存（仅用于测试）."""
+    _loop_stores.clear()

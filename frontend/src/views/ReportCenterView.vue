@@ -1,9 +1,9 @@
 <template>
   <DashboardLayout>
-    <template #breadcrumb>
-      <el-icon class="back-icon" :size="22"><Document /></el-icon>
-      <span>报告中心</span>
+    <template #title>
+      <span class="pv-page-title">报告中心</span>
     </template>
+    <template #subtitle>REPORT CENTER</template>
 
     <el-row :gutter="20" class="action-row">
       <el-col :span="8">

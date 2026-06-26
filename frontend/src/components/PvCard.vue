@@ -9,8 +9,9 @@
       <div class="pv-card-header">
         <div class="pv-card-title-wrap">
           <span v-if="title" class="pv-card-title">
-            <el-icon v-if="icon" :size="18"><component :is="icon" /></el-icon>
-            {{ title }}
+            <span class="pv-card-bar" />
+            <el-icon v-if="icon" :size="16" class="pv-card-icon"><component :is="icon" /></el-icon>
+            <span class="pv-card-title-text">{{ title }}</span>
           </span>
           <span v-if="subtitle" class="pv-card-subtitle">{{ subtitle }}</span>
           <slot name="title-extra" />
@@ -62,10 +63,8 @@ withDefaults(
   transition: var(--pv-transition);
 }
 
-.pv-card:hover {
-  border-color: rgba(0, 240, 255, 0.25);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5), var(--pv-glow-primary);
-  transform: translateY(-2px);
+html.dark .pv-card {
+  background: linear-gradient(180deg, rgba(15, 27, 45, 0.72), rgba(10, 18, 32, 0.6));
 }
 
 .pv-card-header {
@@ -73,6 +72,7 @@ withDefaults(
   justify-content: space-between;
   align-items: center;
   gap: 12px;
+  min-height: 32px;
 }
 
 .pv-card-title-wrap {
@@ -83,18 +83,39 @@ withDefaults(
 }
 
 .pv-card-title {
-  font-size: 16px;
-  font-weight: 800;
+  font-size: 13px;
+  font-weight: 700;
   color: var(--pv-text-primary);
   display: flex;
   align-items: center;
   gap: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.pv-card-bar {
+  display: inline-block;
+  width: 3px;
+  height: 14px;
+  background: linear-gradient(180deg, var(--pv-primary), var(--pv-accent));
+  border-radius: 2px;
+}
+
+.pv-card-icon {
+  color: var(--pv-primary);
+}
+
+.pv-card-title-text {
+  font-family: var(--pv-font-body);
+  font-weight: 700;
 }
 
 .pv-card-subtitle {
-  font-size: 12px;
+  font-size: 11px;
   color: var(--pv-text-tertiary);
   font-weight: 500;
+  font-family: var(--pv-font-mono);
+  letter-spacing: 0.04em;
 }
 
 .pv-card-actions {

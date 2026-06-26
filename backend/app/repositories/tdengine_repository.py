@@ -89,6 +89,24 @@ class TDengineTimeSeriesRepository(TimeSeriesRepository):
                 )
             """
             )
+
+            cursor.execute(
+                f"""
+                CREATE STABLE IF NOT EXISTS {db}.meter_data (
+                    ts TIMESTAMP,
+                    active_power_kw FLOAT,
+                    reactive_power_kvar FLOAT,
+                    forward_active_energy_kwh FLOAT,
+                    reverse_active_energy_kwh FLOAT,
+                    voltage_v FLOAT,
+                    current_a FLOAT,
+                    power_factor FLOAT
+                ) TAGS (
+                    station_id INT,
+                    device_id NCHAR(64)
+                )
+            """
+            )
             cursor.close()
             logger.info("TDengine 数据库初始化完成")
         except Exception as e:
@@ -159,6 +177,37 @@ class TDengineTimeSeriesRepository(TimeSeriesRepository):
                 data.get("ambient_temp_c", 0.0),
                 data.get("module_temp_c", 0.0),
                 data.get("wind_speed_m_s", 0.0),
+            ),
+        )
+        cursor.close()
+
+    async def insert_meter_data(
+        self, station_id: int, device_id: str, data: Dict
+    ) -> None:
+        if not self._taosws_available:
+            return
+        cursor = self._cursor()
+        db = settings.tdengine_database
+        sub_table = f"meter_{station_id}_{_safe_identifier(device_id)}"
+        ts = data.get("timestamp", datetime.now().isoformat())
+        cursor.execute(
+            f"""
+            INSERT INTO {db}.{sub_table}
+            USING {db}.meter_data
+            TAGS (?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+            (
+                station_id,
+                device_id,
+                ts,
+                data.get("active_power_kw", 0.0),
+                data.get("reactive_power_kvar", 0.0),
+                data.get("forward_active_energy_kwh", 0.0),
+                data.get("reverse_active_energy_kwh", 0.0),
+                data.get("voltage_v", 0.0),
+                data.get("current_a", 0.0),
+                data.get("power_factor", 0.0),
             ),
         )
         cursor.close()

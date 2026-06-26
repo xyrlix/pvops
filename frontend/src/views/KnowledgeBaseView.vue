@@ -1,9 +1,9 @@
 <template>
   <DashboardLayout>
-    <template #breadcrumb>
-      <el-icon class="back-icon" :size="22"><Collection /></el-icon>
-      <span>知识库</span>
+    <template #title>
+      <span class="pv-page-title">知识库</span>
     </template>
+    <template #subtitle>KNOWLEDGE BASE · RAG</template>
 
     <template #actions>
       <el-button type="primary" :icon="Refresh" @click="loadDocuments" :loading="loading.list">
@@ -144,7 +144,7 @@
 
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
-import { Collection, Upload, Delete, Search, Refresh } from '@element-plus/icons-vue'
+import { Upload, Delete, Search, Refresh } from '@element-plus/icons-vue'
 import type { UploadFile, UploadUserFile } from 'element-plus'
 import DashboardLayout from '@/components/DashboardLayout.vue'
 import PvCard from '@/components/PvCard.vue'

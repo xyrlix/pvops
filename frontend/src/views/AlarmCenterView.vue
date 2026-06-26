@@ -1,9 +1,9 @@
 <template>
   <DashboardLayout>
-    <template #breadcrumb>
-      <el-icon class="back-icon" :size="22"><Warning /></el-icon>
-      <span>告警中心</span>
+    <template #title>
+      <span class="pv-page-title">告警中心</span>
     </template>
+    <template #subtitle>ALARM CENTER</template>
 
     <!-- 统计卡 -->
     <el-row :gutter="20" class="stats-row">
@@ -165,7 +165,6 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
-import { Warning } from '@element-plus/icons-vue'
 import DashboardLayout from '@/components/DashboardLayout.vue'
 import PvCard from '@/components/PvCard.vue'
 import PvTag from '@/components/PvTag.vue'

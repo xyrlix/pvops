@@ -11,8 +11,15 @@ from alembic import context
 from app.core.config import get_settings
 from app.core.database import Base
 
-# 导入所有模型以注册到 Base.metadata
+# 导入所有模型以注册到 Base.metadata（autogenerate 用得到）
+from app.models.alarm import Alarm  # noqa: F401
+from app.models.device import Device, Inverter, StringUnit  # noqa: F401
+from app.models.knowledge import KnowledgeChunk, KnowledgeDoc  # noqa: F401
+from app.models.report import DiagnosisFeedback, DiagnosisReport, Report  # noqa: F401
 from app.models.station import Station  # noqa: F401
+from app.models.timeseries import InverterData, MeterData, WeatherData  # noqa: F401
+from app.models.user import User  # noqa: F401
+from app.models.work_order import WorkOrder  # noqa: F401
 
 settings = get_settings()
 

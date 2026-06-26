@@ -341,3 +341,76 @@ export const knowledgeMock = {
     ],
   }),
 }
+
+// 鉴权 / 用户 mock —— 用于无后端的演示环境（GitHub Pages）
+export const authMock = {
+  login: async ({ username }: { username: string; password: string }) => ({
+    access_token: 'mock-token-' + Date.now(),
+    user: {
+      id: 1,
+      username: username || 'demo',
+      email: 'demo@pvops.local',
+      full_name: '演示用户',
+      role: 'admin',
+      status: 'active',
+    },
+  }),
+  me: async () => ({
+    id: 1,
+    username: 'demo',
+    email: 'demo@pvops.local',
+    full_name: '演示用户',
+    role: 'admin',
+    status: 'active',
+  }),
+}
+
+// 电站 / 设备 mock —— 用于演示环境，使无后端的 Pages 也能完整导航
+const DEMO_STATIONS = [
+  {
+    id: 1,
+    name: '光伏电站 A',
+    code: 'DEMO-001',
+    capacity_kw: 1000,
+    location: '浙江省杭州市',
+    longitude: 120.16,
+    latitude: 30.25,
+    status: 'active',
+    contact_name: '张工',
+    contact_phone: '13800138000',
+  },
+  {
+    id: 2,
+    name: '光伏电站 B',
+    code: 'DEMO-002',
+    capacity_kw: 850,
+    location: '江苏省苏州市',
+    longitude: 120.62,
+    latitude: 31.32,
+    status: 'active',
+    contact_name: '李工',
+    contact_phone: '13800138001',
+  },
+]
+
+const DEMO_DEVICES = (stationId: number) => [
+  { id: stationId * 100 + 1, station_id: stationId, device_type: 'weather_station', device_code: 'WS001', name: '气象站 001', protocol: 'simulator', status: 'active', sort_order: 0 },
+  { id: stationId * 100 + 2, station_id: stationId, device_type: 'meter', device_code: 'METER001', name: '关口表 001', protocol: 'simulator', status: 'active', sort_order: 1 },
+  { id: stationId * 100 + 3, station_id: stationId, device_type: 'inverter', device_code: 'INV001', name: '逆变器 1', vendor: '阳光电源', model: 'SG350HX', protocol: 'simulator', status: 'active', sort_order: 11 },
+  { id: stationId * 100 + 4, station_id: stationId, device_type: 'inverter', device_code: 'INV002', name: '逆变器 2', vendor: '阳光电源', model: 'SG350HX', protocol: 'simulator', status: 'active', sort_order: 12 },
+  { id: stationId * 100 + 5, station_id: stationId, device_type: 'inverter', device_code: 'INV003', name: '逆变器 3', vendor: '阳光电源', model: 'SG350HX', protocol: 'simulator', status: 'active', sort_order: 13 },
+]
+
+export const stationMock = {
+  list: async () => DEMO_STATIONS,
+  get: async (id: number) => DEMO_STATIONS.find((s) => s.id === id) ?? DEMO_STATIONS[0],
+}
+
+export const deviceMock = {
+  list: async (stationId?: number) => (stationId ? DEMO_DEVICES(stationId) : DEMO_DEVICES(1)),
+  get: async (id: number) => DEMO_DEVICES(Math.floor(id / 100))[0] ?? DEMO_DEVICES(1)[0],
+  topology: async (stationId: number) => ({
+    station_id: stationId,
+    devices: DEMO_DEVICES(stationId).map((d) => ({ ...d, children: [] })),
+  }),
+}

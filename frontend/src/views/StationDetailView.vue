@@ -1,8 +1,11 @@
 <template>
   <DashboardLayout>
-    <template #breadcrumb>
-      <el-icon class="back-icon" :size="20" @click="$router.push('/stations')"><ArrowLeft /></el-icon>
-      <span>{{ stationStore.currentStation?.name || '电站详情' }}</span>
+    <template #title>
+      <el-icon class="back-icon" :size="18" @click="$router.push('/stations')" style="cursor:pointer;margin-right:6px"><ArrowLeft /></el-icon>
+      <span class="pv-page-title">{{ stationStore.currentStation?.name || '电站详情' }}</span>
+    </template>
+    <template #subtitle>
+      STATION DETAIL · {{ stationStore.currentStation?.code || '--' }}
     </template>
 
     <template #actions>

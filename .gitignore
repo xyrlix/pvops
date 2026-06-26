@@ -58,6 +58,9 @@ data/
 logs/
 *.log
 
+# Runtime PIDs
+*.pid
+
 # Docker
 .dockerignore
 

@@ -7,7 +7,7 @@ from typing import Dict, List, Optional
 from sqlalchemy import desc, select
 
 from app.core.database import AsyncSessionLocal
-from app.models.timeseries import InverterData, WeatherData
+from app.models.timeseries import InverterData, MeterData, WeatherData
 from app.repositories.base import TimeSeriesRepository
 
 logger = logging.getLogger(__name__)
@@ -56,6 +56,25 @@ class SQLiteTimeSeriesRepository(TimeSeriesRepository):
                 ambient_temp_c=data.get("ambient_temp_c", 0.0),
                 module_temp_c=data.get("module_temp_c", 0.0),
                 wind_speed_m_s=data.get("wind_speed_m_s", 0.0),
+            )
+            session.add(record)
+            await session.commit()
+
+    async def insert_meter_data(
+        self, station_id: int, device_id: str, data: Dict
+    ) -> None:
+        async with AsyncSessionLocal() as session:
+            record = MeterData(
+                timestamp=datetime.fromisoformat(data["timestamp"]),
+                station_id=station_id,
+                device_id=device_id,
+                active_power_kw=data.get("active_power_kw", 0.0),
+                reactive_power_kvar=data.get("reactive_power_kvar", 0.0),
+                forward_active_energy_kwh=data.get("forward_active_energy_kwh", 0.0),
+                reverse_active_energy_kwh=data.get("reverse_active_energy_kwh", 0.0),
+                voltage_v=data.get("voltage_v", 0.0),
+                current_a=data.get("current_a", 0.0),
+                power_factor=data.get("power_factor", 0.0),
             )
             session.add(record)
             await session.commit()

@@ -2,12 +2,13 @@
 
 from typing import List, Optional
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Depends, Query
 
+from app.core.deps import get_current_user
 from app.schemas.device import DeviceCreate, DeviceResponse, DeviceUpdate
 from app.services import device_service
 
-router = APIRouter()
+router = APIRouter(dependencies=[Depends(get_current_user)])
 
 
 @router.get("", response_model=List[DeviceResponse])

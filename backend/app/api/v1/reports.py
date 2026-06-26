@@ -11,7 +11,7 @@ from app.models.user import User
 from app.schemas.report import ReportCreate, ReportResponse
 from app.services import pdf_service, report_service
 
-router = APIRouter()
+router = APIRouter(dependencies=[Depends(get_current_user)])
 
 
 @router.get("", response_model=List[ReportResponse])

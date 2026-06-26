@@ -45,3 +45,26 @@ class WeatherData(Base):
     module_temp_c = Column(Float, default=0.0)
     wind_speed_m_s = Column(Float, default=0.0)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
+class MeterData(Base):
+    """关口表时序数据."""
+
+    __tablename__ = "meter_data"
+
+    id = Column(Integer, primary_key=True, index=True)
+    timestamp = Column(DateTime(timezone=True), nullable=False, index=True)
+    station_id = Column(Integer, nullable=False, index=True)
+    device_id = Column(String(64), nullable=False, comment="关口表设备编号")
+    active_power_kw = Column(Float, default=0.0, comment="总有功功率(kW)")
+    reactive_power_kvar = Column(Float, default=0.0, comment="总无功功率(kvar)")
+    forward_active_energy_kwh = Column(Float, default=0.0, comment="正向有功电能(kWh)")
+    reverse_active_energy_kwh = Column(Float, default=0.0, comment="反向有功电能(kWh)")
+    voltage_v = Column(Float, default=0.0, comment="电压(V)")
+    current_a = Column(Float, default=0.0, comment="电流(A)")
+    power_factor = Column(Float, default=0.0, comment="功率因数")
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    __table_args__ = (
+        Index("ix_meter_data_station_time", "station_id", "timestamp"),
+    )

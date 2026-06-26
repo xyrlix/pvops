@@ -2,17 +2,18 @@
 
 from typing import List, Optional
 
-from fastapi import APIRouter, HTTPException, Response
+from fastapi import APIRouter, Depends, HTTPException, Response
 from sqlalchemy import desc, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.agents.diagnosis_agent import DiagnosisAgent
 from app.core.database import AsyncSessionLocal, get_db
+from app.core.deps import get_current_user
 from app.models.report import DiagnosisFeedback, DiagnosisReport
 from app.schemas.report import DiagnosisReportCreate, DiagnosisReportResponse
 from app.services.pdf_service import generate_diagnosis_report_pdf
 
-router = APIRouter()
+router = APIRouter(dependencies=[Depends(get_current_user)])
 
 
 @router.post("/station/{station_id}", response_model=DiagnosisReportResponse)

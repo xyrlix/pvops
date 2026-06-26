@@ -1,9 +1,9 @@
 <template>
   <DashboardLayout>
-    <template #breadcrumb>
-      <el-icon class="back-icon" :size="22"><Tickets /></el-icon>
-      <span>工单管理</span>
+    <template #title>
+      <span class="pv-page-title">工单管理</span>
     </template>
+    <template #subtitle>WORK ORDER</template>
 
     <template #actions>
       <el-button type="primary" @click="showCreate = true">
@@ -180,7 +180,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
-import { Tickets, Plus } from '@element-plus/icons-vue'
+import { Plus } from '@element-plus/icons-vue'
 import DashboardLayout from '@/components/DashboardLayout.vue'
 import PvCard from '@/components/PvCard.vue'
 import PvTag from '@/components/PvTag.vue'

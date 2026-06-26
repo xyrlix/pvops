@@ -36,6 +36,13 @@ class TimeSeriesRepository(ABC):
         ...
 
     @abstractmethod
+    async def insert_meter_data(
+        self, station_id: int, device_id: str, data: Dict
+    ) -> None:
+        """写入一条关口表时序数据."""
+        ...
+
+    @abstractmethod
     async def batch_insert_inverter_data(self, data_list: List[Dict]) -> int:
         """批量写入逆变器数据，返回成功条数."""
         ...

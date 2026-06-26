@@ -2,12 +2,13 @@
 
 from typing import List, Optional
 
-from fastapi import APIRouter, File, Form, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 
+from app.core.deps import get_current_user
 from app.schemas.knowledge import KnowledgeAskRequest, KnowledgeAskResponse, KnowledgeDocResponse
 from app.services import knowledge_service
 
-router = APIRouter()
+router = APIRouter(dependencies=[Depends(get_current_user)])
 
 
 @router.get("/documents", response_model=List[KnowledgeDocResponse])

@@ -193,6 +193,18 @@ cd deploy
 
 详细说明见 [deploy/README.md](deploy/README.md)。
 
+### GitHub Pages 静态演示（纯前端，无后端）
+
+仓库自带 `.github/workflows/pages.yml`，推送到 `main` 后会自动构建并发布到 `https://<owner>.github.io/<repo>/`（GitHub 仓库 → Settings → Pages → Source 选择 `GitHub Actions` 即可启用）。
+
+该演示：
+
+- 构建时强制 `VITE_USE_MOCK_DATA=true`，所有数据走 `frontend/src/services/mockData.ts`，**不调用后端**；
+- 适合 UI 验收、客户演示、PR 预览；
+- 后端 API、AI Copilot、知识库上传等功能在演示站不可用（提示文案已做降级）。
+- 通过 `public/404.html` + `main.ts` 中的 sessionStorage 回放实现 SPA 路由兜底，深链（`/stations/1` 等）可直接访问。
+- 自定义基础路径：在 workflow 中调整 `VITE_BASE_PATH`，或在本地构建时传入 `VITE_BASE_URL=/your/base/`。
+
 ## 开发文档
 
 - [实施总方案](docs/光伏运维智能体-实施总方案-终版.md)

@@ -10,172 +10,37 @@ from fastapi.staticfiles import StaticFiles
 
 from app.api.v1 import api_router
 from app.core.config import get_settings
-from app.core.database import AsyncSessionLocal
-from app.core.security import get_password_hash
-from app.models.device import Device, Inverter, StringUnit
-from app.models.station import Station
-from app.models.user import User
-from app.repositories import get_repository
+from app.core.migrate import run_migrations
+from app.core.seed import seed_initial_data
+from app.repositories import close_all_repositories, initialize_repository
+from app.vectorstore import close_all_vector_stores, get_vector_store
 
 settings = get_settings()
-
-
-async def _seed_initial_data() -> None:
-    """初始化默认管理员和演示电站."""
-    async with AsyncSessionLocal() as session:
-        from sqlalchemy import select
-
-        # 默认管理员
-        result = await session.execute(select(User).where(User.username == "admin"))
-        if not result.scalar_one_or_none():
-            admin = User(
-                username="admin",
-                full_name="系统管理员",
-                email="admin@pvops.local",
-                hashed_password=get_password_hash("admin123"),
-                role="admin",
-                status="active",
-            )
-            session.add(admin)
-
-        # 演示电站
-        result = await session.execute(select(Station).where(Station.code == "DEMO-001"))
-        station = result.scalar_one_or_none()
-        if not station:
-            station = Station(
-                name="光伏电站 A",
-                code="DEMO-001",
-                capacity_kw=1000.0,
-                location="浙江省杭州市",
-                longitude=120.16,
-                latitude=30.25,
-                contact_name="张工",
-                contact_phone="13800138000",
-                status="active",
-            )
-            session.add(station)
-            await session.flush()
-
-        # 演示设备资产：气象站、关口表、逆变器、组串
-        if station:
-            existing = await session.execute(
-                select(Device).where(Device.station_id == station.id)
-            )
-            if not existing.scalars().first():
-                # 气象站
-                weather_device = Device(
-                    station_id=station.id,
-                    device_type="weather_station",
-                    device_code="WS001",
-                    name="气象站 001",
-                    vendor="Campbell",
-                    model="CR1000",
-                    protocol="simulator",
-                    config={"interval": 60},
-                    status="active",
-                    sort_order=0,
-                )
-                session.add(weather_device)
-                await session.flush()
-
-                # 关口表
-                meter_device = Device(
-                    station_id=station.id,
-                    device_type="meter",
-                    device_code="METER001",
-                    name="关口表 001",
-                    vendor="华立",
-                    model="DTZY",
-                    protocol="simulator",
-                    config={"interval": 60},
-                    status="active",
-                    sort_order=1,
-                )
-                session.add(meter_device)
-
-                for i in range(1, 4):
-                    inv_code = f"INV00{i}"
-                    inv_device = Device(
-                        station_id=station.id,
-                        device_type="inverter",
-                        device_code=inv_code,
-                        name=f"逆变器 {i}",
-                        vendor="阳光电源",
-                        model="SG350HX",
-                        protocol="simulator",
-                        config={"interval": 5, "capacity_kw": 350.0},
-                        status="active",
-                        sort_order=10 + i,
-                    )
-                    session.add(inv_device)
-                    await session.flush()
-
-                    inv = Inverter(
-                        station_id=station.id,
-                        device_id=inv_device.id,
-                        inverter_id=inv_code,
-                        name=f"逆变器 {i}",
-                        capacity_kw=350.0,
-                        status="active",
-                    )
-                    session.add(inv)
-
-                    for s in range(1, 5):
-                        string_code = f"{inv_code}-S{s:02d}"
-                        string_device = Device(
-                            station_id=station.id,
-                            parent_id=inv_device.id,
-                            device_type="string",
-                            device_code=string_code,
-                            name=f"组串 {s}",
-                            protocol="simulator",
-                            config={"capacity_kw": 80.0},
-                            status="active",
-                            sort_order=100 + i * 10 + s,
-                        )
-                        session.add(string_device)
-                        await session.flush()
-
-                        session.add(
-                            StringUnit(
-                                station_id=station.id,
-                                device_id=string_device.id,
-                                inverter_id=inv_code,
-                                string_id=string_code,
-                                name=f"组串 {s}",
-                                capacity_kw=80.0,
-                            )
-                        )
-
-        await session.commit()
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """应用生命周期管理."""
-    # 启动时创建数据库表
-    from app.core.database import Base, AsyncSessionLocal, engine
-    from app.models.alarm import Alarm  # noqa: F401
-    from app.models.device import Device, Inverter, StringUnit  # noqa: F401
-    from app.models.knowledge import KnowledgeChunk, KnowledgeDoc  # noqa: F401
-    from app.models.report import DiagnosisReport, Report  # noqa: F401
-    from app.models.timeseries import InverterData, WeatherData  # noqa: F401
-    from app.models.user import User  # noqa: F401
-    from app.models.work_order import WorkOrder  # noqa: F401
-    from app.models.station import Station  # noqa: F401
+    # 1) 业务库 schema 由 Alembic 管理（alembic upgrade head）。
+    #    任何 schema 变更都应通过 alembic revision --autogenerate 增量生成迁移，
+    #    不再使用 Base.metadata.create_all。
+    await run_migrations()
 
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+    # 2) 演示数据 seeding（默认开启，生产请关闭）
+    if settings.seed_demo_on_startup:
+        await seed_initial_data()
 
-    # 初始化演示数据
-    await _seed_initial_data()
+    # 3) 时序仓库（TDengine 不可用时自动 fallback SQLite）
+    await initialize_repository()
 
-    # 启动时初始化时序仓库（SQLite / TDengine）
-    repo = get_repository()
-    await repo.init()
+    # 4) 向量存储（PGVector 不可用时 fallback 本地 SQLite 关键词检索）
+    await get_vector_store()
+
     yield
-    # 关闭时清理资源
-    await repo.close()
+
+    # 关闭时清理
+    await close_all_repositories()
+    await close_all_vector_stores()
 
 
 app = FastAPI(
@@ -186,10 +51,12 @@ app = FastAPI(
 )
 
 # CORS
+_cors_raw = settings.cors_allow_origins.strip()
+_cors_origins = ["*"] if _cors_raw in ("", "*") else [o.strip() for o in _cors_raw.split(",") if o.strip()]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # 生产环境应限制具体域名
-    allow_credentials=True,
+    allow_origins=_cors_origins,
+    allow_credentials=(_cors_origins != ["*"]),
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -197,7 +64,7 @@ app.add_middleware(
 # API 路由
 app.include_router(api_router, prefix="/api/v1")
 
-# 静态前端文件
+# 静态前端文件（SPA fallback）。
 # 本地开发：frontend/dist；Docker：backend/static
 possible_static_dirs = [
     Path(__file__).parent.parent.parent / "frontend" / "dist",
@@ -205,17 +72,45 @@ possible_static_dirs = [
 ]
 static_dir = next((d for d in possible_static_dirs if d.exists()), None)
 
+
 if static_dir and static_dir.exists():
-    app.mount("/", StaticFiles(directory=str(static_dir), html=True), name="static")
+    # 把 dist 下的 hashed assets 用 StaticFiles 高优先级挂载（js/css/img）。
+    assets_dir = static_dir / "assets"
+    if assets_dir.is_dir():
+        app.mount(
+            "/assets",
+            StaticFiles(directory=str(assets_dir), check_dir=False),
+            name="assets",
+        )
+
+    from fastapi import Request as _Req
+
+    # SPA fallback：未命中的 GET 一律返回 index.html（Vue Router history 模式）。
+    # 已在 /assets 下找到的文件不会被这条规则捕获（mount 优先级更高）。
+    @app.get("/{full_path:path}", include_in_schema=False)
+    async def spa_fallback(full_path: str, request: _Req):
+        # /api 路径已由上面的 api_router 处理；落进来的就是真正的 404，
+        # 应当返回 JSON 而非 SPA index.html。
+        if full_path.startswith("api/"):
+            from fastapi.responses import JSONResponse
+
+            return JSONResponse({"detail": "Not found"}, status_code=404)
+        # 真实存在的 dist 根级静态文件（如 favicon.svg）原样返回
+        candidate = static_dir / full_path
+        if candidate.is_file():
+            return FileResponse(str(candidate))
+        # 否则返回 index.html 让前端路由接管
+        index_file = static_dir / "index.html"
+        if index_file.exists():
+            return FileResponse(str(index_file))
+        from fastapi.responses import JSONResponse
+
+        return JSONResponse({"detail": "frontend dist not built"}, status_code=404)
 
 
 @app.exception_handler(404)
 async def not_found_handler(request, exc):
-    """SPA fallback."""
-    if not request.url.path.startswith("/api") and static_dir:
-        index_file = static_dir / "index.html"
-        if index_file.exists():
-            return FileResponse(str(index_file))
+    """API 路由的 404 走 JSON 响应."""
     from fastapi.responses import JSONResponse
 
     return JSONResponse({"detail": "Not found"}, status_code=404)

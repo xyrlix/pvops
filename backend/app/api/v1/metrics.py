@@ -5,13 +5,14 @@ import json
 from datetime import datetime, timedelta
 from typing import AsyncGenerator, Dict, List, Optional
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Depends, Query
 from fastapi.responses import StreamingResponse
 
+from app.core.deps import get_current_user
 from app.schemas.metric import StationMetrics
 from app.services import metrics_service
 
-router = APIRouter()
+router = APIRouter(dependencies=[Depends(get_current_user)])
 
 
 @router.get("/station/{station_id}", response_model=StationMetrics)

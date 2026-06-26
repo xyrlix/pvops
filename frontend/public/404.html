@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>光伏运维智能体</title>
+    <script>
+      // SPA fallback for GitHub Pages. We can't reliably know the repo
+      // name at build time on a fork, so we derive it at runtime from
+      // the current pathname. The original URL is replayed after the
+      // app boots — see src/main.ts.
+      (function () {
+        try {
+          var segs = location.pathname.split('/').filter(Boolean)
+          var repo = segs[0] || ''
+          var repoRoot = repo ? '/' + repo + '/' : '/'
+          sessionStorage.setItem(
+            'pvops:redirect',
+            location.pathname + location.search + location.hash
+          )
+          location.replace(repoRoot)
+        } catch (e) {
+          // If anything blows up, just let GitHub Pages show its 404.
+        }
+      })()
+    </script>
+  </head>
+  <body>
+    <noscript>本应用需要启用 JavaScript。</noscript>
+  </body>
+</html>

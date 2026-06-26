@@ -80,8 +80,7 @@ class CollectorRunner:
                 payload["station_id"], payload["device_code"], data
             )
         elif device_type == "meter":
-            # 关口表数据暂时按气象站接口写入（后续可扩展 meter_data 表）
-            await self.repo.insert_weather_data(
+            await self.repo.insert_meter_data(
                 payload["station_id"], payload["device_code"], data
             )
 

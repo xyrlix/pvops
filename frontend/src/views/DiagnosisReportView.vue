@@ -1,9 +1,10 @@
 <template>
   <DashboardLayout>
-    <template #breadcrumb>
-      <el-icon class="back-icon" :size="20" @click="$router.back()"><ArrowLeft /></el-icon>
-      <span>AI 诊断报告</span>
+    <template #title>
+      <el-icon :size="18" @click="$router.back()" style="cursor:pointer;margin-right:6px"><ArrowLeft /></el-icon>
+      <span class="pv-page-title">AI 诊断报告</span>
     </template>
+    <template #subtitle>DIAGNOSIS REPORT</template>
 
     <!-- 报告头部 -->
     <PvCard v-if="report" class="report-header" glow>
