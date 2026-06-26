@@ -157,19 +157,26 @@ body {
   transition: background 0.3s ease, color 0.3s ease;
 }
 
-/* —— 指挥中心网格背景 —— */
-body::before {
+/* —— 指挥中心网格背景（仅作用于 #app 主区域，不覆盖 sidebar/topbar）—— */
+#app::before {
   content: '';
   position: fixed;
   inset: 0;
+  margin-left: 240px; /* 让出 sidebar 区域，避免网格从侧栏后面透出 */
   background-image:
     linear-gradient(var(--pv-grid-line) 1px, transparent 1px),
     linear-gradient(90deg, var(--pv-grid-line) 1px, transparent 1px);
   background-size: 32px 32px;
   pointer-events: none;
   z-index: 0;
-  mask-image: radial-gradient(ellipse at top, rgba(0, 0, 0, 0.5), transparent 80%);
-  -webkit-mask-image: radial-gradient(ellipse at top, rgba(0, 0, 0, 0.5), transparent 80%);
+  mask-image: radial-gradient(ellipse at top right, rgba(0, 0, 0, 0.55), transparent 80%);
+  -webkit-mask-image: radial-gradient(ellipse at top right, rgba(0, 0, 0, 0.55), transparent 80%);
+}
+
+@media (max-width: 900px) {
+  #app::before {
+    margin-left: 0;
+  }
 }
 
 #app {
@@ -453,13 +460,11 @@ html.dark .el-button--primary {
   align-items: center;
   justify-content: space-between;
   padding: 14px 24px;
-  background: var(--pv-surface);
+  background: var(--pv-bg);
   border-bottom: 1px solid var(--pv-border);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
   position: sticky;
   top: 0;
-  z-index: 10;
+  z-index: 4;
 }
 .pv-topbar__brand {
   display: flex;
@@ -494,16 +499,16 @@ html.dark .el-button--primary {
 
 /* 侧栏菜单 */
 .pv-sidebar {
-  width: 232px;
+  width: 240px;
   flex-shrink: 0;
-  background: var(--pv-surface);
+  background: var(--pv-bg);
   border-right: 1px solid var(--pv-border);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
   display: flex;
   flex-direction: column;
   padding: 18px 12px;
   gap: 4px;
+  position: relative;
+  z-index: 2;
 }
 .pv-sidebar__group {
   font-size: 10px;

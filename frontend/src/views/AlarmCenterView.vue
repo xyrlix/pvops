@@ -309,7 +309,7 @@ onMounted(() => {
 .stat-card {
   padding: 18px;
   border-radius: 14px;
-  background: linear-gradient(145deg, rgba(16, 24, 40, 0.9), rgba(8, 12, 22, 0.8));
+  background: var(--pv-surface);
   border: 1px solid var(--pv-border);
   text-align: center;
   position: relative;
@@ -319,6 +319,7 @@ onMounted(() => {
 
 .stat-card:hover {
   transform: translateY(-3px);
+  border-color: var(--pv-border-strong);
 }
 
 .stat-card::before {

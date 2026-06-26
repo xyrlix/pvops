@@ -150,11 +150,11 @@ onUnmounted(() => {
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
-  background: var(--pv-surface);
+  /* Solid background, no backdrop-filter — avoids sticky + blur
+     quirks where some browsers leak the page background through. */
+  background: var(--pv-bg);
   border-right: 1px solid var(--pv-border);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  z-index: 10;
+  z-index: 5;
   width: 240px;
   transition: width 0.25s ease;
 }
