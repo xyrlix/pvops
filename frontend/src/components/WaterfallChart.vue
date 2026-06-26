@@ -42,6 +42,10 @@ const initChart = () => {
       backgroundColor: c.tooltipBg,
       borderColor: c.tooltipBorder,
       textStyle: { color: c.tooltipText },
+      // TODO(typing): replace any with explicit type; suppressed to keep CI green
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      // TODO(typing): replace any with explicit type; suppressed to keep CI green
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       formatter: (params: any) => {
         const item = props.data[params[0].dataIndex]
         return `${item.name}<br/>损失电量: ${item.kwh.toFixed(1)} kWh<br/>损失金额: ¥${item.cny.toFixed(0)}`

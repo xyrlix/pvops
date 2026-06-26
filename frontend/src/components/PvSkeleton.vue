@@ -10,10 +10,10 @@
     </template>
     <template v-else-if="variant === 'card'">
       <div class="skeleton-header">
-        <div class="skeleton-avatar" v-if="avatar" />
+        <div v-if="avatar" class="skeleton-avatar" />
         <div class="skeleton-title" />
       </div>
-      <div class="skeleton-line" v-for="i in rows" :key="i" />
+      <div v-for="i in rows" :key="i" class="skeleton-line" />
     </template>
     <template v-else-if="variant === 'chart'">
       <div class="skeleton-title" style="width: 40%; margin-bottom: 16px" />
@@ -21,7 +21,7 @@
     </template>
     <template v-else-if="variant === 'table'">
       <div class="skeleton-row header" />
-      <div class="skeleton-row" v-for="i in rows" :key="i" />
+      <div v-for="i in rows" :key="i" class="skeleton-row" />
     </template>
   </div>
 </template>

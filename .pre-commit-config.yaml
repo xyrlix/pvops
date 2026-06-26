@@ -1,0 +1,39 @@
+# PVOps 提交前自检 — 防止 lint/type/test 在 main 上挂掉 CI。
+# 安装: pip install pre-commit && pre-commit install
+# 手动跑: pre-commit run --all-files
+# 跳过（紧急）: git commit --no-verify
+repos:
+  # Python / 后端
+  - repo: local
+    hooks:
+      - id: ruff-check
+        name: ruff (lint)
+        entry: bash -c 'cd backend && ruff check .'
+        language: system
+        pass_filenames: false
+        files: '^backend/.*\.py$'
+      - id: ruff-format
+        name: ruff format (check)
+        entry: bash -c 'cd backend && ruff format --check .'
+        language: system
+        pass_filenames: false
+        files: '^backend/.*\.py$'
+      - id: mypy
+        name: mypy
+        entry: bash -c 'cd backend && mypy app/'
+        language: system
+        pass_filenames: false
+        files: '^backend/app/.*\.py$'
+
+  # 前端
+  - repo: local
+    hooks:
+      - id: eslint
+        name: eslint (lint, 0 warnings)
+        entry: bash -c 'cd frontend && npm run lint'
+        language: system
+        pass_filenames: false
+        files: '^frontend/.*\.(vue|ts|tsx|js|jsx|mjs|cjs)$'
+
+# 远程 CI 仍然作为最后一道闸门 (`.github/workflows/ci.yml`)，
+# 即便开发者跳过了 pre-commit，CI 也会重新跑 lint/type/test。

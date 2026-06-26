@@ -7,14 +7,14 @@
     :expand-on-click-node="false"
     class="device-tree"
   >
-    <template #default="{ data }">
+    <template #default="{ data: node }">
       <span class="tree-node">
         <el-icon class="tree-icon" :size="18">
-          <component :is="iconFor(data.device_type)" />
+          <component :is="iconFor(node.device_type)" />
         </el-icon>
-        <span class="tree-label">{{ data.name }}</span>
-        <el-tag size="small" effect="dark" :type="statusType(data.status)">
-          {{ data.device_code }}
+        <span class="tree-label">{{ node.name }}</span>
+        <el-tag size="small" effect="dark" :type="statusType(node.status)">
+          {{ node.device_code }}
         </el-tag>
       </span>
     </template>

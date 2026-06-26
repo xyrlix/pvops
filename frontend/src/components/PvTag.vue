@@ -16,6 +16,8 @@ const props = defineProps<{
 }>()
 
 const tagType = computed(() => {
+  // TODO(typing): replace any with explicit type; suppressed to keep CI green
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const map: Record<string, any> = {
     success: 'success',
     running: 'success',

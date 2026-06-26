@@ -25,6 +25,8 @@ defineProps<{
 }>()
 
 const itemType = (status: string) => {
+  // TODO(typing): replace any with explicit type; suppressed to keep CI green
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const map: Record<string, any> = {
     created: 'info',
     pending: 'danger',

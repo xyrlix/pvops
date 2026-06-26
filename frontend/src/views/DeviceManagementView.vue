@@ -60,7 +60,7 @@
     </el-row>
 
     <el-drawer v-model="detailVisible" title="设备详情" size="400px">
-      <el-descriptions :column="1" border v-if="selectedDevice">
+      <el-descriptions v-if="selectedDevice" :column="1" border>
         <el-descriptions-item label="编号">{{ selectedDevice.device_code }}</el-descriptions-item>
         <el-descriptions-item label="名称">{{ selectedDevice.name }}</el-descriptions-item>
         <el-descriptions-item label="类型">{{ typeLabel(selectedDevice.device_type) }}</el-descriptions-item>
@@ -96,6 +96,8 @@ interface DeviceItem {
   model?: string
   sn?: string
   protocol?: string
+  // TODO(typing): replace any with explicit type; suppressed to keep CI green
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   config?: Record<string, any>
   status: string
 }

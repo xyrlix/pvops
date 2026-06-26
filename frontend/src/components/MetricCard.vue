@@ -52,6 +52,10 @@ const props = withDefaults(
     enableAnimation?: boolean
   }>(),
   {
+    unit: '',
+    subtitle: '',
+    hint: '',
+    trend: 0,
     iconColor: 'var(--pv-primary)',
     valueColor: 'var(--pv-text-primary)',
     iconBg: 'linear-gradient(135deg, rgba(34,211,238,0.18), rgba(34,211,238,0.04))',

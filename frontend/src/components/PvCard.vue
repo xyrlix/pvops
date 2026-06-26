@@ -5,7 +5,7 @@
     shadow="never"
     :body-style="bodyStyle"
   >
-    <template #header v-if="$slots.header || title">
+    <template v-if="$slots.header || title" #header>
       <div class="pv-card-header">
         <div class="pv-card-title-wrap">
           <span v-if="title" class="pv-card-title">
@@ -48,6 +48,11 @@ withDefaults(
     bodyStyle?: Record<string, string>
   }>(),
   {
+    title: '',
+    subtitle: '',
+    icon: '',
+    emptyText: '',
+    bodyStyle: () => ({}),
     skeletonVariant: 'chart',
     skeletonRows: 3,
   }

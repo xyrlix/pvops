@@ -1,6 +1,6 @@
 <template>
   <div class="user-info">
-    <el-dropdown @command="handleCommand" trigger="click">
+    <el-dropdown trigger="click" @command="handleCommand">
       <div class="user-trigger">
         <div class="avatar">
           {{ initials }}

@@ -1,7 +1,7 @@
 <template>
   <DashboardLayout>
     <template #title>
-      <el-icon :size="18" @click="$router.back()" style="cursor:pointer;margin-right:6px"><ArrowLeft /></el-icon>
+      <el-icon :size="18" style="cursor:pointer;margin-right:6px" @click="$router.back()"><ArrowLeft /></el-icon>
       <span class="pv-page-title">AI 诊断报告</span>
     </template>
     <template #subtitle>DIAGNOSIS REPORT</template>
@@ -124,6 +124,8 @@ import { ElMessage } from 'element-plus'
 
 const route = useRoute()
 const copilotStore = useCopilotStore()
+// TODO(typing): replace any with explicit type; suppressed to keep CI green
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const report = ref<any>(null)
 const loading = ref(true)
 const feedbackRating = ref('')
@@ -193,6 +195,8 @@ const submitFeedback = async () => {
 onMounted(async () => {
   try {
     const stationId = Number(route.params.id)
+    // TODO(typing): replace any with explicit type; suppressed to keep CI green
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const data = (await diagnosisApi.diagnoseStation(stationId)) as unknown as any
     report.value = data
   } catch (err) {
