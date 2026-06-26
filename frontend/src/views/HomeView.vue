@@ -193,7 +193,7 @@
           <div class="pv-heatmap-legend">
             <span class="lg">健康(≥80)</span>
             <span class="ly">亚健康(60-80)</span>
-            <span class="lr">异常(<60)</span>
+            <span class="lr">异常(&lt;60)</span>
             <span style="margin-left:auto;color:rgba(255,255,255,0.2)">← 6月1日 ............... 6月22日 →</span>
           </div>
         </PvCard>
@@ -247,7 +247,7 @@
             <span>00:00</span><span>06:00</span><span>12:00</span><span>18:00</span><span>24:00</span>
           </div>
           <div style="margin-top:10px;padding:8px 12px;background:rgba(52,211,153,0.08);border-radius:6px;font-size:12px;color:rgba(255,255,255,0.7)">
-            💰 预计明日套利 <strong style="color:#34D399">¥1,250</strong>　|　本月累计 <strong style="color:#34D399">¥31,800</strong>
+            💰 预计明日套利 <strong style="color:#34D399">¥1,250</strong>  |  本月累计 <strong style="color:#34D399">¥31,800</strong>
           </div>
         </PvCard>
 
