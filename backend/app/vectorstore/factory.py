@@ -21,8 +21,8 @@ _loop_stores: "weakref.WeakKeyDictionary[asyncio.AbstractEventLoop, VectorStore]
 
 async def _build() -> VectorStore:
     """探测可用后端，构造实例."""
-    from app.vectorstore.pgvector import PGVectorStore
     from app.vectorstore.local import LocalVectorStore
+    from app.vectorstore.pgvector import PGVectorStore
 
     pg = PGVectorStore()
     if await pg.is_available():

@@ -1,7 +1,5 @@
 """指标计算测试."""
 
-import pytest
-
 
 def test_pr_calculation() -> None:
     """测试 PR 计算."""

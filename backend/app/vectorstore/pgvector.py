@@ -1,7 +1,8 @@
 """PGVector 向量存储实现."""
 
+from __future__ import annotations
+
 import logging
-from typing import List, Optional
 
 from app.core.config import get_settings
 from app.vectorstore.base import Document, VectorStore
@@ -64,8 +65,8 @@ class PGVectorStore(VectorStore):
             return False
 
     async def add_documents(
-        self, documents: List[Document], ids: Optional[List[str]] = None
-    ) -> List[str]:
+        self, documents: list[Document], ids: list[str] | None = None
+    ) -> list[str]:
         store = self._get_store()
         lc_docs = [
             type("LCDocument", (), {"page_content": d.page_content, "metadata": d.metadata})()
@@ -74,13 +75,13 @@ class PGVectorStore(VectorStore):
         return store.add_documents(lc_docs, ids=ids)
 
     async def similarity_search(
-        self, query: str, k: int = 4, filter: Optional[dict] = None
-    ) -> List[Document]:
+        self, query: str, k: int = 4, filter: dict | None = None
+    ) -> list[Document]:
         store = self._get_store()
         results = store.similarity_search(query, k=k, filter=filter)
         return [Document(page_content=r.page_content, metadata=r.metadata) for r in results]
 
-    async def delete(self, ids: List[str]) -> bool:
+    async def delete(self, ids: list[str]) -> bool:
         store = self._get_store()
         try:
             store.delete(ids)

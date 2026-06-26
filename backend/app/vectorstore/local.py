@@ -1,10 +1,11 @@
 """本地向量存储 fallback（基于 SQLite 关键词检索）."""
 
+from __future__ import annotations
+
 import json
 import logging
 import os
 import re
-from typing import List, Optional
 
 import aiosqlite
 
@@ -47,20 +48,20 @@ class LocalVectorStore(VectorStore):
 
     async def add_texts(
         self,
-        texts: List[str],
-        metadatas: Optional[List[dict]] = None,
-        ids: Optional[List[str]] = None,
-    ) -> List[str]:
+        texts: list[str],
+        metadatas: list[dict] | None = None,
+        ids: list[str] | None = None,
+    ) -> list[str]:
         metadatas = metadatas or [{} for _ in texts]
         documents = [
             Document(page_content=text, metadata=metadata)
-            for text, metadata in zip(texts, metadatas)
+            for text, metadata in zip(texts, metadatas, strict=True)
         ]
         return await self.add_documents(documents, ids=ids)
 
     async def add_documents(
-        self, documents: List[Document], ids: Optional[List[str]] = None
-    ) -> List[str]:
+        self, documents: list[Document], ids: list[str] | None = None
+    ) -> list[str]:
         await self.init()
         from datetime import datetime
 
@@ -85,7 +86,7 @@ class LocalVectorStore(VectorStore):
             await db.commit()
         return ids
 
-    def _extract_terms(self, query: str) -> List[str]:
+    def _extract_terms(self, query: str) -> list[str]:
         """提取查询词：中文按字符/二元组，英文按单词."""
         terms = []
         # 中文单字作为基础匹配单元
@@ -98,15 +99,15 @@ class LocalVectorStore(VectorStore):
         return list(set(terms))
 
     async def similarity_search(
-        self, query: str, k: int = 4, filter: Optional[dict] = None
-    ) -> List[Document]:
+        self, query: str, k: int = 4, filter: dict | None = None
+    ) -> list[Document]:
         await self.init()
         terms = self._extract_terms(query)
         if not terms:
             return []
 
-        async with aiosqlite.connect(self.db_path) as db:
-            async with db.execute(
+        async with aiosqlite.connect(self.db_path) as db, \
+                db.execute(
                 "SELECT id, doc_id, content, metadata FROM kb_documents"
             ) as cursor:
                 rows = await cursor.fetchall()
@@ -126,7 +127,7 @@ class LocalVectorStore(VectorStore):
         results.sort(key=lambda x: x[0], reverse=True)
         return [doc for _, doc in results[:k]]
 
-    async def delete(self, ids: List[str]) -> bool:
+    async def delete(self, ids: list[str]) -> bool:
         await self.init()
         async with aiosqlite.connect(self.db_path) as db:
             placeholders = ",".join("?" * len(ids))
