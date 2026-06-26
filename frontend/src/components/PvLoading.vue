@@ -25,7 +25,8 @@ defineProps<{
 .pv-loading.fullscreen {
   position: fixed;
   inset: 0;
-  background: rgba(5, 9, 20, 0.8);
+  background: var(--pv-bg);
+  opacity: 0.88;
   backdrop-filter: blur(4px);
   z-index: 2000;
 }
@@ -45,7 +46,7 @@ defineProps<{
   border-top-color: var(--pv-primary);
   border-right-color: var(--pv-primary-light);
   animation: pv-spin 1s linear infinite;
-  box-shadow: 0 0 16px rgba(0, 240, 255, 0.3);
+  box-shadow: 0 0 16px rgba(96, 165, 250, 0.3);
 }
 
 @keyframes pv-spin {
