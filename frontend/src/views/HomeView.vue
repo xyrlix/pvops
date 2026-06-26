@@ -1,234 +1,312 @@
 <template>
   <DashboardLayout>
-    <template #title>
-      <span class="pv-page-title">运营总览</span>
-    </template>
-    <template #subtitle>
-      GROUP COMMAND · {{ currentTimeLabel }}
-    </template>
-
-    <!-- AI 洞察 -->
-    <div class="ai-insight-bar" @click="copilotStore.open({ type: 'overview' })">
-      <el-icon class="insight-icon" :size="20"><Cpu /></el-icon>
-      <div class="insight-content">
-        <span class="insight-label">AI INSIGHT</span>
-        <span class="insight-text">{{ aiInsight }}</span>
-      </div>
-      <el-icon class="insight-arrow"><ArrowRight /></el-icon>
-    </div>
-
-    <!-- 信号条 -->
-    <div class="pv-strip" style="margin-bottom: 22px;">
-      <span><strong class="pv-text-glow">{{ overviewKpi.online_count }}</strong> 座在线</span>
-      <span>·</span>
-      <span><strong>{{ overviewKpi.offline_count }}</strong> 离线</span>
-      <span>·</span>
-      <span>采集频率 <strong class="pv-number">5s</strong></span>
-      <span>·</span>
-      <span>数据延迟 <strong class="pv-number">&lt; 1.5s</strong></span>
-    </div>
-
-    <!-- 顶部 KPI -->
-    <el-row :gutter="20" class="metrics-row">
-      <el-col :xs="24" :sm="12" :md="6">
-        <MetricCard
-          title="电站总数"
-          :value="overviewKpi.station_count"
-          unit="座"
-          icon="OfficeBuilding"
-          icon-color="#00f0ff"
-          value-color="#00f0ff"
-          icon-bg="linear-gradient(135deg, rgba(0,240,255,0.22), rgba(0,102,255,0.08))"
-          :trend="2.4"
-          :loading="kpiLoading"
-        />
-      </el-col>
-      <el-col :xs="24" :sm="12" :md="6">
-        <MetricCard
-          title="总装机容量"
-          :value="overviewKpi.total_capacity_kw"
-          unit="kW"
-          icon="Lightning"
-          icon-color="#00ff9d"
-          value-color="#00ff9d"
-          icon-bg="linear-gradient(135deg, rgba(0,255,157,0.22), rgba(0,255,157,0.06))"
-          :loading="kpiLoading"
-        />
-      </el-col>
-      <el-col :xs="24" :sm="12" :md="6">
-        <MetricCard
-          title="实时总功率"
-          :value="overviewKpi.total_active_power_kw"
-          unit="kW"
-          icon="TrendCharts"
-          icon-color="#ffcc00"
-          value-color="#ffcc00"
-          icon-bg="linear-gradient(135deg, rgba(255,204,0,0.22), rgba(255,204,0,0.06))"
-          :trend="-1.2"
-          :loading="kpiLoading"
-        />
-      </el-col>
-      <el-col :xs="24" :sm="12" :md="6">
-        <MetricCard
-          title="今日总发电"
-          :value="overviewKpi.total_daily_energy_kwh"
-          unit="kWh"
-          icon="Calendar"
-          icon-color="#ff2a6d"
-          value-color="#ff2a6d"
-          icon-bg="linear-gradient(135deg, rgba(255,42,109,0.22), rgba(255,42,109,0.06))"
-          :trend="5.8"
-          :loading="kpiLoading"
-        />
-      </el-col>
-    </el-row>
-
-    <!-- 告警统计 -->
-    <el-row :gutter="20" class="alarm-stats-row">
-      <el-col :xs="12" :sm="6" :md="3" v-for="item in alarmStatsList" :key="item.key">
-        <div class="alarm-stat-card" :class="item.key" @click="$router.push('/alarms')">
-          <div class="alarm-stat-value">{{ item.value }}</div>
-          <div class="alarm-stat-label">{{ item.label }}</div>
-          <div class="alarm-stat-bar" />
+    <!-- 统计卡片行 —— 5 列 -->
+    <div class="stats-row">
+      <div class="pv-stat-card pv-stat-card--blue">
+        <div class="pv-stat-card__label">接入电站</div>
+        <div class="pv-stat-card__value pv-stat-card__value--blue">
+          <PvSkeleton v-if="kpiLoading" variant="text" :rows="1" />
+          <template v-else>
+            {{ overviewKpi.station_count }}<span style="font-size:14px;font-weight:400;color:rgba(255,255,255,0.3)"> 座</span>
+          </template>
         </div>
-      </el-col>
-    </el-row>
+        <div class="pv-stat-card__change pv-stat-card__change--up">↑ 本月新增 3 座</div>
+      </div>
+      <div class="pv-stat-card pv-stat-card--green">
+        <div class="pv-stat-card__label">今日发电量</div>
+        <div class="pv-stat-card__value pv-stat-card__value--green">
+          <PvSkeleton v-if="kpiLoading" variant="text" :rows="1" />
+          <template v-else>
+            {{ formatNumber(overviewKpi.total_daily_energy_kwh / 1000, 1) }}
+            <span style="font-size:14px;font-weight:400;color:rgba(255,255,255,0.3)"> MWh</span>
+          </template>
+        </div>
+        <div class="pv-stat-card__change pv-stat-card__change--up">↑ 较昨日 +12.3%</div>
+      </div>
+      <div class="pv-stat-card pv-stat-card--orange">
+        <div class="pv-stat-card__label">今日收益</div>
+        <div class="pv-stat-card__value pv-stat-card__value--orange">
+          <PvSkeleton v-if="kpiLoading" variant="text" :rows="1" />
+          <template v-else>
+            ¥{{ formatNumber(todayRevenue / 10000, 2) }}
+            <span style="font-size:14px;font-weight:400;color:rgba(255,255,255,0.3)"> 万</span>
+          </template>
+        </div>
+        <div class="pv-stat-card__change pv-stat-card__change--up">↑ 储能套利 ¥1,280</div>
+      </div>
+      <div class="pv-stat-card pv-stat-card--red">
+        <div class="pv-stat-card__label">异常设备</div>
+        <div class="pv-stat-card__value pv-stat-card__value--red">
+          <PvSkeleton v-if="kpiLoading" variant="text" :rows="1" />
+          <template v-else>
+            {{ abnormalCount }}
+            <span style="font-size:14px;font-weight:400;color:rgba(255,255,255,0.3)"> 台</span>
+          </template>
+        </div>
+        <div class="pv-stat-card__change pv-stat-card__change--down">↓ 较上周 -3 台</div>
+      </div>
+      <div class="pv-stat-card pv-stat-card--purple">
+        <div class="pv-stat-card__label">AI 诊断准确率</div>
+        <div class="pv-stat-card__value pv-stat-card__value--purple">
+          <PvSkeleton v-if="kpiLoading" variant="text" :rows="1" />
+          <template v-else>
+            {{ aiAccuracy }}
+            <span style="font-size:14px;font-weight:400;color:rgba(255,255,255,0.3)">%</span>
+          </template>
+        </div>
+        <div class="pv-stat-card__change pv-stat-card__change--up">↑ 持续提升中</div>
+      </div>
+    </div>
 
-    <!-- 气泡图 + 高风险 TOP -->
-    <el-row :gutter="20" class="chart-row">
-      <el-col :xs="24" :lg="16">
-        <PvCard title="集团场站分布" subtitle="气泡大小 = 损失金额，颜色 = 健康度" icon="Coordinate" glow :loading="dashboardLoading">
-          <BubbleChart :data="bubbleData" :height="400" />
-        </PvCard>
-      </el-col>
-      <el-col :xs="24" :lg="8">
-        <PvCard title="高风险场站 TOP" icon="Warning" glow>
-          <div class="risk-list">
-            <div
-              v-for="(item, index) in riskStations"
-              :key="item.station_id"
-              class="risk-item"
-              @click="$router.push(`/stations/${item.station_id}`)"
-            >
-              <div class="risk-rank" :class="{ top3: index < 3 }">{{ index + 1 }}</div>
-              <div class="risk-info">
-                <div class="risk-name">{{ item.name }}</div>
-                <div class="risk-meta">
-                  完成率 {{ (item.completion_rate * 100).toFixed(1) }}% · 损失 ¥{{ item.loss_cny.toFixed(0) }}
+    <!-- AI 洞察横幅 -->
+    <div class="pv-ai-banner" @click="copilotStore.open({ type: 'overview' })">
+      <div class="pv-ai-banner__tag">🤖 AI 洞察</div>
+      <div class="pv-ai-banner__text">
+        {{ aiInsight }}
+      </div>
+    </div>
+
+    <!-- 主内容区：左宽右窄 -->
+    <div class="main-grid">
+      <!-- 左侧：气泡图 + 风险列表 -->
+      <div class="main-left">
+        <PvCard title="集团总览 · 场站健康度气泡图" icon="Coordinate" :loading="dashboardLoading"
+          subtitle="横轴=装机 | 纵轴=完成率 | 大小=损失 | 颜色=健康度"
+        >
+          <BubbleChart :data="bubbleData" :height="320" />
+
+          <!-- 风险 TOP 5 -->
+          <div style="margin-top:16px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.06)">
+            <div style="font-size:13px;color:rgba(255,255,255,0.7);font-weight:600;margin-bottom:10px">⚠️ 高风险电站 TOP 5</div>
+            <div class="pv-risk-list">
+              <div
+                v-for="(item, index) in riskStations.slice(0, 5)"
+                :key="item.station_id"
+                class="pv-risk-item"
+                @click="$router.push(`/stations/${item.station_id}`)"
+              >
+                <div class="pv-risk-rank" :class="`pv-risk-rank--${index + 1}`">{{ index + 1 }}</div>
+                <div class="pv-risk-info">
+                  <div class="pv-risk-name">{{ item.name }}</div>
+                  <div class="pv-risk-detail">
+                    {{ item.capacity_kw }}kW · 发电完成率 {{ (item.completion_rate * 100).toFixed(0) }}% · 健康度 {{ item.health_score.toFixed(0) }}
+                  </div>
+                </div>
+                <div
+                  class="pv-risk-tag"
+                  :class="{
+                    'pv-risk-tag--bad': index < 2,
+                    'pv-risk-tag--warn': index === 2,
+                    'pv-risk-tag--good': index >= 3
+                  }"
+                >
+                  {{ index < 2 ? '高风险' : index === 2 ? '关注' : '正常' }}
                 </div>
               </div>
-              <PvTag :type="healthTagType(item.health_score)" :label="item.health_score.toFixed(0)" />
             </div>
           </div>
         </PvCard>
-      </el-col>
-    </el-row>
+      </div>
 
-    <!-- 实时功率 + 健康度 + 告警 -->
-    <el-row :gutter="20" class="chart-row">
-      <el-col :xs="24" :lg="13">
-        <PvCard title="集团实时功率" icon="TrendCharts" glow :loading="dashboardLoading">
-          <PowerChart :station-id="1" :height="360" title="实时功率" />
+      <!-- 右侧：AI 诊断 + 待处理工单 -->
+      <div class="main-right">
+        <!-- AI 智能诊断 -->
+        <PvCard title="AI 智能诊断" icon="Cpu" :loading="dashboardLoading"
+          subtitle="实时"
+        >
+          <div class="pv-diag-card">
+            <div class="pv-diag-header">
+              <span class="pv-diag-device">逆变器异常</span>
+              <div class="pv-diag-title">{{ diagData.station }} · {{ diagData.device }}</div>
+            </div>
+            <div class="pv-diag-section">
+              <div class="pv-diag-label">🔍 根因分析</div>
+              <div class="pv-diag-value">{{ diagData.cause }}</div>
+            </div>
+            <div class="pv-diag-section">
+              <div class="pv-diag-label">📊 证据链</div>
+              <div class="pv-evidence-chain">
+                <div v-for="ev in diagData.evidence" :key="ev" class="pv-evidence">
+                  <span v-html="ev" />
+                </div>
+              </div>
+            </div>
+            <div class="pv-diag-section">
+              <div class="pv-diag-label">💡 修复建议</div>
+              <div class="pv-diag-value" v-html="diagData.suggestion"></div>
+            </div>
+            <div style="margin-top:10px;display:flex;gap:8px">
+              <el-button type="warning" size="small">✓ 生成工单</el-button>
+              <el-button size="small" style="background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.5);border:1px solid rgba(255,255,255,0.08)">反馈纠错</el-button>
+            </div>
+          </div>
         </PvCard>
-      </el-col>
-      <el-col :xs="24" :lg="5">
-        <PvCard title="系统健康" icon="FirstAidKit" glow :loading="dashboardLoading">
-          <GaugeChart :value="overallHealth" title="健康度" unit="分" :height="300" />
-        </PvCard>
-      </el-col>
-      <el-col :xs="24" :lg="6">
-        <AlarmPanel :alarms="alarms" />
-      </el-col>
-    </el-row>
 
-    <!-- 排名 + 容量分布 + 健康度热力图 -->
-    <el-row :gutter="20" class="chart-row">
-      <el-col :xs="24" :lg="8">
-        <PvCard title="电站功率排名" icon="Rank" glow :loading="dashboardLoading">
-          <BarChart :data="stationPowerData" unit="kWh" color="#00f0ff" :height="300" />
+        <!-- 待处理工单 -->
+        <PvCard title="待处理工单" icon="Tickets" :loading="dashboardLoading"
+          subtitle="3 待处理"
+        >
+          <div style="max-height:240px;overflow-y:auto">
+            <div
+              v-for="wo in pendingWorkOrders.slice(0, 3)"
+              :key="wo.id"
+              class="pv-wo-card"
+              @click="$router.push('/work-orders')"
+            >
+              <div class="pv-wo-priority" :class="`pv-wo-priority--${wo.priority}`" />
+              <div class="pv-wo-body">
+                <div class="pv-wo-id">{{ wo.id }}</div>
+                <div class="pv-wo-title">{{ wo.title }}</div>
+                <div class="pv-wo-meta">
+                  <span>{{ priorityEmoji(wo.priority) }} {{ priorityText(wo.priority) }}</span>
+                  <span>{{ wo.station_name }}</span>
+                  <span>{{ wo.assignee || '待派' }}</span>
+                  <span>⏰ {{ wo.deadline }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
         </PvCard>
-      </el-col>
-      <el-col :xs="24" :lg="8">
-        <PvCard title="装机容量分布" icon="PieChart" glow :loading="dashboardLoading">
-          <DonutChart :data="capacityData" :height="300" />
-        </PvCard>
-      </el-col>
-      <el-col :xs="24" :lg="8">
-        <PvCard title="月度健康度热力图" icon="Grid" glow :loading="dashboardLoading">
-          <HeatmapChart :data="healthTrend" :height="300" />
-        </PvCard>
-      </el-col>
-    </el-row>
+      </div>
+    </div>
 
-    <!-- 电站列表 -->
-    <el-row class="station-row">
-      <el-col :span="24">
-        <PvCard title="电站运行状态" icon="OfficeBuilding" glow :loading="dashboardLoading" :empty="!overview.length">
-          <template #actions>
-            <el-button type="primary" size="small" @click="$router.push('/stations')">查看全部</el-button>
-          </template>
-          <el-table :data="overview" stripe>
-            <el-table-column prop="name" label="电站名称" min-width="160" />
-            <el-table-column prop="capacity_kw" label="装机容量(kW)" />
-            <el-table-column label="健康度" width="110">
-              <template #default="{ row }">
-                <PvTag :type="healthTagType(row.health_score)" :label="row.health_score.toFixed(0)" />
-              </template>
-            </el-table-column>
-            <el-table-column label="完成率" width="120">
-              <template #default="{ row }">
-                {{ (row.completion_rate * 100).toFixed(1) }}%
-              </template>
-            </el-table-column>
-            <el-table-column label="今日发电(kWh)" width="140">
-              <template #default="{ row }">
-                {{ row.daily_energy_kwh.toFixed(0) }}
-              </template>
-            </el-table-column>
-            <el-table-column label="损失金额" width="130">
-              <template #default="{ row }">
-                ¥{{ row.loss_cny.toFixed(0) }}
-              </template>
-            </el-table-column>
-            <el-table-column label="状态" width="110">
-              <template #default="{ row }">
-                <PvTag :type="row.status === 'active' ? 'running' : 'inactive'" :label="row.status === 'active' ? '运行中' : '停用'" />
-              </template>
-            </el-table-column>
-            <el-table-column label="操作" width="120">
-              <template #default="{ row }">
-                <el-button size="small" type="primary" plain @click="$router.push(`/stations/${row.station_id}`)">详情</el-button>
-              </template>
-            </el-table-column>
-          </el-table>
+    <!-- 底部行 -->
+    <div class="bottom-grid">
+      <!-- 左侧：健康度热力图 -->
+      <div class="bottom-left">
+        <PvCard title="月度健康度热力图（6 月）" icon="Grid" :loading="dashboardLoading"
+          subtitle="每格=一天 · 颜色=健康度"
+        >
+          <!-- 自定义热力图：横向时间轴，纵向电站 -->
+          <div class="pv-heatmap">
+            <div v-for="row in heatmapRows" :key="row.name" class="pv-heatmap-row">
+              <div class="pv-heatmap-label">{{ row.name }}</div>
+              <div
+                v-for="(cell, ci) in row.cells"
+                :key="ci"
+                class="pv-heatmap-cell"
+                :class="`pv-heatmap-cell--${cell}`"
+                :title="`${row.name} · 6月${ci + 1}日 · 健康度${cell === 'green' ? '≥80' : cell === 'yellow' ? '60-80' : '<60'}`"
+              />
+            </div>
+          </div>
+          <div class="pv-heatmap-legend">
+            <span class="lg">健康(≥80)</span>
+            <span class="ly">亚健康(60-80)</span>
+            <span class="lr">异常(<60)</span>
+            <span style="margin-left:auto;color:rgba(255,255,255,0.2)">← 6月1日 ............... 6月22日 →</span>
+          </div>
         </PvCard>
-      </el-col>
-    </el-row>
+      </div>
+
+      <!-- 右侧：储能 + 电力市场 -->
+      <div class="bottom-right">
+        <!-- 储能监控 -->
+        <PvCard title="储能监控 · 嘉兴XX站" icon="Battery" :loading="dashboardLoading"
+          subtitle="运行中"
+        >
+          <div class="pv-battery-visual">
+            <div class="pv-battery-icon">
+              <div class="pv-battery-level" :style="{ height: batteryData.soc + '%' }" />
+            </div>
+            <div>
+              <div class="pv-battery-pct">{{ batteryData.soc }}%</div>
+              <div class="pv-battery-label">SOC · 可用容量</div>
+            </div>
+            <div class="pv-battery-info">
+              <div>
+                <div class="pv-battery-info__label">充放电功率</div>
+                <div class="pv-battery-info__val">{{ batteryData.power }}</div>
+              </div>
+              <div>
+                <div class="pv-battery-info__label">循环次数</div>
+                <div class="pv-battery-info__val">{{ batteryData.cycles }} 次</div>
+              </div>
+              <div>
+                <div class="pv-battery-info__label">SOH 健康度</div>
+                <div class="pv-battery-info__val" style="color:#34D399">{{ batteryData.soh }}%</div>
+              </div>
+              <div>
+                <div class="pv-battery-info__label">温度</div>
+                <div class="pv-battery-info__val">{{ batteryData.temp }} ℃</div>
+              </div>
+            </div>
+          </div>
+
+          <div style="font-size:11px;color:var(--pv-warning);font-weight:600;margin:8px 0 4px">⚡ 明日 AI 充放电策略</div>
+          <div class="pv-strategy-bar">
+            <div class="pv-strategy-seg pv-strategy-seg--idle" style="width:8%">00</div>
+            <div class="pv-strategy-seg pv-strategy-seg--charge" style="width:17%">谷充</div>
+            <div class="pv-strategy-seg pv-strategy-seg--idle" style="width:8%">06</div>
+            <div class="pv-strategy-seg pv-strategy-seg--solar" style="width:25%">光伏充</div>
+            <div class="pv-strategy-seg pv-strategy-seg--idle" style="width:8%">15</div>
+            <div class="pv-strategy-seg pv-strategy-seg--discharge" style="width:17%">峰放</div>
+            <div class="pv-strategy-seg pv-strategy-seg--idle" style="width:17%">闲</div>
+          </div>
+          <div style="font-size:11px;color:rgba(255,255,255,0.35);display:flex;justify-content:space-between">
+            <span>00:00</span><span>06:00</span><span>12:00</span><span>18:00</span><span>24:00</span>
+          </div>
+          <div style="margin-top:10px;padding:8px 12px;background:rgba(52,211,153,0.08);border-radius:6px;font-size:12px;color:rgba(255,255,255,0.7)">
+            💰 预计明日套利 <strong style="color:#34D399">¥1,250</strong>　|　本月累计 <strong style="color:#34D399">¥31,800</strong>
+          </div>
+        </PvCard>
+
+        <!-- 电力市场 -->
+        <PvCard title="电力市场 · 现货价格" icon="TrendCharts" :loading="dashboardLoading"
+          subtitle="山东节点"
+        >
+          <div class="pv-trade-price">
+            <div>
+              <div class="pv-trade-price__label">实时电价</div>
+              <div class="pv-trade-price__val pv-trade-up">¥{{ tradeData.current }}</div>
+            </div>
+            <div>
+              <div class="pv-trade-price__label">今日最高</div>
+              <div class="pv-trade-price__val pv-trade-up" style="font-size:20px">¥{{ tradeData.high }}</div>
+            </div>
+            <div>
+              <div class="pv-trade-price__label">今日最低</div>
+              <div class="pv-trade-price__val pv-trade-down" style="font-size:20px">¥{{ tradeData.low }}</div>
+            </div>
+          </div>
+
+          <div class="trade-chart">
+            <svg width="100%" height="100%" viewBox="0 0 340 100" preserveAspectRatio="none">
+              <defs>
+                <linearGradient id="tradeGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="rgba(96,165,250,0.3)"/>
+                  <stop offset="100%" stop-color="rgba(96,165,250,0)"/>
+                </linearGradient>
+              </defs>
+              <path d="M0,70 Q20,65 30,55 T60,30 T90,20 T120,25 T150,45 T180,65 T210,75 T240,60 T270,35 T300,15 T330,30 L340,30 L340,100 L0,100Z" fill="url(#tradeGrad)"/>
+              <path d="M0,70 Q20,65 30,55 T60,30 T90,20 T120,25 T150,45 T180,65 T210,75 T240,60 T270,35 T300,15 T330,30 L340,30" fill="none" stroke="#60A5FA" stroke-width="2"/>
+              <circle cx="300" cy="15" r="3" fill="#60A5FA"/>
+              <line x1="0" y1="80" x2="340" y2="80" stroke="rgba(255,255,255,0.06)" stroke-width="1" stroke-dasharray="4,4"/>
+              <text x="335" y="78" fill="rgba(255,255,255,0.15)" font-size="8" text-anchor="end">平均</text>
+            </svg>
+          </div>
+          <div style="font-size:11px;color:rgba(255,255,255,0.35);display:flex;justify-content:space-between">
+            <span>00:00</span><span>06:00</span><span>12:00</span><span>18:00</span><span>24:00</span>
+          </div>
+          <div style="margin-top:8px;padding:8px 12px;background:rgba(245,166,35,0.08);border-radius:6px;font-size:12px;color:rgba(255,255,255,0.7)">
+            🤖 AI 建议策略：<strong style="color:var(--pv-warning)">10:00-11:30 高价时段多放电 +15%</strong>，预计多赚 <strong style="color:var(--pv-warning)">¥380</strong>
+          </div>
+        </PvCard>
+      </div>
+    </div>
   </DashboardLayout>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from 'vue'
-import { Cpu, ArrowRight } from '@element-plus/icons-vue'
+import { computed, onMounted, ref } from 'vue'
 import { useCopilotStore } from '@/stores/copilot'
-import { alarmApi, dashboardApi, metricApi } from '@/services/api'
+import { dashboardApi, workOrderApi } from '@/services/api'
 import DashboardLayout from '@/components/DashboardLayout.vue'
-import MetricCard from '@/components/MetricCard.vue'
 import PvCard from '@/components/PvCard.vue'
-import PvTag from '@/components/PvTag.vue'
-import PowerChart from '@/components/PowerChart.vue'
-import GaugeChart from '@/components/GaugeChart.vue'
-import BarChart from '@/components/BarChart.vue'
-import DonutChart from '@/components/DonutChart.vue'
+import PvSkeleton from '@/components/PvSkeleton.vue'
 import BubbleChart from '@/components/BubbleChart.vue'
-import HeatmapChart from '@/components/HeatmapChart.vue'
-import AlarmPanel from '@/components/AlarmPanel.vue'
 
-const currentTimeLabel = computed(() => {
-  const d = new Date()
-  const pad = (n: number) => String(n).padStart(2, '0')
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`
-})
+const copilotStore = useCopilotStore()
 
 interface OverviewItem {
   station_id: number
@@ -254,11 +332,8 @@ interface KpiData {
   system_health: number
 }
 
-const copilotStore = useCopilotStore()
-
 const overview = ref<OverviewItem[]>([])
 const riskStations = ref<OverviewItem[]>([])
-const healthTrend = ref<{ date: string; health_score: number }[]>([])
 const aiInsight = ref('正在分析集团电站运行数据...')
 const kpiLoading = ref(true)
 const dashboardLoading = ref(true)
@@ -272,16 +347,18 @@ const overviewKpi = ref<KpiData>({
   alarm_summary: { urgent: 0, high: 0, medium: 0, low: 0 },
   system_health: 100,
 })
-const alarms = ref<any[]>([])
 
-let refreshTimer: ReturnType<typeof setInterval> | null = null
+// 计算字段
+const todayRevenue = computed(() => {
+  // 假设电价 0.4元/kWh
+  return overviewKpi.value.total_daily_energy_kwh * 0.4
+})
 
-const alarmStatsList = computed(() => [
-  { key: 'urgent', label: '紧急', value: overviewKpi.value.alarm_summary.urgent || 0 },
-  { key: 'high', label: '重要', value: overviewKpi.value.alarm_summary.high || 0 },
-  { key: 'medium', label: '一般', value: overviewKpi.value.alarm_summary.medium || 0 },
-  { key: 'low', label: '低', value: overviewKpi.value.alarm_summary.low || 0 },
-])
+const abnormalCount = computed(() => {
+  return overview.value.filter(s => s.health_score < 80).length
+})
+
+const aiAccuracy = ref(87.2)
 
 const bubbleData = computed(() => {
   return overview.value.map((s) => ({
@@ -290,44 +367,61 @@ const bubbleData = computed(() => {
   }))
 })
 
-const overallHealth = computed(() => Math.round(overviewKpi.value.system_health || 92))
+// 工单数据
+const pendingWorkOrders = ref<any[]>([])
 
-const stationPowerData = computed(() => {
-  return overview.value.map((s) => ({ name: s.name, value: Math.round(s.daily_energy_kwh) }))
-})
-
-const capacityData = computed(() => {
-  return overview.value.map((s) => ({ name: s.name, value: s.capacity_kw || 0 }))
-})
-
-const healthTagType = (score: number) => {
-  if (score >= 80) return 'success'
-  if (score >= 60) return 'warning'
-  return 'danger'
+const priorityText = (p: string) => {
+  const map: Record<string, string> = { urgent: '紧急', high: '重要', medium: '一般', low: '低' }
+  return map[p] || p
 }
 
-const formatAlarmTime = (timeStr: string) => {
-  const date = new Date(timeStr)
-  const now = new Date()
-  const diff = Math.floor((now.getTime() - date.getTime()) / 60000)
-  if (diff < 1) return '刚刚'
-  if (diff < 60) return `${diff}分钟前`
-  return `${Math.floor(diff / 60)}小时前`
+const priorityEmoji = (p: string) => {
+  const map: Record<string, string> = { urgent: '🔴', high: '🟡', medium: '🔵', low: '🟢' }
+  return map[p] || '⚪'
 }
 
-const fetchAlarms = async () => {
-  try {
-    const data = (await alarmApi.list()) as unknown as any[]
-    alarms.value = data.map((a) => ({
-      id: a.id,
-      title: a.title,
-      description: a.description,
-      time: formatAlarmTime(a.created_at),
-      type: (a.level === 'critical' ? 'danger' : a.level === 'warning' ? 'warning' : 'info') as any,
-    }))
-  } catch (err) {
-    console.error('获取告警失败:', err)
-  }
+// 诊断数据
+const diagData = ref({
+  station: '江苏XX园区',
+  device: '3号逆变器',
+  cause: '第 17、18 号组串电流偏低 23%~28%，同组其他组串正常，排除逆变器本身故障。根因指向组串侧 —— 高度疑似 MC4 接头接触不良或积灰。',
+  evidence: [
+    '<strong>电流</strong> 17串 6.2A (正常 8.5A)',
+    '<strong>持续</strong> 已 5 天',
+    '<strong>同组</strong> 其他正常',
+    '<strong>天气</strong> 晴天排除',
+  ],
+  suggestion: '1. 现场检查 17、18 号组串 MC4 接头，重新紧固<br>2. 清洗组件面板（如积灰）<br>3. 48h 内完成，预计每天挽回 <strong>12 度电 ≈ ¥4.8</strong>',
+})
+
+// 电池数据
+const batteryData = ref({
+  soc: 72,
+  power: '-185 kW ⬇ 放电',
+  cycles: '1,247',
+  soh: '96.3',
+  temp: '28.5',
+})
+
+// 交易数据
+const tradeData = ref({
+  current: '0.682',
+  high: '1.023',
+  low: '0.215',
+})
+
+// 热力图数据
+const heatmapRows = ref([
+  { name: '上海XX厂', cells: ['green','green','yellow','yellow','red','red','red','yellow','yellow','green','green','green','green','yellow','yellow','red','red','red','red','yellow','green','green'] },
+  { name: '江苏XX园', cells: ['green','green','green','green','green','green','yellow','yellow','red','red','red','red','red','red','red','yellow','yellow','yellow','green','green','green','green'] },
+  { name: '杭州A站', cells: ['green','green','green','green','green','green','green','green','green','green','green','green','green','green','yellow','green','green','green','green','green','green','green'] },
+  { name: '嘉兴XX站', cells: ['green','green','green','yellow','yellow','green','green','green','yellow','yellow','yellow','red','yellow','yellow','green','green','green','green','green','green','green','green'] },
+  { name: '宁波C站', cells: ['green','green','green','green','green','green','green','green','green','green','green','yellow','green','green','green','green','green','green','green','green','green','green'] },
+])
+
+const formatNumber = (n: number, digits = 1) => {
+  if (Number.isNaN(n)) return '--'
+  return n.toFixed(digits)
 }
 
 const fetchDashboard = async () => {
@@ -352,220 +446,92 @@ const fetchDashboard = async () => {
   }
 }
 
-const fetchHealthTrend = async () => {
+const fetchWorkOrders = async () => {
   try {
-    // 取第一个电站展示集团示例热力图
-    const target = overview.value[0]?.station_id || 1
-    const data = await metricApi.getStationHealthTrend(target, 30)
-    healthTrend.value = data as unknown as { date: string; health_score: number }[]
+    const data = (await workOrderApi.list()) as unknown as any[]
+    pendingWorkOrders.value = data.filter((o: any) => o.status === 'pending').map((o: any) => ({
+      ...o,
+      station_name: o.station_id ? `电站${o.station_id}` : '未知电站',
+      deadline: '剩余 36h',
+    }))
   } catch (err) {
-    console.error('获取健康趋势失败:', err)
+    console.error('获取工单失败:', err)
   }
 }
 
 onMounted(() => {
-  fetchDashboard().then(() => fetchHealthTrend())
-  fetchAlarms()
-  refreshTimer = setInterval(() => {
-    fetchAlarms()
-    fetchDashboard()
-  }, 10000)
-})
-
-onUnmounted(() => {
-  if (refreshTimer) clearInterval(refreshTimer)
+  fetchDashboard()
+  fetchWorkOrders()
 })
 </script>
 
 <style scoped>
-.metrics-row {
-  margin-bottom: 22px;
-}
-
-.insight-row {
-  margin-bottom: 22px;
-}
-
-.ai-insight-bar {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 14px 20px;
-  border-radius: 12px;
-  background: linear-gradient(90deg, rgba(34, 211, 238, 0.1), rgba(129, 140, 248, 0.06));
-  border: 1px solid var(--pv-border-strong);
-  cursor: pointer;
-  transition: var(--pv-transition);
-  margin-bottom: 22px;
-}
-
-.ai-insight-bar:hover {
-  border-color: var(--pv-primary);
-  box-shadow: var(--pv-glow-primary);
-}
-
-.insight-icon {
-  color: var(--pv-primary);
-  animation: pulse 2s ease-in-out infinite;
-}
-
-@keyframes pulse {
-  0%, 100% { filter: drop-shadow(0 0 4px rgba(34, 211, 238, 0.5)); }
-  50% { filter: drop-shadow(0 0 12px rgba(34, 211, 238, 0.9)); }
-}
-
-.insight-content {
-  display: flex;
-  align-items: center;
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
   gap: 12px;
-  flex-wrap: wrap;
-  flex: 1;
+  margin-bottom: 20px;
 }
 
-.insight-label {
-  font-weight: 800;
-  font-family: var(--pv-font-mono);
-  font-size: 11px;
-  letter-spacing: 0.12em;
-  color: var(--pv-primary);
-  padding: 3px 8px;
-  border: 1px solid rgba(34, 211, 238, 0.3);
-  border-radius: 4px;
-  background: rgba(34, 211, 238, 0.08);
+@media (max-width: 1100px) {
+  .stats-row {
+    grid-template-columns: repeat(3, 1fr);
+  }
 }
 
-.insight-text {
-  color: var(--pv-text-secondary);
-  font-size: 13px;
+@media (max-width: 700px) {
+  .stats-row {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
-.insight-arrow {
-  color: var(--pv-text-tertiary);
+.main-grid {
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  gap: 16px;
+  margin-bottom: 16px;
 }
 
-.alarm-stats-row {
-  margin-bottom: 22px;
+@media (max-width: 1200px) {
+  .main-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
-.alarm-stat-card {
-  padding: 16px 18px;
-  border-radius: 12px;
-  background: var(--pv-surface);
-  border: 1px solid var(--pv-border);
-  cursor: pointer;
-  transition: var(--pv-transition);
-  position: relative;
-  overflow: hidden;
-}
-
-.alarm-stat-card:hover {
-  transform: translateY(-2px);
-  border-color: var(--pv-border-strong);
-}
-
-.alarm-stat-card::before {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 2px;
-}
-
-.alarm-stat-card.urgent::before { background: var(--pv-danger); box-shadow: 0 0 12px var(--pv-danger); }
-.alarm-stat-card.high::before { background: var(--pv-warning); box-shadow: 0 0 12px var(--pv-warning); }
-.alarm-stat-card.medium::before { background: var(--pv-info); box-shadow: 0 0 12px var(--pv-info); }
-.alarm-stat-card.low::before { background: var(--pv-success); box-shadow: 0 0 12px var(--pv-success); }
-
-.alarm-stat-value {
-  font-family: var(--pv-font-mono);
-  font-variant-numeric: tabular-nums;
-  font-size: 28px;
-  font-weight: 600;
-  color: var(--pv-text-primary);
-  margin-bottom: 4px;
-  line-height: 1.1;
-}
-
-.alarm-stat-label {
-  font-size: 11px;
-  font-weight: 600;
-  font-family: var(--pv-font-mono);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--pv-text-tertiary);
-}
-
-.chart-row {
-  margin-bottom: 22px;
-}
-
-.risk-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.risk-item {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 12px 14px;
-  border-radius: 10px;
-  background: var(--pv-stripe);
-  border: 1px solid var(--pv-border);
-  cursor: pointer;
-  transition: var(--pv-transition);
-}
-
-.risk-item:hover {
-  background: rgba(34, 211, 238, 0.06);
-  border-color: var(--pv-border-strong);
-}
-
-.risk-rank {
-  width: 26px;
-  height: 26px;
-  border-radius: 6px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 700;
-  font-family: var(--pv-font-mono);
-  font-size: 12px;
-  color: var(--pv-text-tertiary);
-  background: var(--pv-stripe);
-  flex-shrink: 0;
-}
-
-.risk-rank.top3 {
-  color: #fff;
-  background: linear-gradient(135deg, var(--pv-danger), #fb7185);
-  box-shadow: 0 0 10px rgba(244, 63, 94, 0.4);
-}
-
-.risk-info {
-  flex: 1;
+.main-left {
   min-width: 0;
 }
 
-.risk-name {
-  font-weight: 600;
-  color: var(--pv-text-primary);
-  margin-bottom: 3px;
-  white-space: nowrap;
+.main-right {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.bottom-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+@media (max-width: 1100px) {
+  .bottom-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.bottom-right {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.trade-chart {
+  height: 120px;
+  position: relative;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 8px;
   overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.risk-meta {
-  font-size: 11px;
-  font-family: var(--pv-font-mono);
-  color: var(--pv-text-tertiary);
-  letter-spacing: 0.02em;
-}
-
-.station-row {
-  margin-bottom: 22px;
+  margin: 8px 0;
 }
 </style>

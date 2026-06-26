@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>光伏电站智能运营系统 - UI 效果图</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--blue:#0F4C81;--blue-light:#E6F0FA;--blue-dark:#0A3A66;--orange:#F5A623;--orange-light:#FFF4E1;--green:#2E7D5B;--green-light:#E8F5EE;--red:#C0392B;--red-light:#FBEAE7;--gray:#6B7280;--gray-light:#F4F6F9;--border:#E5E7EB;--white:#fff;--text:#1a2332}
+body{font-family:'Microsoft YaHei','Noto Sans SC',system-ui,sans-serif;background:#0B1120;color:var(--text);font-size:13px;line-height:1.5;overflow-x:hidden}
+.wrap{max-width:1440px;margin:0 auto;padding:16px 20px 40px}
+
+/* ━ topbar ━ */
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:0 0 16px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:20px}
+.topbar-brand{display:flex;align-items:center;gap:12px}
+.topbar-logo{width:38px;height:38px;background:linear-gradient(135deg,var(--blue),var(--orange));border-radius:10px;display:flex;align-items:center;justify-content:center;color:white;font-weight:900;font-size:18px}
+.topbar-text h1{font-size:18px;color:white;font-weight:700}
+.topbar-text span{font-size:11px;color:rgba(255,255,255,.45);letter-spacing:2px}
+.topbar-right{display:flex;align-items:center;gap:16px}
+.topbar-right .dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green)}
+.topbar-right .label{color:rgba(255,255,255,.5);font-size:12px}
+.topbar-avatar{width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.1);border:2px solid rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.6);font-size:14px}
+
+/* ━ stats row ━ */
+.stats{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:20px}
+.stat-card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06);border-radius:12px;padding:18px 20px;position:relative;overflow:hidden}
+.stat-card::after{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+.stat-card:nth-child(1)::after{background:var(--blue)}
+.stat-card:nth-child(2)::after{background:var(--green)}
+.stat-card:nth-child(3)::after{background:var(--orange)}
+.stat-card:nth-child(4)::after{background:var(--red)}
+.stat-card:nth-child(5)::after{background:var(--blue)}
+.stat-label{font-size:12px;color:rgba(255,255,255,.45);margin-bottom:6px}
+.stat-val{font-size:26px;font-weight:800;color:white;font-family:'Segoe UI',system-ui,sans-serif}
+.stat-card:nth-child(1) .stat-val{color:#60A5FA}
+.stat-card:nth-child(2) .stat-val{color:#34D399}
+.stat-card:nth-child(3) .stat-val{color:var(--orange)}
+.stat-card:nth-child(4) .stat-val{color:#F87171}
+.stat-card:nth-child(5) .stat-val{color:#A78BFA}
+.stat-change{font-size:11px;margin-top:4px}
+.stat-up{color:var(--green)}
+.stat-down{color:var(--red)}
+
+/* ━ main grid ━ */
+.main{display:grid;grid-template-columns:1fr 380px;gap:16px}
+.panel{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06);border-radius:12px;overflow:hidden}
+.panel-head{padding:14px 18px;border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;justify-content:space-between}
+.panel-title{font-size:14px;color:rgba(255,255,255,.85);font-weight:600;display:flex;align-items:center;gap:8px}
+.panel-title .icon{font-size:16px}
+.panel-body{padding:18px}
+
+/* ━ bubble chart mock ━ */
+.chart-area{height:320px;position:relative;border-radius:8px;overflow:hidden}
+.chart-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.03) 1px,transparent 1px);background-size:40px 40px}
+.chart-axes{position:absolute;left:0;bottom:0;padding:6px 10px;font-size:10px;color:rgba(255,255,255,.3)}
+.chart-y{position:absolute;left:8px;top:40px;bottom:40px;width:40px;display:flex;flex-direction:column-reverse;justify-content:space-between}
+.chart-y span{font-size:9px;color:rgba(255,255,255,.25);text-align:right}
+.bubble{position:absolute;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-direction:column;cursor:pointer;transition:transform .2s;box-shadow:0 4px 20px rgba(0,0,0,.3)}
+.bubble:hover{transform:scale(1.12);z-index:10}
+.bubble-name{font-size:9px;color:white;font-weight:600;white-space:nowrap;text-shadow:0 1px 3px rgba(0,0,0,.5)}
+.bubble-loss{font-size:8px;color:rgba(255,255,255,.7);font-family:'Segoe UI',system-ui}
+
+/* ━ risk list ━ */
+.risk-list{max-height:280px;overflow-y:auto}
+.risk-item{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.04)}
+.risk-rank{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:white;flex-shrink:0}
+.risk-rank.r1{background:var(--red)}
+.risk-rank.r2{background:#E67E22}
+.risk-rank.r3{background:var(--orange)}
+.risk-rank.r4,.risk-rank.r5{background:rgba(255,255,255,.12);color:rgba(255,255,255,.5)}
+.risk-info{flex:1;min-width:0}
+.risk-name{font-size:13px;color:rgba(255,255,255,.85);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.risk-detail{font-size:11px;color:rgba(255,255,255,.4);margin-top:2px}
+.risk-tag{font-size:10px;padding:2px 8px;border-radius:10px;flex-shrink:0;font-weight:600}
+.risk-tag.bad{background:var(--red-light);color:var(--red)}
+.risk-tag.warn{background:var(--orange-light);color:var(--orange)}
+
+/* ━ AI insights ━ */
+.ai-box{background:linear-gradient(135deg,rgba(15,76,129,.25),rgba(245,166,35,.1));border:1px solid rgba(245,166,35,.2);border-radius:10px;padding:14px 16px;margin-bottom:16px}
+.ai-box .ai-tag{display:inline-flex;align-items:center;gap:4px;background:var(--orange);color:white;font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px;margin-bottom:8px}
+.ai-box p{font-size:12.5px;color:rgba(255,255,255,.8);line-height:1.7}
+.ai-box p strong{color:var(--orange)}
+
+/* ━ health heatmap mock ━ */
+.heatmap{margin-top:12px}
+.heatmap-row{display:flex;align-items:center;gap:4px;margin-bottom:3px}
+.heatmap-label{width:90px;font-size:10px;color:rgba(255,255,255,.4);flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.heatmap-cell{flex:1;height:22px;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:600;color:rgba(255,255,255,.6);cursor:pointer;transition:transform .15s}
+.heatmap-cell:hover{transform:scaleY(1.3);z-index:5}
+.h-green{background:rgba(46,125,91,.55)}
+.h-yellow{background:rgba(217,119,6,.5)}
+.h-red{background:rgba(192,57,43,.55)}
+.heatmap-legend{display:flex;gap:12px;margin-top:8px;font-size:10px;color:rgba(255,255,255,.4)}
+.heatmap-legend span::before{content:'';display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:middle}
+.heatmap-legend .lg::before{background:rgba(46,125,91,.55)}
+.heatmap-legend .ly::before{background:rgba(217,119,6,.5)}
+.heatmap-legend .lr::before{background:rgba(192,57,43,.55)}
+
+/* ━ AI diagnosis panel ━ */
+.diag-card{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:14px 16px;margin-bottom:12px}
+.diag-header{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.diag-device{background:var(--red);color:white;font-size:10px;padding:2px 8px;border-radius:4px;font-weight:600}
+.diag-title{font-size:13px;color:rgba(255,255,255,.9);font-weight:600}
+.diag-section{margin:8px 0}
+.diag-label{font-size:11px;color:var(--orange);font-weight:600;margin-bottom:4px;display:flex;align-items:center;gap:4px}
+.diag-value{font-size:12px;color:rgba(255,255,255,.75);line-height:1.6;padding-left:18px}
+.evidence-chain{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.evidence{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);border-radius:6px;padding:6px 10px;font-size:11px;color:rgba(255,255,255,.65)}
+.evidence strong{color:var(--orange)}
+
+/* ━ work order ━ */
+.wo-card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06);border-radius:10px;padding:14px 16px;margin-bottom:10px;display:flex;gap:12px;align-items:flex-start}
+.wo-priority{width:4px;min-height:50px;border-radius:2px;flex-shrink:0}
+.wo-priority.p1{background:var(--red)}
+.wo-priority.p2{background:var(--orange)}
+.wo-priority.p3{background:var(--blue)}
+.wo-body{flex:1}
+.wo-id{font-size:10px;color:rgba(255,255,255,.35);font-family:'Segoe UI',system-ui}
+.wo-title{font-size:13px;color:rgba(255,255,255,.85);font-weight:500;margin:2px 0 4px}
+.wo-meta{display:flex;gap:14px;font-size:11px;color:rgba(255,255,255,.4)}
+.wo-meta span{display:flex;align-items:center;gap:3px}
+
+/* ━ battery panel ━ */
+.battery-visual{display:flex;align-items:center;justify-content:center;gap:20px;padding:10px 0}
+.batt-icon{width:60px;height:100px;border:3px solid rgba(255,255,255,.3);border-radius:8px;position:relative;display:flex;align-items:flex-end;overflow:hidden}
+.batt-level{width:100%;background:linear-gradient(to top,var(--green),#34D399);border-radius:0 0 5px 5px;transition:height .3s}
+.batt-label{text-align:center;font-size:11px;color:rgba(255,255,255,.6)}
+.batt-pct{font-size:22px;font-weight:800;color:#34D399;text-align:center}
+.batt-info{display:grid;grid-template-columns:1fr 1fr;gap:8px 20px;font-size:12px}
+.batt-info .bi-label{color:rgba(255,255,255,.35)}
+.batt-info .bi-val{color:rgba(255,255,255,.85);font-weight:600}
+.strategy-bar{display:flex;gap:2px;height:24px;border-radius:4px;overflow:hidden;margin:8px 0}
+.strat-seg{display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:white}
+.strat-charge{background:var(--blue)}
+.strat-solar{background:var(--green)}
+.strat-discharge{background:var(--orange)}
+.strat-idle{background:rgba(255,255,255,.1)}
+
+/* ━ trade panel ━ */
+.trade-price{display:flex;align-items:center;gap:16px;padding:12px 0}
+.trade-price .tp-val{font-size:32px;font-weight:800}
+.trade-price .tp-label{font-size:12px;color:rgba(255,255,255,.4)}
+.trade-up{color:var(--green)}
+.trade-down{color:var(--red)}
+.trade-chart{height:120px;position:relative;background:rgba(255,255,255,.02);border-radius:8px;overflow:hidden;margin:8px 0}
+.trade-line{position:absolute;bottom:0;left:0;right:0;height:1px;background:rgba(255,255,255,.06)}
+
+/* ━ bottom row ━ */
+.bottom{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px}
+
+/* ━ scrollbar ━ */
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:4px}
+
+/* ━ badge ━ */
+.badge{display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:600;padding:2px 7px;border-radius:8px}
+.badge-blue{background:var(--blue-light);color:var(--blue)}
+.badge-green{background:var(--green-light);color:var(--green)}
+.badge-orange{background:var(--orange-light);color:var(--orange)}
+.badge-red{background:var(--red-light);color:var(--red)}
+
+/* section label */
+.demo-label{position:fixed;top:10px;right:16px;background:rgba(192,57,43,.85);color:white;font-size:11px;font-weight:700;padding:6px 14px;border-radius:6px;z-index:999;letter-spacing:1px;box-shadow:0 4px 12px rgba(0,0,0,.3)}
+
+/* responsive */
+@media(max-width:1100px){.main{grid-template-columns:1fr}.stats{grid-template-columns:repeat(3,1fr)}.bottom{grid-template-columns:1fr}}
+@media(max-width:700px){.stats{grid-template-columns:repeat(2,1fr)}.batt-visual{flex-direction:column}}
+</style>
+</head>
+<body>
+<div class="demo-label">UI 效果图</div>
+<div class="wrap">
+
+<!-- ━━ Top Bar ━━ -->
+<div class="topbar">
+  <div class="topbar-brand">
+    <div class="topbar-logo">☀</div>
+    <div class="topbar-text">
+      <h1>光伏电站智能运营系统</h1>
+      <span>PV INTELLIGENT OPERATION SYSTEM</span>
+    </div>
+  </div>
+  <div class="topbar-right">
+    <div class="dot"></div>
+    <div class="label">全部设备在线 · 32/32</div>
+    <div class="label" style="color:rgba(255,255,255,.3)">|</div>
+    <div class="label">2026-06-22 14:35</div>
+    <div class="topbar-avatar">管</div>
+  </div>
+</div>
+
+<!-- ━━ Stats Row ━━ -->
+<div class="stats">
+  <div class="stat-card">
+    <div class="stat-label">接入电站</div>
+    <div class="stat-val">18<span style="font-size:14px;font-weight:400;color:rgba(255,255,255,.4)"> 座</span></div>
+    <div class="stat-change stat-up">↑ 本月新增 3 座</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">今日发电量</div>
+    <div class="stat-val">86.4<span style="font-size:14px;font-weight:400;color:rgba(255,255,255,.4)"> MWh</span></div>
+    <div class="stat-change stat-up">↑ 较昨日 +12.3%</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">今日收益</div>
+    <div class="stat-val">¥3.46<span style="font-size:14px;font-weight:400;color:rgba(255,255,255,.4)"> 万</span></div>
+    <div class="stat-change stat-up">↑ 储能套利 ¥1,280</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">异常设备</div>
+    <div class="stat-val">7<span style="font-size:14px;font-weight:400;color:rgba(255,255,255,.4)"> 台</span></div>
+    <div class="stat-change stat-down">↓ 较上周 -3 台</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">AI 诊断准确率</div>
+    <div class="stat-val">87.2<span style="font-size:14px;font-weight:400;color:rgba(255,255,255,.4)">%</span></div>
+    <div class="stat-change stat-up">↑ 持续提升中</div>
+  </div>
+</div>
+
+<!-- ━━ AI Insight Banner ━━ -->
+<div class="ai-box">
+  <div class="ai-tag">🤖 AI 洞察</div>
+  <p>今日识别 <strong>3 个高风险事项</strong>：①上海XX厂房屋顶站发电完成率偏低(82%)，建议优先处理；②江苏XX园区 3 号逆变器连续 2 天效率异常，疑似灰尘积累；③嘉兴XX站储能 SOC 偏低(18%)，建议今日谷电时段补充。</p>
+</div>
+
+<!-- ━━ Main Grid ━━ -->
+<div class="main">
+
+<!-- ━ LEFT: Bubble Chart ━ -->
+<div class="panel">
+  <div class="panel-head">
+    <div class="panel-title"><span class="icon">📊</span> 集团总览 · 场站健康度气泡图</div>
+    <div style="font-size:11px;color:rgba(255,255,255,.35)">横轴=装机 | 纵轴=完成率 | 大小=损失 | 颜色=健康度</div>
+  </div>
+  <div class="panel-body">
+    <div class="chart-area">
+      <div class="chart-grid"></div>
+      <div class="chart-y"><span>80%</span><span>70%</span><span>60%</span><span>50%</span></div>
+
+      <!-- bubbles positioned manually -->
+      <div class="bubble" style="left:18%;top:15%;width:90px;height:90px;background:rgba(192,57,43,.65);border:2px solid rgba(248,113,113,.6)">
+        <div class="bubble-name">上海XX厂</div>
+        <div class="bubble-loss">损失 ¥2.1万/月</div>
+      </div>
+      <div class="bubble" style="left:45%;top:10%;width:80px;height:80px;background:rgba(192,57,43,.55);border:2px solid rgba(248,113,113,.5)">
+        <div class="bubble-name">江苏XX园</div>
+        <div class="bubble-loss">损失 ¥1.4万/月</div>
+      </div>
+      <div class="bubble" style="left:72%;top:22%;width:65px;height:65px;background:rgba(217,119,6,.55);border:2px solid rgba(245,166,35,.5)">
+        <div class="bubble-name">嘉兴XX站</div>
+        <div class="bubble-loss">¥0.6万/月</div>
+      </div>
+      <div class="bubble" style="left:12%;top:55%;width:55px;height:55px;background:rgba(46,125,91,.45);border:2px solid rgba(52,211,153,.4)">
+        <div class="bubble-name">杭州A站</div>
+        <div class="bubble-loss">正常</div>
+      </div>
+      <div class="bubble" style="left:35%;top:50%;width:50px;height:50px;background:rgba(46,125,91,.4);border:2px solid rgba(52,211,153,.35)">
+        <div class="bubble-name">杭州B站</div>
+        <div class="bubble-loss">正常</div>
+      </div>
+      <div class="bubble" style="left:55%;top:48%;width:45px;height:45px;background:rgba(46,125,91,.35);border:2px solid rgba(52,211,153,.3)">
+        <div class="bubble-name">宁波C站</div>
+      </div>
+      <div class="bubble" style="left:78%;top:52%;width:40px;height:40px;background:rgba(46,125,91,.35);border:2px solid rgba(52,211,153,.3)">
+        <div class="bubble-name">温州D站</div>
+      </div>
+      <div class="bubble" style="left:25%;top:75%;width:35px;height:35px;background:rgba(46,125,91,.3);border:2px solid rgba(52,211,153,.25)">
+        <div class="bubble-name">E站</div>
+      </div>
+      <div class="bubble" style="left:50%;top:70%;width:38px;height:38px;background:rgba(217,119,6,.4);border:2px solid rgba(245,166,35,.35)">
+        <div class="bubble-name">绍兴F站</div>
+      </div>
+      <div class="bubble" style="left:68%;top:72%;width:30px;height:30px;background:rgba(46,125,91,.3);border:2px solid rgba(52,211,153,.25)">
+        <div class="bubble-name">G站</div>
+      </div>
+
+      <div class="chart-axes">装机容量(MW) →</div>
+    </div>
+
+    <!-- risk list -->
+    <div style="margin-top:16px;padding-top:14px;border-top:1px solid rgba(255,255,255,.06)">
+      <div style="font-size:13px;color:rgba(255,255,255,.7);font-weight:600;margin-bottom:10px">⚠️ 高风险电站 TOP 5</div>
+      <div class="risk-list">
+        <div class="risk-item"><div class="risk-rank r1">1</div><div class="risk-info"><div class="risk-name">上海XX厂房屋顶电站</div><div class="risk-detail">10MW · 发电完成率 82% · 健康度 42</div></div><div class="risk-tag bad">高风险</div></div>
+        <div class="risk-item"><div class="risk-rank r2">2</div><div class="risk-info"><div class="risk-name">江苏XX园区电站</div><div class="risk-detail">5MW · 3号逆变器连续异常 · 健康度 56</div></div><div class="risk-tag bad">高风险</div></div>
+        <div class="risk-item"><div class="risk-rank r3">3</div><div class="risk-info"><div class="risk-name">嘉兴XX储能电站</div><div class="risk-detail">3MW+1MWh · SOC持续偏低 · 健康度 63</div></div><div class="risk-tag warn">关注</div></div>
+        <div class="risk-item"><div class="risk-rank r4">4</div><div class="risk-info"><div class="risk-name">绍兴F站</div><div class="risk-detail">2MW · 组串离散率偏高 · 健康度 71</div></div><div class="risk-tag warn">关注</div></div>
+        <div class="risk-item"><div class="risk-rank r5">5</div><div class="risk-info"><div class="risk-name">宁波C站</div><div class="risk-detail">4MW · 通讯中断过1次 · 健康度 78</div></div><span class="badge badge-blue">正常</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ━ RIGHT Column ━ -->
+<div style="display:flex;flex-direction:column;gap:16px">
+
+  <!-- AI Diagnosis -->
+  <div class="panel">
+    <div class="panel-head">
+      <div class="panel-title"><span class="icon">🤖</span> AI 智能诊断</div>
+      <span class="badge badge-orange">实时</span>
+    </div>
+    <div class="panel-body">
+      <div class="diag-card">
+        <div class="diag-header">
+          <span class="diag-device">逆变器异常</span>
+          <div class="diag-title">江苏XX园区 · 3号逆变器</div>
+        </div>
+        <div class="diag-section">
+          <div class="diag-label">🔍 根因分析</div>
+          <div class="diag-value">第 17、18 号组串电流偏低 23%~28%，同组其他组串正常，排除逆变器本身故障。根因指向组串侧 —— 高度疑似 MC4 接头接触不良或积灰。</div>
+        </div>
+        <div class="diag-section">
+          <div class="diag-label">📊 证据链</div>
+          <div class="evidence-chain">
+            <div class="evidence"><strong>电流</strong> 17串 6.2A (正常 8.5A)</div>
+            <div class="evidence"><strong>持续</strong> 已 5 天</div>
+            <div class="evidence"><strong>同组</strong> 其他正常</div>
+            <div class="evidence"><strong>天气</strong> 晴天排除</div>
+          </div>
+        </div>
+        <div class="diag-section">
+          <div class="diag-label">💡 修复建议</div>
+          <div class="diag-value">1. 现场检查 17、18 号组串 MC4 接头，重新紧固<br>2. 清洗组件面板（如积灰）<br>3. 48h 内完成，预计每天挽回 <strong>12 度电 ≈ ¥4.8</strong></div>
+        </div>
+        <div style="margin-top:10px;display:flex;gap:8px">
+          <button style="background:var(--orange);color:white;border:none;padding:6px 14px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer">✓ 生成工单</button>
+          <button style="background:rgba(255,255,255,.08);color:rgba(255,255,255,.6);border:1px solid rgba(255,255,255,.1);padding:6px 14px;border-radius:6px;font-size:12px;cursor:pointer">反馈纠错</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Work Orders -->
+  <div class="panel">
+    <div class="panel-head">
+      <div class="panel-title"><span class="icon">📋</span> 待处理工单</div>
+      <span class="badge badge-red">3 待处理</span>
+    </div>
+    <div class="panel-body" style="max-height:220px;overflow-y:auto">
+      <div class="wo-card">
+        <div class="wo-priority p1"></div>
+        <div class="wo-body">
+          <div class="wo-id">#20260622-017</div>
+          <div class="wo-title">上海XX厂 · 组串17接头接触不良</div>
+          <div class="wo-meta"><span>🔴 紧急</span><span>📍 上海XX厂</span><span>👤 王师傅</span><span>⏰ 剩余 36h</span></div>
+        </div>
+      </div>
+      <div class="wo-card">
+        <div class="wo-priority p2"></div>
+        <div class="wo-body">
+          <div class="wo-id">#20260621-014</div>
+          <div class="wo-title">江苏XX园 · 3号逆变器效率偏低清洗</div>
+          <div class="wo-meta"><span>🟡 重要</span><span>📍 江苏XX园</span><span>👤 李工</span><span>⏰ 剩余 72h</span></div>
+        </div>
+      </div>
+      <div class="wo-card">
+        <div class="wo-priority p3"></div>
+        <div class="wo-body">
+          <div class="wo-id">#20260620-009</div>
+          <div class="wo-title">绍兴F站 · 气象站辐照仪校准</div>
+          <div class="wo-meta"><span>🔵 一般</span><span>📍 绍兴F站</span><span>👤 待派</span><span>⏰ 剩余 5d</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<!-- ━━ Bottom Row ━━ -->
+<div class="bottom">
+
+  <!-- Health Heatmap -->
+  <div class="panel">
+    <div class="panel-head">
+      <div class="panel-title"><span class="icon">🗓️</span> 月度健康度热力图（6 月）</div>
+      <div style="font-size:11px;color:rgba(255,255,255,.35)">每格=一天 · 颜色=健康度</div>
+    </div>
+    <div class="panel-body">
+      <div class="heatmap">
+        <div class="heatmap-row"><div class="heatmap-label">上海XX厂</div><div class="heatmap-cell h-green"></div><div class="heatmap-cell h-green"></div><div class="heatmap-cell h-yellow"></div><div class="heatmap-cell h-yellow"></div><div class="heatmap-cell h-red"></div><div class="heatmap-cell h-red"></div><div class="heatmap-cell h-red"></div><div class="heatmap-cell h-yellow"></div><div class="heatmap-cell h-yellow"></div><div class="heatmap-cell h-green"></div><div class="heatmap-cell h-green"></div><div class="heatmap-cell h-green"></div><div class="heatmap-cell h-green"></div><div class="heatmap-cell h-yellow"></div><div class="heatmap-cell h-yellow"></div><div class="heatmap-cell h-red"></div><div class="heatmap-cell h-red"></div><div class="heatmap-cell h-red"></div><div class="heatmap-cell h-red"></div><div class="heatmap-cell h-yellow"></div></div>
+        <div class="heatmap-row"><div class="heatmap-label">江苏XX园</div><div class="heatmap-cell h-green"></div><div class="heatmap-cell h-green"></div><div class="heatmap-cell h-green"></div><div class="heatmap-cell h-green"></div><div class="heatmap-cell h-green"></div><div class="heatmap-cell h-green"></div><div class="heatmap-cell h-yellow"></div><div class="heatmap-cell h-yellow"></div><div class="heatmap-cell h-red"></div><div class="heatmap-cell h-red"></div><div class="heatmap-cell h-red"></div><div class="heatmap-cell h-red"></div><div class="heatmap-cell h-red"></div><div class="heatmap-cell h-red"></div><div class="heatmap-cell h-red"></div><div class="heatmap-cell h-yellow"></div><div class="heatmap-cell h-yellow"></div><div class="heatmap-cell h-yellow"></div><div class="heatmap-cell h-green"></div><div class="heatmap-cell h-green"></div><div class="heatmap-cell h-green"></div></div>
+        <div class="heatmap-row"><div class="heatmap-label">杭州A站</div><div class="heatmap-cell h-green"></div><div class="heatmap-cell h-green"></div><div class="heatmap-cell h-green"></div><div class="heatmap-cell h-green"></div><div class="heatmap-cell h-green"></div><div class="heatmap-cell h-green"></div><div class="heatmap-cell h-green"></div><div class="heatmap-cell h-green"></div><div class="heatmap-cell h-green"></div><div class="heatmap-cell h-green"></div><div class="heatmap-cell h-green"></div><div class="heatmap-cell h-green"></div><div class="heatmap-cell h-green"></div><div class="heatmap-cell h-green"></div><div class="heatmap-cell h-yellow"></div><div class="heatmap-cell h-green"></div><div class="heatmap-cell h-green"></div><div class="heatmap-cell h-green"></div><div class="heatmap-cell h-green"></div><div class="heatmap-cell h-green"></div><div class="heatmap-cell h-green"></div></div>
+        <div class="heatmap-row"><div class="heatmap-label">嘉兴XX站</div><div class="heatmap-cell h-green"></div><div class="heatmap-cell h-green"></div><div class="heatmap-cell h-green"></div><div class="heatmap-cell h-yellow"></div><div class="heatmap-cell h-yellow"></div><div class="heatmap-cell h-green"></div><div class="heatmap-cell h-green"></div><div class="heatmap-cell h-green"></div><div class="heatmap-cell h-yellow"></div><div class="heatmap-cell h-yellow"></div><div class="heatmap-cell h-yellow"></div><div class="heatmap-cell h-red"></div><div class="heatmap-cell h-yellow"></div><div class="heatmap-cell h-yellow"></div><div class="heatmap-cell h-green"></div><div class="heatmap-cell h-green"></div><div class="heatmap-cell h-green"></div><div class="heatmap-cell h-green"></div><div class="heatmap-cell h-green"></div><div class="heatmap-cell h-green"></div><div class="heatmap-cell h-green"></div></div>
+        <div class="heatmap-row"><div class="heatmap-label">宁波C站</div><div class="heatmap-cell h-green"></div><div class="heatmap-cell h-green"></div><div class="heatmap-cell h-green"></div><div class="heatmap-cell h-green"></div><div class="heatmap-cell h-green"></div><div class="heatmap-cell h-green"></div><div class="heatmap-cell h-green"></div><div class="heatmap-cell h-green"></div><div class="heatmap-cell h-green"></div><div class="heatmap-cell h-green"></div><div class="heatmap-cell h-green"></div><div class="heatmap-cell h-yellow"></div><div class="heatmap-cell h-green"></div><div class="heatmap-cell h-green"></div><div class="heatmap-cell h-green"></div><div class="heatmap-cell h-green"></div><div class="heatmap-cell h-green"></div><div class="heatmap-cell h-green"></div><div class="heatmap-cell h-green"></div><div class="heatmap-cell h-green"></div><div class="heatmap-cell h-green"></div></div>
+      </div>
+      <div class="heatmap-legend">
+        <span class="lg">健康(≥80)</span>
+        <span class="ly">亚健康(60-80)</span>
+        <span class="lr">异常(&lt;60)</span>
+        <span style="margin-left:auto;color:rgba(255,255,255,.25)">← 6月1日 ............... 6月22日 →</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Battery + Trade -->
+  <div style="display:flex;flex-direction:column;gap:16px">
+
+    <!-- Battery -->
+    <div class="panel">
+      <div class="panel-head">
+        <div class="panel-title"><span class="icon">🔋</span> 储能监控 · 嘉兴XX站</div>
+        <span class="badge badge-green">运行中</span>
+      </div>
+      <div class="panel-body">
+        <div class="battery-visual">
+          <div class="batt-icon"><div class="batt-level" style="height:72%"></div></div>
+          <div>
+            <div class="batt-pct">72%</div>
+            <div class="batt-label">SOC · 可用容量</div>
+          </div>
+          <div class="batt-info">
+            <div><div class="bi-label">充放电功率</div><div class="bi-val">-185 kW ⬇ 放电</div></div>
+            <div><div class="bi-label">循环次数</div><div class="bi-val">1,247 次</div></div>
+            <div><div class="bi-label">SOH 健康度</div><div class="bi-val" style="color:#34D399">96.3%</div></div>
+            <div><div class="bi-label">温度</div><div class="bi-val">28.5 ℃</div></div>
+          </div>
+        </div>
+        <div style="font-size:11px;color:var(--orange);font-weight:600;margin:8px 0 4px">⚡ 明日 AI 充放电策略</div>
+        <div class="strategy-bar">
+          <div class="strat-seg strat-idle" style="width:8%;background:rgba(255,255,255,.05)">00</div>
+          <div class="strat-seg strat-charge" style="width:17%">谷充</div>
+          <div class="strat-seg strat-idle" style="width:8%">06</div>
+          <div class="strat-seg strat-solar" style="width:25%">光伏充</div>
+          <div class="strat-seg strat-idle" style="width:8%">15</div>
+          <div class="strat-seg strat-discharge" style="width:17%">峰放</div>
+          <div class="strat-seg strat-idle" style="width:17%">闲</div>
+        </div>
+        <div style="font-size:11px;color:rgba(255,255,255,.4);display:flex;justify-content:space-between"><span>00:00</span><span>06:00</span><span>12:00</span><span>18:00</span><span>24:00</span></div>
+        <div style="margin-top:10px;padding:8px 12px;background:rgba(52,211,153,.08);border-radius:6px;font-size:12px;color:rgba(255,255,255,.7)">💰 预计明日套利 <strong style="color:#34D399">¥1,250</strong>　|　本月累计 <strong style="color:#34D399">¥31,800</strong></div>
+      </div>
+    </div>
+
+    <!-- Trade -->
+    <div class="panel">
+      <div class="panel-head">
+        <div class="panel-title"><span class="icon">💹</span> 电力市场 · 现货价格</div>
+        <span class="badge badge-blue">山东节点</span>
+      </div>
+      <div class="panel-body">
+        <div class="trade-price">
+          <div>
+            <div class="tp-label">实时电价</div>
+            <div class="tp-val trade-up">¥0.682</div>
+          </div>
+          <div>
+            <div class="tp-label">今日最高</div>
+            <div class="tp-val trade-up" style="font-size:20px">¥1.023</div>
+          </div>
+          <div>
+            <div class="tp-label">今日最低</div>
+            <div class="tp-val trade-down" style="font-size:20px">¥0.215</div>
+          </div>
+        </div>
+        <div class="trade-chart">
+          <!-- mock price curve -->
+          <svg width="100%" height="100%" viewBox="0 0 340 100" preserveAspectRatio="none">
+            <defs><linearGradient id="pg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="rgba(96,165,250,0.3)"/><stop offset="100%" stop-color="rgba(96,165,250,0)"/></linearGradient></defs>
+            <path d="M0,70 Q20,65 30,55 T60,30 T90,20 T120,25 T150,45 T180,65 T210,75 T240,60 T270,35 T300,15 T330,30 L340,30 L340,100 L0,100Z" fill="url(#pg)"/>
+            <path d="M0,70 Q20,65 30,55 T60,30 T90,20 T120,25 T150,45 T180,65 T210,75 T240,60 T270,35 T300,15 T330,30 L340,30" fill="none" stroke="#60A5FA" stroke-width="2"/>
+            <circle cx="300" cy="15" r="3" fill="#60A5FA"/>
+            <line x1="0" y1="80" x2="340" y2="80" stroke="rgba(255,255,255,0.08)" stroke-width="1" stroke-dasharray="4,4"/>
+            <text x="335" y="78" fill="rgba(255,255,255,0.2)" font-size="8" text-anchor="end">平均</text>
+          </svg>
+        </div>
+        <div style="font-size:11px;color:rgba(255,255,255,.4);display:flex;justify-content:space-between"><span>00:00</span><span>06:00</span><span>12:00</span><span>18:00</span><span>24:00</span></div>
+        <div style="margin-top:8px;padding:8px 12px;background:rgba(245,166,35,.08);border-radius:6px;font-size:12px;color:rgba(255,255,255,.7)">🤖 AI 建议策略：<strong style="color:var(--orange)">10:00-11:30 高价时段多放电 +15%</strong>，预计多赚 <strong style="color:var(--orange)">¥380</strong></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+</div>
+
+<div style="text-align:center;padding:24px 0 0;color:rgba(255,255,255,.15);font-size:11px">
+  光伏电站智能运营系统 · UI 效果图（可交互演示）· 2026.06<br>
+  以上为系统建成后的实际使用界面效果，所有数据为模拟演示
+</div>
+
+</div>
+</body>
+</html>

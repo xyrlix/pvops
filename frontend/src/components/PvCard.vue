@@ -2,14 +2,13 @@
   <el-card
     class="pv-card"
     :class="{ 'pv-card-glow': glow, 'is-loading': loading }"
-    shadow="hover"
+    shadow="never"
     :body-style="bodyStyle"
   >
     <template #header v-if="$slots.header || title">
       <div class="pv-card-header">
         <div class="pv-card-title-wrap">
           <span v-if="title" class="pv-card-title">
-            <span class="pv-card-bar" />
             <el-icon v-if="icon" :size="16" class="pv-card-icon"><component :is="icon" /></el-icon>
             <span class="pv-card-title-text">{{ title }}</span>
           </span>
@@ -57,14 +56,15 @@ withDefaults(
 
 <style scoped>
 .pv-card {
-  border-radius: var(--pv-radius-lg);
-  background: var(--pv-surface);
-  border: 1px solid var(--pv-border);
+  border-radius: var(--pv-radius);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
   transition: var(--pv-transition);
+  --el-card-padding: 0;
 }
 
-html.dark .pv-card {
-  background: linear-gradient(180deg, rgba(15, 27, 45, 0.72), rgba(10, 18, 32, 0.6));
+.pv-card:hover {
+  border-color: rgba(255, 255, 255, 0.1);
 }
 
 .pv-card-header {
@@ -72,7 +72,8 @@ html.dark .pv-card {
   justify-content: space-between;
   align-items: center;
   gap: 12px;
-  min-height: 32px;
+  padding: 14px 18px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .pv-card-title-wrap {
@@ -83,22 +84,12 @@ html.dark .pv-card {
 }
 
 .pv-card-title {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--pv-text-primary);
+  font-size: 14px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.85);
   display: flex;
   align-items: center;
   gap: 8px;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-}
-
-.pv-card-bar {
-  display: inline-block;
-  width: 3px;
-  height: 14px;
-  background: linear-gradient(180deg, var(--pv-primary), var(--pv-accent));
-  border-radius: 2px;
 }
 
 .pv-card-icon {
@@ -107,12 +98,12 @@ html.dark .pv-card {
 
 .pv-card-title-text {
   font-family: var(--pv-font-body);
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .pv-card-subtitle {
   font-size: 11px;
-  color: var(--pv-text-tertiary);
+  color: rgba(255, 255, 255, 0.35);
   font-weight: 500;
   font-family: var(--pv-font-mono);
   letter-spacing: 0.04em;
@@ -130,5 +121,9 @@ html.dark .pv-card {
 
 .pv-card-empty {
   padding: 30px 0;
+}
+
+:deep(.el-card__body) {
+  padding: 18px;
 }
 </style>

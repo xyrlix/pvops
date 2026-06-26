@@ -3,10 +3,10 @@
     <!-- 桌面端侧边栏 -->
     <aside class="pv-sidebar" :class="{ collapsed: isCollapsed, mobile: isMobile, open: mobileOpen }">
       <div class="pv-sidebar__brand">
-        <div class="pv-sidebar__logo">PV</div>
+        <div class="pv-sidebar__logo">☀</div>
         <div v-if="!isCollapsed || isMobile" class="pv-sidebar__brandtext">
           <div class="pv-sidebar__title">PVOps</div>
-          <div class="pv-sidebar__sub">Command Center</div>
+          <div class="pv-sidebar__sub">智能运维</div>
         </div>
       </div>
 
@@ -41,38 +41,25 @@
             </el-icon>
           </el-button>
           <div>
-            <div class="pv-topbar__title">
-              <slot name="title">运营总览</slot>
+            <div v-if="$slots.title" class="pv-topbar__title">
+              <slot name="title" />
             </div>
-            <div class="pv-topbar__sub">
-              <slot name="subtitle">{{ currentTime }} · 系统运行正常</slot>
+            <div v-else class="pv-topbar__title">光伏电站智能运营系统</div>
+            <div v-if="$slots.subtitle" class="pv-topbar__sub">
+              <slot name="subtitle" />
             </div>
+            <div v-else class="pv-topbar__sub">PV INTELLIGENT OPERATION SYSTEM</div>
           </div>
         </div>
 
-        <!-- 信号条：在线/告警/采集频率 -->
-        <div class="pv-topbar__signals">
-          <div class="signal">
+        <div class="pv-topbar__right">
+          <div class="pv-topbar__status">
             <span class="pv-status-dot pv-status-dot--success" />
-            <span class="signal__label">采集</span>
-            <span class="signal__value pv-number">5s</span>
+            <span class="pv-topbar__status-label">全部设备在线 · 32/32</span>
           </div>
-          <div class="signal">
-            <span class="pv-status-dot pv-status-dot--info" />
-            <span class="signal__label">在线</span>
-            <span class="signal__value pv-number">{{ onlineCount }}</span>
-          </div>
-          <div class="signal" :class="{ alert: alarmCount > 0 }">
-            <span class="pv-status-dot" :class="alarmCount > 0 ? 'pv-status-dot--danger' : 'pv-status-dot--muted'" />
-            <span class="signal__label">告警</span>
-            <span class="signal__value pv-number">{{ alarmCount }}</span>
-          </div>
-        </div>
-
-        <div class="pv-topbar__actions">
-          <slot name="actions" />
-          <ThemeSwitcher />
-          <UserInfo />
+          <div class="pv-topbar__divider" />
+          <div class="pv-topbar__time">{{ currentTime }}</div>
+          <div class="pv-topbar__avatar">管</div>
         </div>
       </header>
 
@@ -86,12 +73,10 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { onMounted, onUnmounted, ref } from 'vue'
 import { Fold, Expand } from '@element-plus/icons-vue'
 import SidebarMenu from '@/components/SidebarMenu.vue'
-import UserInfo from '@/components/UserInfo.vue'
 import AiCopilot from '@/components/AiCopilot.vue'
-import ThemeSwitcher from '@/components/ThemeSwitcher.vue'
 
 const MOBILE_BREAKPOINT = 900
 
@@ -101,10 +86,6 @@ let timer: ReturnType<typeof setInterval> | null = null
 const isCollapsed = ref(false)
 const isMobile = ref(false)
 const mobileOpen = ref(false)
-
-// 这些数字会在后续接入真实数据时改为 store
-const onlineCount = computed(() => 5)
-const alarmCount = computed(() => 3)
 
 const checkScreen = () => {
   isMobile.value = window.innerWidth <= MOBILE_BREAKPOINT
@@ -119,7 +100,7 @@ const toggleSidebar = () => {
 const updateTime = () => {
   const d = new Date()
   const pad = (n: number) => String(n).padStart(2, '0')
-  currentTime.value = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`
+  currentTime.value = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`
 }
 
 onMounted(() => {
@@ -150,8 +131,6 @@ onUnmounted(() => {
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
-  /* Solid background, no backdrop-filter — avoids sticky + blur
-     quirks where some browsers leak the page background through. */
   background: var(--pv-bg);
   border-right: 1px solid var(--pv-border);
   z-index: 5;
@@ -199,11 +178,9 @@ onUnmounted(() => {
   background: linear-gradient(135deg, var(--pv-primary), var(--pv-accent));
   display: grid;
   place-items: center;
-  color: #001018;
+  color: #0B1120;
   font-weight: 800;
-  font-family: var(--pv-font-mono);
-  font-size: 13px;
-  letter-spacing: 0.04em;
+  font-size: 18px;
   box-shadow: var(--pv-glow-primary);
   flex-shrink: 0;
 }
@@ -216,7 +193,6 @@ onUnmounted(() => {
 }
 
 .pv-sidebar__sub {
-  font-family: var(--pv-font-mono);
   font-size: 10px;
   color: var(--pv-text-tertiary);
   letter-spacing: 0.12em;
@@ -231,7 +207,6 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-family: var(--pv-font-mono);
   font-size: 11px;
   color: var(--pv-text-tertiary);
   letter-spacing: 0.06em;
@@ -253,6 +228,19 @@ onUnmounted(() => {
 }
 
 /* —— Topbar —— */
+.pv-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  height: 64px;
+  background: var(--pv-bg);
+  border-bottom: 1px solid var(--pv-border);
+  position: sticky;
+  top: 0;
+  z-index: 4;
+}
+
 .pv-topbar__brand {
   display: flex;
   align-items: center;
@@ -269,50 +257,71 @@ onUnmounted(() => {
   background: var(--el-fill-color-light);
 }
 
-.pv-topbar__signals {
+.pv-topbar__text {
   display: flex;
-  align-items: center;
-  gap: 4px;
-  padding: 4px;
-  background: var(--pv-stripe);
-  border: 1px solid var(--pv-border);
-  border-radius: 999px;
+  flex-direction: column;
+  gap: 2px;
 }
 
-.signal {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 12px;
-  border-radius: 999px;
-  font-family: var(--pv-font-mono);
+.pv-topbar__title {
+  font-size: 18px;
+  color: var(--pv-text-primary);
+  font-weight: 700;
+}
+
+.pv-topbar__sub {
   font-size: 11px;
-  color: var(--pv-text-secondary);
-  transition: var(--pv-transition);
-}
-
-.signal.alert {
-  background: rgba(244, 63, 94, 0.08);
-}
-
-.signal__label {
-  letter-spacing: 0.06em;
+  color: var(--pv-text-tertiary);
+  letter-spacing: 2px;
   text-transform: uppercase;
 }
 
-.signal__value {
-  font-weight: 700;
-  color: var(--pv-text-primary);
-}
-
-.signal.alert .signal__value {
-  color: var(--pv-danger);
-}
-
-.pv-topbar__actions {
+.pv-topbar__right {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 16px;
+}
+
+.pv-topbar__status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pv-topbar__status-label {
+  font-size: 12px;
+  color: var(--pv-text-secondary);
+}
+
+.pv-topbar__divider {
+  width: 1px;
+  height: 20px;
+  background: var(--pv-border);
+}
+
+.pv-topbar__time {
+  font-size: 12px;
+  color: var(--pv-text-secondary);
+  font-family: var(--pv-font-mono);
+}
+
+.pv-topbar__avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  border: 2px solid rgba(255, 255, 255, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--pv-text-secondary);
+  font-size: 14px;
+  cursor: pointer;
+  transition: var(--pv-transition);
+}
+.pv-topbar__avatar:hover {
+  border-color: var(--pv-primary);
+  color: var(--pv-primary);
 }
 
 /* 移动端 */
@@ -325,16 +334,20 @@ onUnmounted(() => {
     display: inline-flex;
   }
 
-  .pv-topbar__signals {
-    display: none;
-  }
-
-  .pv-topbar__sub {
+  .pv-topbar__sub,
+  .pv-topbar__divider,
+  .pv-topbar__status-label {
     display: none;
   }
 
   .pv-topbar {
-    padding: 12px 16px;
+    padding: 0 16px;
+  }
+}
+
+@media (max-width: 700px) {
+  .pv-topbar__time {
+    display: none;
   }
 }
 </style>
