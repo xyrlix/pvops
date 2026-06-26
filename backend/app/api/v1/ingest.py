@@ -13,6 +13,7 @@ from fastapi import APIRouter, HTTPException, Request, status
 
 from app.collector.runner import CollectorRunner
 from app.core.config import get_settings
+from app.core.limiter import limiter
 from app.core.security import verify_gateway_token
 from app.repositories import get_repository
 
@@ -20,7 +21,8 @@ router = APIRouter()
 
 
 @router.post("/telemetry")
-async def ingest_telemetry(payload: Dict[str, Any], request: Request):
+@limiter.limit("600/minute")  # 网关高频推送：每 IP 每分钟 600 条
+async def ingest_telemetry(request: Request, payload: Dict[str, Any]):
     """接收单条或多条设备遥测数据.
 
     请求体示例:
@@ -69,7 +71,8 @@ async def ingest_telemetry(payload: Dict[str, Any], request: Request):
 
 
 @router.post("/telemetry/batch")
-async def ingest_telemetry_batch(payloads: List[Dict[str, Any]], request: Request):
+@limiter.limit("60/minute")  # 批量端点更贵，收紧
+async def ingest_telemetry_batch(request: Request, payloads: List[Dict[str, Any]]):
     """批量接收遥测数据."""
     verify_gateway_token(request)
 

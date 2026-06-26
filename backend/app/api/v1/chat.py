@@ -2,10 +2,11 @@
 
 from typing import Any, Dict, List, Optional
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 
 from app.agents import chat_service
 from app.core.deps import get_current_user
+from app.core.limiter import limiter
 
 router = APIRouter(dependencies=[Depends(get_current_user)])
 
@@ -17,11 +18,12 @@ class ChatRequest:
 
 
 @router.post("")
-async def chat(request: Dict[str, Any]):
+@limiter.limit("30/minute")  # LLM 调用配额与防滥用：每用户每分钟 30 次
+async def chat(request: Request, payload: Dict[str, Any]):
     """AI 对话."""
-    message = request.get("message", "")
-    session_id = request.get("session_id")
-    context = request.get("context")
+    message = payload.get("message", "")
+    session_id = payload.get("session_id")
+    context = payload.get("context")
     return await chat_service.chat(message, session_id=session_id, context=context)
 
 

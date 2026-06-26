@@ -2,11 +2,13 @@
 
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
 
 from app.core.deps import get_current_user
+from app.core.limiter import limiter
 from app.schemas.knowledge import KnowledgeAskRequest, KnowledgeAskResponse, KnowledgeDocResponse
 from app.services import knowledge_service
+from app.vectorstore import get_vector_store
 
 router = APIRouter(dependencies=[Depends(get_current_user)])
 
@@ -19,7 +21,9 @@ async def list_documents(station_id: Optional[int] = None):
 
 
 @router.post("/documents", response_model=KnowledgeDocResponse)
+@limiter.limit("20/minute")  # 上传成本高（含分块 + embedding），收紧
 async def upload_document(
+    request: Request,
     file: UploadFile = File(...),
     station_id: Optional[int] = Form(None),
 ):
@@ -34,7 +38,8 @@ async def upload_document(
 
 
 @router.delete("/documents/{doc_id}")
-async def delete_document(doc_id: int):
+@limiter.limit("30/minute")
+async def delete_document(request: Request, doc_id: int):
     """删除知识库文档."""
     success = await knowledge_service.delete_document(doc_id)
     if not success:
@@ -43,15 +48,16 @@ async def delete_document(doc_id: int):
 
 
 @router.post("/ask", response_model=KnowledgeAskResponse)
-async def ask_knowledge(request: KnowledgeAskRequest):
+@limiter.limit("30/minute")  # 检索 + LLM，限速
+async def ask_knowledge(request: Request, payload: KnowledgeAskRequest):
     """独立的知识库问答接口."""
     store = await get_vector_store()
     filter_dict = {}
-    if request.station_id:
-        filter_dict["station_id"] = request.station_id
+    if payload.station_id:
+        filter_dict["station_id"] = payload.station_id
 
     docs = await store.similarity_search(
-        request.question, k=request.top_k or 4, filter=filter_dict or None
+        payload.question, k=payload.top_k or 4, filter=filter_dict or None
     )
 
     answer = ""

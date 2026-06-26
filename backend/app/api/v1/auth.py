@@ -2,11 +2,12 @@
 
 from datetime import datetime, timedelta
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy import select
 
 from app.core.database import AsyncSessionLocal
 from app.core.deps import get_current_user
+from app.core.limiter import limiter
 from app.core.security import create_access_token, verify_password
 from app.models.user import User
 from app.schemas.user import TokenResponse, UserCreate, UserLogin, UserResponse
@@ -17,7 +18,8 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24  # 1 天
 
 
 @router.post("/login", response_model=TokenResponse)
-async def login(form_data: UserLogin) -> dict:
+@limiter.limit("10/minute")  # 防爆破：每个 IP 每分钟最多 10 次
+async def login(request: Request, form_data: UserLogin) -> dict:
     """用户登录."""
     async with AsyncSessionLocal() as session:
         result = await session.execute(
@@ -57,7 +59,8 @@ async def login(form_data: UserLogin) -> dict:
 
 
 @router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
-async def register(user_data: UserCreate) -> User:
+@limiter.limit("5/minute")  # 防滥用注册：每个 IP 每分钟最多 5 次
+async def register(request: Request, user_data: UserCreate) -> User:
     """用户注册（预留，生产环境应关闭或仅限管理员）."""
     from app.core.security import get_password_hash
 

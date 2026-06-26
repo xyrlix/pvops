@@ -7,9 +7,13 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware
 
 from app.api.v1 import api_router
 from app.core.config import get_settings, validate_settings_on_startup
+from app.core.limiter import limiter
 from app.core.migrate import run_migrations
 from app.core.seed import seed_initial_data
 from app.repositories import close_all_repositories, initialize_repository
@@ -28,15 +32,6 @@ async def lifespan(app: FastAPI):
     if os.getenv("PVOPS_SKIP_STARTUP_VALIDATION") != "1":
         validate_settings_on_startup(settings)
 
-    # 1) 业务库 schema 由 Alembic 管理（alembic upgrade head）。
-    #    任何 schema 变更都应通过 alembic revision --autogenerate 增量生成迁移，
-    #    不再使用 Base.metadata.create_all。
-    await run_migrations()
-
-
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    """应用生命周期管理."""
     # 1) 业务库 schema 由 Alembic 管理（alembic upgrade head）。
     #    任何 schema 变更都应通过 alembic revision --autogenerate 增量生成迁移，
     #    不再使用 Base.metadata.create_all。
@@ -65,6 +60,12 @@ app = FastAPI(
     description="光伏运维智能体 API",
     lifespan=lifespan,
 )
+
+# 限流：登录/注册/LLM 等敏感接口通过 @limiter.limit 装饰器单独限速，
+# 全局默认 200/分钟（SlowAPI 默认值）。挂中间件并注册 429 handler。
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+app.add_middleware(SlowAPIMiddleware)
 
 # CORS
 _cors_raw = settings.cors_allow_origins.strip()
