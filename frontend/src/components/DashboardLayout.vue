@@ -59,6 +59,7 @@
           </div>
           <div class="pv-topbar__divider" />
           <div class="pv-topbar__time">{{ currentTime }}</div>
+          <ThemeSwitcher />
           <div class="pv-topbar__avatar">管</div>
         </div>
       </header>
@@ -77,6 +78,7 @@ import { onMounted, onUnmounted, ref } from 'vue'
 import { Fold, Expand } from '@element-plus/icons-vue'
 import SidebarMenu from '@/components/SidebarMenu.vue'
 import AiCopilot from '@/components/AiCopilot.vue'
+import ThemeSwitcher from '@/components/ThemeSwitcher.vue'
 
 const MOBILE_BREAKPOINT = 900
 

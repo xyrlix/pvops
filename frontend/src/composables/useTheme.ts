@@ -19,8 +19,11 @@ function resolveSystemTheme(): 'light' | 'dark' {
 function applyTheme(mode: ThemeMode) {
   const resolved = mode === 'system' ? resolveSystemTheme() : mode
   const root = document.documentElement
+  // 确保上一帧的旧类不残留
   root.classList.remove('light', 'dark')
   root.classList.add(resolved)
+  // 同时设置 data-theme 属性供其他选择器（如 [data-theme="dark"] .x）使用
+  root.setAttribute('data-theme', resolved)
   root.style.colorScheme = resolved
 }
 

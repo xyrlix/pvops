@@ -36,12 +36,45 @@ html.light {
 
   --pv-grid-line: rgba(15, 23, 42, 0.04);
   --pv-stripe: rgba(15, 23, 42, 0.03);
+
+  /* Element Plus 主题覆盖（light） */
+  --el-color-primary: #0F4C81;
+  --el-color-primary-light-3: #3B82F6;
+  --el-color-primary-light-5: #60A5FA;
+  --el-color-primary-light-7: #93C5FD;
+  --el-color-primary-light-8: #BFDBFE;
+  --el-color-primary-light-9: rgba(15, 76, 129, 0.1);
+  --el-color-primary-dark-2: #0A3A66;
+  --el-bg-color: #ffffff;
+  --el-bg-color-page: #f1f5f9;
+  --el-bg-color-overlay: #ffffff;
+  --el-text-color-primary: #0f172a;
+  --el-text-color-regular: #1f2937;
+  --el-text-color-secondary: #475569;
+  --el-text-color-placeholder: #94a3b8;
+  --el-text-color-disabled: #cbd5e1;
+  --el-border-color: rgba(15, 23, 42, 0.12);
+  --el-border-color-light: rgba(15, 23, 42, 0.08);
+  --el-border-color-lighter: rgba(15, 23, 42, 0.05);
+  --el-border-color-extra-light: rgba(15, 23, 42, 0.03);
+  --el-fill-color: rgba(15, 23, 42, 0.04);
+  --el-fill-color-light: rgba(15, 23, 42, 0.03);
+  --el-fill-color-lighter: rgba(15, 23, 42, 0.02);
+  --el-fill-color-extra-light: rgba(15, 23, 42, 0.01);
+  --el-fill-color-blank: transparent;
+  --el-box-shadow: 0 8px 32px rgba(15, 23, 42, 0.08);
+  --el-box-shadow-light: 0 4px 16px rgba(15, 23, 42, 0.06);
+  --el-box-shadow-lighter: 0 2px 8px rgba(15, 23, 42, 0.04);
+  --el-box-shadow-dark: 0 12px 48px rgba(15, 23, 42, 0.12);
+  --el-color-success: #2E7D5B;
+  --el-color-warning: #D97706;
+  --el-color-danger: #C0392B;
+  --el-color-info: #0ea5e9;
 }
 
 /* ─── Dark（匹配效果图：极深海军蓝）────────────────────────── */
 
-html.dark,
-html:not(.light) {
+html.dark {
   color-scheme: dark;
 
   --pv-primary: #60A5FA;
