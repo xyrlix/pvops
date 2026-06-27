@@ -546,19 +546,6 @@ onMounted(() => {
   gap: 16px;
 }
 
-/* bottom-grid deprecated */ {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-}
-
-@media (max-width: 1100px) {
-  /* bottom-grid deprecated */ {
-    grid-template-columns: 1fr;
-  }
-}
-
-/* bottom-right replaced by section-row */
 .section-row {
   margin-bottom: 20px;
 }
