@@ -1,9 +1,9 @@
 <template>
   <DashboardLayout>
     <template #title>
-      <span class="pv-page-title">工单管理</span>
+      <span class="pv-page-title">运维工单</span>
     </template>
-    <template #subtitle>WORK ORDER</template>
+    <template #subtitle>OPERATION WORK ORDERS</template>
 
     <template #actions>
       <el-button type="primary" @click="showCreate = true">

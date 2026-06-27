@@ -23,11 +23,11 @@
     </el-menu-item>
     <el-menu-item index="/workorders">
       <el-icon><Tickets /></el-icon>
-      <span>工单管理</span>
+      <span>运维工单</span>
     </el-menu-item>
     <el-menu-item index="/reports">
       <el-icon><Document /></el-icon>
-      <span>报告中心</span>
+      <span>运维简报</span>
     </el-menu-item>
     <el-menu-item index="/knowledge">
       <el-icon><Collection /></el-icon>

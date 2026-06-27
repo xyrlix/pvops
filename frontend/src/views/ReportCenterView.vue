@@ -1,9 +1,9 @@
 <template>
   <DashboardLayout>
     <template #title>
-      <span class="pv-page-title">报告中心</span>
+      <span class="pv-page-title">运维简报</span>
     </template>
-    <template #subtitle>REPORT CENTER</template>
+    <template #subtitle>OPERATION BRIEF</template>
 
     <el-row :gutter="20" class="action-row">
       <el-col :span="8">
