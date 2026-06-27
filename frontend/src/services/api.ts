@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { ElMessage } from 'element-plus'
 
 const apiClient = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || '/api/v1',
@@ -29,15 +30,57 @@ apiClient.interceptors.request.use(
   },
 )
 
-// 响应拦截器
+// 响应拦截器：401 → 登录页；4xx/5xx → ElMessage 提示；网络错误 → 统一文案
 apiClient.interceptors.response.use(
   (response) => response.data,
   (error) => {
-    if (error.response?.status === 401) {
+    const status = error.response?.status
+    const detail = error.response?.data?.detail
+    const url: string = error.config?.url || ''
+
+    // 401：清 token 跳转登录
+    if (status === 401) {
       localStorage.removeItem('token')
-      window.location.href = '/login'
+      // 仅在当前不是 /login 时跳转，避免死循环
+      if (window.location.pathname !== '/login') {
+        ElMessage.warning('登录已过期，请重新登录')
+        window.location.href = '/login'
+      }
+      return Promise.reject(error)
     }
-    console.error('API Error:', error)
+
+    // 403：无权限（多租户场景常见）
+    if (status === 403) {
+      ElMessage.error(detail || '无权限访问该资源')
+      return Promise.reject(error)
+    }
+
+    // 404：仅在非 GET 静默的路由报错（GET 404 经常是 expected）
+    if (status === 404) {
+      if (!url.includes('/health')) {
+        ElMessage.error(detail || '请求的资源不存在')
+      }
+      return Promise.reject(error)
+    }
+
+    // 429：限流
+    if (status === 429) {
+      ElMessage.warning('请求过于频繁，请稍后再试')
+      return Promise.reject(error)
+    }
+
+    // 5xx + 网络错误
+    if (status && status >= 500) {
+      ElMessage.error(`服务异常（${status}），请稍后再试或联系管理员`)
+    } else if (!error.response) {
+      // 网络层错误（断网、超时、CORS）
+      const isTimeout = error.code === 'ECONNABORTED'
+      ElMessage.error(
+        isTimeout ? '请求超时，请检查网络或稍后再试' : '无法连接到服务器，请检查网络',
+      )
+    }
+    // 其他 4xx（如 400/422）让调用方自行处理（业务字段错误通常需要更精细提示）
+    console.error('[API]', status, url, error.message)
     return Promise.reject(error)
   },
 )

@@ -301,7 +301,7 @@ const formatHealth = (v: number | null | undefined) => {
 
 const peerDelta = (key: 'pr' | 'completion_rate' | 'health_score' | 'daily_energy_per_kw') => {
   if (!peerBaseline.value?.self || !peerBaseline.value) return ''
-  const self = peerBaseline.value.self as Record<string, number | null>
+  const self = peerBaseline.value.self as unknown as Record<string, number | null>
   const medianKey = `median_${key}` as 'median_pr' | 'median_completion_rate' | 'median_health_score' | 'median_daily_energy_per_kw'
   const selfVal = self[key]
   const medianVal = peerBaseline.value[medianKey]

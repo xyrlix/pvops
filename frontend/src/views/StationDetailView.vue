@@ -129,7 +129,8 @@
       <el-row :gutter="20" class="chart-row">
         <el-col :xs="24" :lg="12">
           <PvCard title="损失分解瀑布" subtitle="单位：kWh / 元" icon="DataLine" glow :loading="stationLoading">
-            <WaterfallChart :data="losses.breakdown" :height="340" />
+            <PvEmpty v-if="!losses.breakdown.length" description="暂无损失分解数据" />
+            <WaterfallChart v-else :data="losses.breakdown" :height="340" />
           </PvCard>
         </el-col>
         <el-col :xs="24" :lg="12">

@@ -1,6 +1,7 @@
 """诊断接口."""
 
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
+from urllib.parse import quote
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from sqlalchemy import desc, select
@@ -81,22 +82,65 @@ async def export_report_pdf(report_id: int):
         if not report:
             raise HTTPException(status_code=404, detail="报告不存在")
 
-    report_dict = {
-        "station_name": f"电站 {report.station_id}",
-        "created_at": str(report.created_at),
-        "summary": report.summary,
-        "findings": report.findings or [],
+        # 关联电站名称
+        station_name = f"电站 {report.station_id}"
+        if report.station_id:
+            from app.models.station import Station
+
+            s = await session.get(Station, report.station_id)
+            if s and s.name:
+                station_name = s.name
+
+    # 转换 findings 字段名：suggestions -> suggestion（pdf_service 模板用的是单数）
+    raw_findings = report.findings or []
+    findings_for_pdf: List[Dict[str, Any]] = []
+    for item in raw_findings:
+        findings_for_pdf.append({
+            "title": item.get("title", "未命名"),
+            "category": item.get("category", ""),
+            "severity": item.get("severity", "info"),
+            "evidence": "\n".join(item.get("evidence", []) or []),
+            "root_cause": item.get("root_cause", "-"),
+            "suggestion": "\n".join(item.get("suggestions", []) or []),
+        })
+
+    overall = report.overall_health
+    if overall is None:
+        health_text = "-"
+    elif overall >= 80:
+        health_text = f"{overall:.1f}（健康）"
+    elif overall >= 60:
+        health_text = f"{overall:.1f}（亚健康）"
+    else:
+        health_text = f"{overall:.1f}（异常）"
+
+    report_dict: Dict[str, Any] = {
+        "title": "诊断报告",
+        "station_name": station_name,
+        "report_id": report.id,
+        "created_at": report.created_at.strftime("%Y-%m-%d %H:%M:%S") if report.created_at else "-",
+        "diagnosis_time": report.diagnosis_time.strftime("%Y-%m-%d %H:%M:%S") if report.diagnosis_time else "-",
+        "overall_health": health_text,
+        "summary": report.summary or "（无总结）",
+        "findings": findings_for_pdf,
     }
     try:
         pdf_bytes = generate_diagnosis_report_pdf(report_dict)
     except RuntimeError as e:
         raise HTTPException(status_code=503, detail=str(e)) from e
 
-    filename = f"diagnosis_report_{report_id}.pdf"
+    filename = f"diagnosis_report_{report_id}_{station_name}.pdf"
+    # RFC 5987 中文文件名编码
+    encoded = quote(filename, safe="")
     return Response(
         content=pdf_bytes,
         media_type="application/pdf",
-        headers={"Content-Disposition": f"attachment; filename={filename}"},
+        headers={
+            "Content-Disposition": (
+                f"attachment; filename=\"diagnosis_report_{report_id}.pdf\"; "
+                f"filename*=UTF-8''{encoded}"
+            )
+        },
     )
 
 

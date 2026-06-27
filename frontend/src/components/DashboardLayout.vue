@@ -33,6 +33,8 @@
           <el-button
             text
             class="menu-toggle"
+            :title="isMobile ? '打开菜单' : (isCollapsed ? '展开侧栏' : '折叠侧栏')"
+            :aria-label="isMobile ? '打开菜单' : (isCollapsed ? '展开侧栏' : '折叠侧栏')"
             @click="toggleSidebar"
           >
             <el-icon :size="20">
@@ -53,14 +55,22 @@
         </div>
 
         <div class="pv-topbar__right">
-          <div class="pv-topbar__status">
-            <span class="pv-status-dot pv-status-dot--success" />
-            <span class="pv-topbar__status-label">全部设备在线 · 32/32</span>
-          </div>
+          <el-tooltip
+            :content="deviceStatus.tooltip"
+            placement="bottom"
+            :show-after="200"
+          >
+            <div class="pv-topbar__status">
+              <span :class="['pv-status-dot', `pv-status-dot--${deviceStatus.tone}`]" />
+              <span class="pv-topbar__status-label">{{ deviceStatus.label }}</span>
+            </div>
+          </el-tooltip>
           <div class="pv-topbar__divider" />
-          <div class="pv-topbar__time">{{ currentTime }}</div>
+          <div class="pv-topbar__time" :title="`服务器时间：${currentTime}`">{{ currentTime }}</div>
           <ThemeSwitcher />
-          <div class="pv-topbar__avatar">管</div>
+          <el-tooltip content="个人中心（即将上线）" placement="bottom">
+            <div class="pv-topbar__avatar">管</div>
+          </el-tooltip>
         </div>
       </header>
 
@@ -74,8 +84,10 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { Fold, Expand } from '@element-plus/icons-vue'
+import { useStationStore } from '@/stores/station'
+import { dashboardApi } from '@/services/api'
 import SidebarMenu from '@/components/SidebarMenu.vue'
 import AiCopilot from '@/components/AiCopilot.vue'
 import ThemeSwitcher from '@/components/ThemeSwitcher.vue'
@@ -88,6 +100,8 @@ let timer: ReturnType<typeof setInterval> | null = null
 const isCollapsed = ref(false)
 const isMobile = ref(false)
 const mobileOpen = ref(false)
+
+const stationStore = useStationStore()
 
 const checkScreen = () => {
   isMobile.value = window.innerWidth <= MOBILE_BREAKPOINT
@@ -105,11 +119,45 @@ const updateTime = () => {
   currentTime.value = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`
 }
 
+// 顶栏设备状态：从 store 实时聚合
+const deviceStatus = computed(() => {
+  const stations = stationStore.stations || []
+  const total = stations.length
+  const online = stations.filter((s) => s.status === 'active').length
+  const offline = total - online
+
+  if (total === 0) {
+    return {
+      label: '等待数据接入',
+      tooltip: '尚未配置电站 / 设备',
+      tone: 'muted' as const,
+    }
+  }
+  if (offline > 0) {
+    return {
+      label: `${online}/${total} 在线 · ${offline} 离线`,
+      tooltip: `${offline} 个电站离线，请检查通信链路`,
+      tone: 'warning' as const,
+    }
+  }
+  return {
+    label: `${online}/${total} 在线`,
+    tooltip: '所有电站运行正常',
+    tone: 'success' as const,
+  }
+})
+
 onMounted(() => {
   updateTime()
   timer = setInterval(updateTime, 1000)
   checkScreen()
   window.addEventListener('resize', checkScreen)
+  // 初次拉取总览，用于顶栏状态聚合
+  if (stationStore.fetchStations) {
+    stationStore.fetchStations()
+  }
+  // 静默拉总览（用于 KPI，但不阻塞渲染）
+  dashboardApi.overview().catch(() => {})
 })
 
 onUnmounted(() => {
