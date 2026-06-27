@@ -464,6 +464,8 @@ html:not(.light) .el-card {
   align-items: center;
   justify-content: space-between;
   padding: 14px 24px;
+  /* iOS safe-area：顶部时间栏/刘海留白 */
+  padding-top: max(14px, env(safe-area-inset-top, 0px));
   background: var(--pv-bg);
   border-bottom: 1px solid var(--pv-border);
   position: sticky;
@@ -566,6 +568,8 @@ html:not(.light) .el-card {
   padding: 20px;
   max-width: 1680px;
   margin: 0 auto;
+  /* iOS 底部 home indicator 留白 */
+  padding-bottom: max(20px, env(safe-area-inset-bottom, 0px));
 }
 
 /* ─── 全局移动端适配（v2：每个 view 仍按需写 grid/scroll，这里做容器级兜底） ───── */

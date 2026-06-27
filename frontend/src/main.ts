@@ -23,6 +23,16 @@ import router from './router'
 
 initTheme()
 
+// PWA Service Worker 注册：仅 HTTPS / localhost 下生效；
+// 生产部署若走 Cloudflare Tunnel 自定义域名即可触发。
+if ('serviceWorker' in navigator && import.meta.env.PROD) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker
+      .register('/sw.js')
+      .catch((err) => console.warn('[PWA] SW 注册失败:', err))
+  })
+}
+
 const app = createApp(App)
 
 app.use(createPinia())
