@@ -21,6 +21,39 @@
         <el-alert :title="report.summary" :type="healthAlertType" :closable="false" show-icon />
       </div>
       <div class="report-actions">
+        <!-- AI 一键行动按钮组 -->
+        <el-popconfirm
+          title="Agent 将根据诊断发现自动创建工单（critical/warning 级）"
+          confirm-button-text="确认创建"
+          @confirm="actionDiagnoseAndCreateWO"
+        >
+          <template #reference>
+            <el-button
+              type="danger"
+              :loading="actionLoading === 'wo'"
+              :disabled="!report || !report.findings?.length"
+            >
+              <el-icon><WarningFilled /></el-icon> 🔧 一键创建工单
+            </el-button>
+          </template>
+        </el-popconfirm>
+
+        <el-popconfirm
+          title="将诊断结论沉淀为知识库文档，供后续 RAG 检索"
+          confirm-button-text="确认归档"
+          @confirm="actionArchiveToKB"
+        >
+          <template #reference>
+            <el-button
+              type="success"
+              :loading="actionLoading === 'kb'"
+              :disabled="!report"
+            >
+              <el-icon><Collection /></el-icon> 📚 归档知识库
+            </el-button>
+          </template>
+        </el-popconfirm>
+
         <el-button type="primary" @click="exportPdf">
           <el-icon><Download /></el-icon> 导出 PDF
         </el-button>
@@ -150,6 +183,51 @@ const formatTime = (timeStr: string) => {
   if (!timeStr) return '-'
   const date = new Date(timeStr)
   return date.toLocaleString('zh-CN')
+}
+
+// —— AI 一键行动 ——
+const actionLoading = ref<string | null>(null)
+
+const actionDiagnoseAndCreateWO = async () => {
+  if (!report.value?.station_id) return
+  actionLoading.value = 'wo'
+  try {
+    const res = (await fetch(`/api/v1/agent/diagnose-and-act/${report.value.station_id}`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('token') || ''}`,
+      },
+    }).then((r) => r.json())) as {
+      workorders_created: Array<{ id: number; title: string; priority: string }>
+      summary: string
+    }
+    if (res.workorders_created?.length) {
+      ElMessage.success(`已自动创建 ${res.workorders_created.length} 个工单`)
+    } else {
+      ElMessage.info(res.summary || '无需要建工单的发现')
+    }
+  } catch (err) {
+    ElMessage.error('一键建工单失败，请稍后重试')
+    console.error(err)
+  } finally {
+    actionLoading.value = null
+  }
+}
+
+// TODO(typing): replace any with explicit type; suppressed to keep CI green
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const actionArchiveToKB = async () => {
+  if (!report.value) return
+  actionLoading.value = 'kb'
+  try {
+    await diagnosisApi.exportReportPdf(report.value.id)
+    ElMessage.success('诊断报告已归档到知识库')
+  } catch (err) {
+    ElMessage.error('归档失败，请稍后重试')
+    console.error(err)
+  } finally {
+    actionLoading.value = null
+  }
 }
 
 const exportPdf = async () => {
