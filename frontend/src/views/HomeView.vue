@@ -58,13 +58,8 @@
       </div>
     </div>
 
-    <!-- AI 洞察横幅 -->
-    <div class="pv-ai-banner" @click="copilotStore.open({ type: 'overview' })">
-      <div class="pv-ai-banner__tag">🤖 AI 洞察</div>
-      <div class="pv-ai-banner__text">
-        {{ aiInsight }}
-      </div>
-    </div>
+    <!-- AI 智能体日报 -->
+    <AgentDigestCard />
 
     <!-- 主内容区：左宽右窄 -->
     <div class="main-grid">
@@ -310,14 +305,12 @@ title="电力市场 · 现货价格" icon="TrendCharts" :loading="dashboardLoadi
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
-import { useCopilotStore } from '@/stores/copilot'
 import { dashboardApi, metricApi, workOrderApi } from '@/services/api'
 import DashboardLayout from '@/components/DashboardLayout.vue'
 import PvCard from '@/components/PvCard.vue'
+import AgentDigestCard from '@/components/AgentDigestCard.vue'
 import PvSkeleton from '@/components/PvSkeleton.vue'
 import BubbleChart from '@/components/BubbleChart.vue'
-
-const copilotStore = useCopilotStore()
 
 interface OverviewItem {
   station_id: number
