@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import logging
 from datetime import datetime, timedelta
-from typing import Any, Dict, List
+from typing import Any
 
 from sqlalchemy import desc, func, select
 
@@ -34,7 +34,7 @@ logger = logging.getLogger(__name__)
 # ─── 工具函数 ────────────────────────────────────────────────
 
 
-async def _tool_critical_alarms(hours: int = 24, limit: int = 10) -> List[Dict[str, Any]]:
+async def _tool_critical_alarms(hours: int = 24, limit: int = 10) -> list[dict[str, Any]]:
     """过去 N 小时内未关闭的 critical / warning 告警."""
     async with AsyncSessionLocal() as session:
         cutoff = datetime.now() - timedelta(hours=hours)
@@ -62,7 +62,7 @@ async def _tool_critical_alarms(hours: int = 24, limit: int = 10) -> List[Dict[s
         ]
 
 
-async def _tool_health_decline(days: int = 7, limit: int = 5) -> List[Dict[str, Any]]:
+async def _tool_health_decline(days: int = 7, limit: int = 5) -> list[dict[str, Any]]:
     """健康度连续下降的电站 (近 N 天)."""
     async with AsyncSessionLocal() as session:
         stations = (await session.execute(select(Station))).scalars().all()
@@ -89,7 +89,7 @@ async def _tool_health_decline(days: int = 7, limit: int = 5) -> List[Dict[str, 
         return sorted(declining, key=lambda x: -x["open_alarms"])[:limit]
 
 
-async def _tool_outstanding_workorders(limit: int = 10) -> List[Dict[str, Any]]:
+async def _tool_outstanding_workorders(limit: int = 10) -> list[dict[str, Any]]:
     """未处理工单 + SLA 超期标记."""
     async with AsyncSessionLocal() as session:
         result = await session.execute(
@@ -114,7 +114,7 @@ async def _tool_outstanding_workorders(limit: int = 10) -> List[Dict[str, Any]]:
         ]
 
 
-async def _tool_new_knowledge(days: int = 7, limit: int = 5) -> List[Dict[str, Any]]:
+async def _tool_new_knowledge(days: int = 7, limit: int = 5) -> list[dict[str, Any]]:
     """近 N 天新增的知识库文档."""
     async with AsyncSessionLocal() as session:
         cutoff = datetime.now() - timedelta(days=days)
@@ -136,7 +136,7 @@ async def _tool_new_knowledge(days: int = 7, limit: int = 5) -> List[Dict[str, A
         ]
 
 
-async def _tool_station_overview() -> List[Dict[str, Any]]:
+async def _tool_station_overview() -> list[dict[str, Any]]:
     """电站总览 (容量 / 状态)."""
     async with AsyncSessionLocal() as session:
         result = await session.execute(select(Station))
@@ -189,7 +189,7 @@ class DailyBriefingAgent(ReactAgent):
     def name(self) -> str:
         return "DailyBriefingAgent"
 
-    def _build_tools(self) -> List[Tool]:
+    def _build_tools(self) -> list[Tool]:
         return [
             Tool(
                 name="get_critical_alarms",
@@ -245,7 +245,7 @@ class DailyBriefingAgent(ReactAgent):
         ]
 
 
-async def generate_briefing() -> Dict[str, Any]:
+async def generate_briefing() -> dict[str, Any]:
     """生成每日简报主入口 — 工具优先 + LLM 总结 fallback."""
     # 1. 主动拉取所有工具数据 (无 LLM 也能给个基础简报)
     raw = {
@@ -298,9 +298,9 @@ async def generate_briefing() -> Dict[str, Any]:
     }
 
 
-def _build_template_items(raw: Dict[str, Any]) -> List[Dict[str, Any]]:
+def _build_template_items(raw: dict[str, Any]) -> list[dict[str, Any]]:
     """无 LLM 时的模板化简报."""
-    items: List[Dict[str, Any]] = []
+    items: list[dict[str, Any]] = []
 
     # 1. critical 告警
     for a in raw["critical_alarms"][:3]:
@@ -361,7 +361,7 @@ def _build_template_items(raw: Dict[str, Any]) -> List[Dict[str, Any]]:
     return items[:5]
 
 
-def _parse_llm_json(content: str) -> List[Dict[str, Any]]:
+def _parse_llm_json(content: str) -> list[dict[str, Any]]:
     """从 LLM 输出中提取 JSON 数组."""
     import json
     import re

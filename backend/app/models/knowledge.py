@@ -21,6 +21,18 @@ class KnowledgeDoc(Base):
     created_at = Column(String(50), server_default=func.now())
 
 
+class KnowledgeFeedback(Base):
+    """AI 回答反馈."""
+
+    __tablename__ = "knowledge_feedback"
+
+    id = Column(Integer, primary_key=True, index=True)
+    question = Column(Text, nullable=True, comment="用户问题")
+    answer = Column(Text, nullable=True, comment="AI 回答")
+    rating = Column(String(20), nullable=False, comment="good / bad")
+    created_at = Column(String(50), server_default=func.now())
+
+
 class KnowledgeChunk(Base):
     """知识库文本块（用于本地 fallback，PGVector 场景可选）."""
 

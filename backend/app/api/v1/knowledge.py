@@ -2,8 +2,10 @@
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
 
+from app.core.database import AsyncSessionLocal
 from app.core.deps import get_current_user
 from app.core.limiter import limiter
+from app.models.knowledge import KnowledgeFeedback
 from app.schemas.knowledge import KnowledgeAskRequest, KnowledgeAskResponse, KnowledgeDocResponse
 from app.services import knowledge_service
 from app.vectorstore import get_vector_store
@@ -68,3 +70,18 @@ async def ask_knowledge(request: Request, payload: KnowledgeAskRequest):
         answer=answer,
         sources=[{"content": d.page_content, "metadata": d.metadata} for d in docs],
     )
+
+
+@router.post("/feedback")
+@limiter.limit("60/minute")
+async def submit_feedback(request: Request, payload: dict) -> dict:
+    """接收 AI 回答的 👍/👎 反馈（用于改进 prompt）。"""
+    async with AsyncSessionLocal() as session:
+        fb = KnowledgeFeedback(
+            question=payload.get("question", ""),
+            answer=payload.get("answer", ""),
+            rating=payload.get("rating", "good"),
+        )
+        session.add(fb)
+        await session.commit()
+    return {"success": True}

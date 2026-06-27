@@ -7,12 +7,13 @@
 from __future__ import annotations
 
 import logging
-from typing import Any, Dict
+from typing import Any
 
 from fastapi import APIRouter, Depends
 
 from app.agents.daily_briefing import generate_briefing
 from app.agents.diagnosis_agent import DiagnosisAgent
+from app.core.database import AsyncSessionLocal
 from app.core.deps import get_current_user
 from app.services import work_order_service
 
@@ -22,7 +23,7 @@ router = APIRouter(dependencies=[Depends(get_current_user)])
 
 
 @router.get("/briefing")
-async def get_daily_briefing() -> Dict[str, Any]:
+async def get_daily_briefing() -> dict[str, Any]:
     """生成每日巡检简报.
 
     返回结构::
@@ -50,7 +51,7 @@ async def get_daily_briefing() -> Dict[str, Any]:
 async def diagnose_and_create_work_order(
     station_id: int,
     current_user=Depends(get_current_user),
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """诊断电站并自动创建工单（Agent 闭环行动）.
 
     1. 调 DiagnosisAgent 跑诊断
@@ -79,22 +80,23 @@ async def diagnose_and_create_work_order(
         if severity not in ("critical", "warning"):
             continue
         priority = "urgent" if severity == "critical" else "high"
-        wo = await work_order_service.create_work_order(
-            db=None,  # type: ignore[arg-type]
-            title=f"[自动] {f.get('title', '诊断异常')}",
-            description=(
-                f"由 AI 智能体自动创建（基于诊断报告）\n\n"
-                f"类别：{f.get('category', '未知')}\n"
-                f"证据：{f.get('evidence', '-')}\n"
-                f"根因：{f.get('root_cause', '-')}\n"
-                f"建议：{', '.join(f.get('suggestions', []))}"
-            ),
-            priority=priority,
-            assignee=None,
-            created_by=f"AI-Agent ({current_user.username})",
-            station_id=station_id,
-            tenant_id=None,
-        )
+        async with AsyncSessionLocal() as session:
+            wo = await work_order_service.create_work_order(
+                session,
+                title=f"[自动] {f.get('title', '诊断异常')}",
+                description=(
+                    f"由 AI 智能体自动创建（基于诊断报告）\n\n"
+                    f"类别：{f.get('category', '未知')}\n"
+                    f"证据：{f.get('evidence', '-')}\n"
+                    f"根因：{f.get('root_cause', '-')}\n"
+                    f"建议：{', '.join(f.get('suggestions', []))}"
+                ),
+                priority=priority,
+                assignee=None,
+                created_by=f"AI-Agent ({current_user.username})",
+                station_id=station_id,
+                tenant_id=None,
+            )
         workorders.append({
             "id": wo.id,
             "title": wo.title,

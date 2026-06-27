@@ -70,6 +70,18 @@ const router = createRouter({
       component: () => import('@/views/DeviceManagementView.vue'),
       meta: { requiresAuth: true },
     },
+    {
+      path: '/agent',
+      name: 'agent',
+      component: () => import('@/views/AgentView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/profile',
+      name: 'profile',
+      component: () => import('@/views/ProfileView.vue'),
+      meta: { requiresAuth: true },
+    },
   ],
 })
 

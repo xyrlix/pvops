@@ -13,6 +13,10 @@
       <el-icon><Odometer /></el-icon>
       <span>总览大屏</span>
     </el-menu-item>
+    <el-menu-item index="/agent">
+      <el-icon><ChatDotRound /></el-icon>
+      <span>AI 智能体</span>
+    </el-menu-item>
     <el-menu-item index="/stations">
       <el-icon><OfficeBuilding /></el-icon>
       <span>电站管理</span>

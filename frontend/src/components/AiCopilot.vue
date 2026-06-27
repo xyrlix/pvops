@@ -48,6 +48,14 @@
                   </div>
                 </div>
               </div>
+              <div v-if="msg.role === 'assistant' && !msg._feedback" class="message-feedback">
+                <el-button text size="small" @click="submitFeedback(index, 'good')">
+                  <el-icon :size="14"><CircleCheck /></el-icon>
+                </el-button>
+                <el-button text size="small" @click="submitFeedback(index, 'bad')">
+                  <el-icon :size="14"><CircleClose /></el-icon>
+                </el-button>
+              </div>
               <div v-if="msg.sources && msg.sources.length" class="message-sources">
                 <div class="sources-title">参考来源：</div>
                 <div
@@ -102,7 +110,7 @@
 
 <script setup lang="ts">
 import { computed, nextTick, ref, watch } from 'vue'
-import { ChatDotRound, Promotion, Aim, ArrowRight, ArrowDown } from '@element-plus/icons-vue'
+import { ChatDotRound, Promotion, Aim, ArrowRight, ArrowDown, CircleCheck, CircleClose } from '@element-plus/icons-vue'
 import { chatApi } from '@/services/api'
 import { useCopilotStore } from '@/stores/copilot'
 
@@ -121,6 +129,7 @@ interface ChatMessage {
   sources?: any[]
   tool_calls?: ToolCall[]
   _traceOpen?: boolean
+  _feedback?: 'good' | 'bad'
 }
 
 const copilotStore = useCopilotStore()
@@ -194,6 +203,12 @@ const sendMessage = async (text: string) => {
       sources: res.sources,
       _traceOpen: (res.tool_calls?.length ?? 0) > 0,
     })
+    // 保存到 localStorage 供 /agent 页面展示历史
+    try {
+      const history = JSON.parse(localStorage.getItem('pvops-chat-history') || '[]')
+      history.unshift({ question: text, answer: res.answer, time: new Date().toISOString() })
+      localStorage.setItem('pvops-chat-history', JSON.stringify(history.slice(0, 50)))
+    } catch { /* ignore */ }
   } catch (err) {
     messages.value.push({
       role: 'assistant',
@@ -202,6 +217,25 @@ const sendMessage = async (text: string) => {
   } finally {
     loading.value = false
   }
+}
+
+const submitFeedback = (index: number, rating: 'good' | 'bad') => {
+  const msg = messages.value[index]
+  if (!msg || msg._feedback) return
+  msg._feedback = rating
+  // 反馈写入 API（静默，不阻塞）
+  fetch('/api/v1/kb/feedback', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${localStorage.getItem('token') || ''}`,
+    },
+    body: JSON.stringify({
+      question: messages.value[index - 1]?.content || '',
+      answer: msg.content,
+      rating,
+    }),
+  }).catch(() => {})
 }
 </script>
 
@@ -285,6 +319,22 @@ const sendMessage = async (text: string) => {
   white-space: pre-wrap;
   line-height: 1.5;
   font-size: 14px;
+}
+
+.message-feedback {
+  margin-top: 8px;
+  display: flex;
+  gap: 4px;
+  justify-content: flex-end;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  padding-top: 6px;
+}
+
+.message-feedback :deep(.el-button) {
+  color: var(--pv-text-tertiary);
+}
+.message-feedback :deep(.el-button:hover) {
+  color: var(--pv-primary);
 }
 
 .message-sources {

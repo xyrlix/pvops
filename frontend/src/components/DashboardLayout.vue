@@ -68,8 +68,8 @@
           <div class="pv-topbar__divider" />
           <div class="pv-topbar__time" :title="`服务器时间：${currentTime}`">{{ currentTime }}</div>
           <ThemeSwitcher />
-          <el-tooltip content="个人中心（即将上线）" placement="bottom">
-            <div class="pv-topbar__avatar">管</div>
+          <el-tooltip content="个人中心" placement="bottom">
+            <div class="pv-topbar__avatar" style="cursor:pointer" @click="$router.push('/profile')">管</div>
           </el-tooltip>
         </div>
       </header>
