@@ -86,4 +86,5 @@ class ModbusTCPAdapter(BaseProtocolAdapter):
             **values,
         }
 
+
 # mypy: disable-error-code="attr-defined,assignment,union-attr"
