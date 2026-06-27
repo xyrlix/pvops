@@ -22,9 +22,7 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24  # 1 天
 async def login(request: Request, form_data: UserLogin) -> dict:
     """用户登录."""
     async with AsyncSessionLocal() as session:
-        result = await session.execute(
-            select(User).where(User.username == form_data.username)
-        )
+        result = await session.execute(select(User).where(User.username == form_data.username))
         user = result.scalar_one_or_none()
 
         if not user or not verify_password(form_data.password, user.hashed_password):
@@ -72,9 +70,7 @@ async def register(request: Request, user_data: UserCreate) -> User:
 
     async with AsyncSessionLocal() as session:
         # 检查用户名是否存在
-        result = await session.execute(
-            select(User).where(User.username == user_data.username)
-        )
+        result = await session.execute(select(User).where(User.username == user_data.username))
         if result.scalar_one_or_none():
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,

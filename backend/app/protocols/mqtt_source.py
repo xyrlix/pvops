@@ -13,8 +13,8 @@
 
 import json
 import logging
-from datetime import datetime, timezone
-from typing import Any, Dict, Optional
+from datetime import UTC, datetime
+from typing import Any
 
 from app.protocols.base import BaseProtocolAdapter, CollectorPoint
 
@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 class MqttSourceAdapter(BaseProtocolAdapter):
     """MQTT 数据源适配器."""
 
-    def __init__(self, device_code: str, config: Optional[Dict[str, Any]] = None):
+    def __init__(self, device_code: str, config: dict[str, Any] | None = None):
         super().__init__(device_code, config)
         self.host = self.config.get("host", "localhost")
         self.port = int(self.config.get("port", 1883))
@@ -33,10 +33,10 @@ class MqttSourceAdapter(BaseProtocolAdapter):
         self.client_id = self.config.get("client_id", f"pvops_collector_{device_code}")
         self.timeout = float(self.config.get("timeout", 10))
         self._client = None
-        self._latest_payload: Optional[Dict[str, Any]] = None
+        self._latest_payload: dict[str, Any] | None = None
 
         try:
-            from paho.mqtt.client import Client, MQTTMessage
+            from paho.mqtt.client import Client, MQTTMessage  # noqa: F401
 
             self._message_class = MQTTMessage
         except ImportError as e:
@@ -75,14 +75,14 @@ class MqttSourceAdapter(BaseProtocolAdapter):
             self._client.disconnect()
             self._client = None
 
-    async def read_points(self, points: list[CollectorPoint]) -> Dict[str, Any]:
+    async def read_points(self, points: list[CollectorPoint]) -> dict[str, Any]:
         """MQTT 通常直接推送完整 JSON，因此 read_points 返回最新 payload."""
         return self._latest_payload or {}
 
-    async def collect_once(self) -> Dict[str, Any]:
+    async def collect_once(self) -> dict[str, Any]:
         payload = self._latest_payload or {}
         self._latest_payload = None
         return {
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             **payload,
         }

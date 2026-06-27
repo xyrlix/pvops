@@ -14,7 +14,7 @@ from app.vectorstore.base import VectorStore
 
 logger = logging.getLogger(__name__)
 
-_loop_stores: "weakref.WeakKeyDictionary[asyncio.AbstractEventLoop, VectorStore]" = (
+_loop_stores: weakref.WeakKeyDictionary[asyncio.AbstractEventLoop, VectorStore] = (
     weakref.WeakKeyDictionary()
 )
 

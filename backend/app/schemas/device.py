@@ -1,23 +1,23 @@
 """设备资产 Schema."""
 
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from pydantic import BaseModel
 
 
 class DeviceBase(BaseModel):
     station_id: int
-    parent_id: Optional[int] = None
+    parent_id: int | None = None
     device_type: str
     device_code: str
     name: str
-    vendor: Optional[str] = None
-    model: Optional[str] = None
-    sn: Optional[str] = None
-    protocol: Optional[str] = "simulator"
-    config: Optional[Dict[str, Any]] = None
-    status: Optional[str] = "active"
-    sort_order: Optional[int] = 0
+    vendor: str | None = None
+    model: str | None = None
+    sn: str | None = None
+    protocol: str | None = "simulator"
+    config: dict[str, Any] | None = None
+    status: str | None = "active"
+    sort_order: int | None = 0
 
 
 class DeviceCreate(DeviceBase):
@@ -25,29 +25,29 @@ class DeviceCreate(DeviceBase):
 
 
 class DeviceUpdate(BaseModel):
-    parent_id: Optional[int] = None
-    device_type: Optional[str] = None
-    device_code: Optional[str] = None
-    name: Optional[str] = None
-    vendor: Optional[str] = None
-    model: Optional[str] = None
-    sn: Optional[str] = None
-    protocol: Optional[str] = None
-    config: Optional[Dict[str, Any]] = None
-    status: Optional[str] = None
-    sort_order: Optional[int] = None
+    parent_id: int | None = None
+    device_type: str | None = None
+    device_code: str | None = None
+    name: str | None = None
+    vendor: str | None = None
+    model: str | None = None
+    sn: str | None = None
+    protocol: str | None = None
+    config: dict[str, Any] | None = None
+    status: str | None = None
+    sort_order: int | None = None
 
 
 class DeviceResponse(DeviceBase):
     id: int
-    created_at: Optional[str] = None
+    created_at: str | None = None
 
     class Config:
         orm_mode = True
 
 
 class DeviceTreeNode(DeviceResponse):
-    children: List["DeviceTreeNode"] = []
+    children: list["DeviceTreeNode"] = []
 
 
 DeviceTreeNode.update_forward_refs()

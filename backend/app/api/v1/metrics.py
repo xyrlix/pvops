@@ -2,8 +2,8 @@
 
 import asyncio
 import json
+from collections.abc import AsyncGenerator
 from datetime import datetime, timedelta
-from typing import AsyncGenerator, Dict, List, Optional
 
 from fastapi import APIRouter, Depends, Query
 from fastapi.responses import StreamingResponse
@@ -25,9 +25,9 @@ async def get_station_metrics(station_id: int) -> dict:
 async def get_station_history(
     station_id: int,
     metric: str = Query(..., description="指标名: active_power_kw, daily_energy_kwh 等"),
-    start: Optional[str] = Query(None),
-    end: Optional[str] = Query(None),
-) -> List[Dict]:
+    start: str | None = Query(None),
+    end: str | None = Query(None),
+) -> list[dict]:
     """获取电站历史指标."""
     start_dt = datetime.fromisoformat(start) if start else datetime.now() - timedelta(days=1)
     end_dt = datetime.fromisoformat(end) if end else datetime.now()
@@ -56,7 +56,7 @@ async def get_metrics_stream(station_id: int) -> StreamingResponse:
 
 
 @router.get("/stations/overview")
-async def get_stations_overview() -> List[Dict]:
+async def get_stations_overview() -> list[dict]:
     """集团总览指标（气泡图/TOP榜）."""
     return await metrics_service.get_stations_overview()
 
@@ -65,19 +65,19 @@ async def get_stations_overview() -> List[Dict]:
 async def get_stations_ranking(
     metric: str = Query("health_score", description="排序指标"),
     limit: int = Query(10),
-) -> List[Dict]:
+) -> list[dict]:
     """电站排名."""
     return await metrics_service.get_stations_ranking(metric, limit)
 
 
 @router.get("/station/{station_id}/efficiency")
-async def get_station_efficiency(station_id: int) -> Dict:
+async def get_station_efficiency(station_id: int) -> dict:
     """电站效率指标（等效小时/PR/系统效率）."""
     return await metrics_service.get_station_efficiency(station_id)
 
 
 @router.get("/station/{station_id}/losses")
-async def get_station_losses(station_id: int) -> Dict:
+async def get_station_losses(station_id: int) -> dict:
     """电站损失分解."""
     return await metrics_service.get_station_losses(station_id)
 
@@ -86,13 +86,13 @@ async def get_station_losses(station_id: int) -> Dict:
 async def get_station_health_trend(
     station_id: int,
     days: int = Query(30),
-) -> List[Dict]:
+) -> list[dict]:
     """健康度趋势（热力图）."""
     return await metrics_service.get_health_trend(station_id, days)
 
 
 @router.get("/station/{station_id}/inverters")
-async def get_station_inverters(station_id: int) -> List[Dict]:
+async def get_station_inverters(station_id: int) -> list[dict]:
     """逆变器群组对比."""
     return await metrics_service.get_inverter_comparison(station_id)
 
@@ -100,14 +100,14 @@ async def get_station_inverters(station_id: int) -> List[Dict]:
 @router.get("/station/{station_id}/strings")
 async def get_station_strings(
     station_id: int,
-    inverter_id: Optional[str] = Query(None),
-) -> List[Dict]:
+    inverter_id: str | None = Query(None),
+) -> list[dict]:
     """组串离散率."""
     return await metrics_service.get_string_dispersion(station_id, inverter_id)
 
 
 @router.get("/station/{station_id}/peer-baseline")
-async def get_station_peer_baseline(station_id: int) -> Dict:
+async def get_station_peer_baseline(station_id: int) -> dict:
     """群体基线（同容量档位中位数 + top quartile）.
 
     对标竞品 V3.2 §F3.3：同区域/同厂家/同容量横向对比。
@@ -119,6 +119,6 @@ async def get_station_peer_baseline(station_id: int) -> Dict:
 async def get_station_peer_ranking(
     station_id: int,
     metric: str = Query("health_score", description="排序指标"),
-) -> Dict:
+) -> dict:
     """同档位内电站排名（高亮本电站）."""
     return await metrics_service.get_station_peer_ranking(station_id, metric)

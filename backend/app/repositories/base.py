@@ -2,7 +2,6 @@
 
 from abc import ABC, abstractmethod
 from datetime import datetime
-from typing import Dict, List, Optional
 
 
 class TimeSeriesRepository(ABC):
@@ -22,33 +21,27 @@ class TimeSeriesRepository(ABC):
         ...
 
     @abstractmethod
-    async def insert_inverter_data(
-        self, station_id: int, inverter_id: str, data: Dict
-    ) -> None:
+    async def insert_inverter_data(self, station_id: int, inverter_id: str, data: dict) -> None:
         """写入一条逆变器时序数据."""
         ...
 
     @abstractmethod
-    async def insert_weather_data(
-        self, station_id: int, device_id: str, data: Dict
-    ) -> None:
+    async def insert_weather_data(self, station_id: int, device_id: str, data: dict) -> None:
         """写入一条气象站时序数据."""
         ...
 
     @abstractmethod
-    async def insert_meter_data(
-        self, station_id: int, device_id: str, data: Dict
-    ) -> None:
+    async def insert_meter_data(self, station_id: int, device_id: str, data: dict) -> None:
         """写入一条关口表时序数据."""
         ...
 
     @abstractmethod
-    async def batch_insert_inverter_data(self, data_list: List[Dict]) -> int:
+    async def batch_insert_inverter_data(self, data_list: list[dict]) -> int:
         """批量写入逆变器数据，返回成功条数."""
         ...
 
     @abstractmethod
-    async def get_latest_station_metrics(self, station_id: int) -> Dict:
+    async def get_latest_station_metrics(self, station_id: int) -> dict:
         """获取电站最新指标."""
         ...
 
@@ -57,15 +50,13 @@ class TimeSeriesRepository(ABC):
         self,
         station_id: int,
         metric: str,
-        start: Optional[datetime] = None,
-        end: Optional[datetime] = None,
-    ) -> List[Dict]:
+        start: datetime | None = None,
+        end: datetime | None = None,
+    ) -> list[dict]:
         """获取指定指标历史."""
         ...
 
     @abstractmethod
-    async def get_daily_energy(
-        self, station_id: int, date: Optional[datetime] = None
-    ) -> float:
+    async def get_daily_energy(self, station_id: int, date: datetime | None = None) -> float:
         """获取某日发电量（取当天最后一条 daily_energy_kwh）."""
         ...

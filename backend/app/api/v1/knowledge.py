@@ -1,7 +1,5 @@
 """知识库接口."""
 
-from typing import List, Optional
-
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
 
 from app.core.deps import get_current_user
@@ -13,8 +11,8 @@ from app.vectorstore import get_vector_store
 router = APIRouter(dependencies=[Depends(get_current_user)])
 
 
-@router.get("/documents", response_model=List[KnowledgeDocResponse])
-async def list_documents(station_id: Optional[int] = None):
+@router.get("/documents", response_model=list[KnowledgeDocResponse])
+async def list_documents(station_id: int | None = None):
     """列出知识库文档."""
     docs = await knowledge_service.list_documents(station_id)
     return docs
@@ -25,7 +23,7 @@ async def list_documents(station_id: Optional[int] = None):
 async def upload_document(
     request: Request,
     file: UploadFile = File(...),
-    station_id: Optional[int] = Form(None),
+    station_id: int | None = Form(None),
 ):
     """上传知识库文档并建立索引."""
     content = await file.read()

@@ -7,22 +7,20 @@
 网关侧应在反代/边缘 SDK 配置此 token，避免在公网裸奔。
 """
 
-from typing import Any, Dict, List
+from typing import Any
 
 from fastapi import APIRouter, HTTPException, Request, status
 
 from app.collector.runner import CollectorRunner
-from app.core.config import get_settings
 from app.core.limiter import limiter
 from app.core.security import verify_gateway_token
-from app.repositories import get_repository
 
 router = APIRouter()
 
 
 @router.post("/telemetry")
 @limiter.limit("600/minute")  # 网关高频推送：每 IP 每分钟 600 条
-async def ingest_telemetry(request: Request, payload: Dict[str, Any]):
+async def ingest_telemetry(request: Request, payload: dict[str, Any]):
     """接收单条或多条设备遥测数据.
 
     请求体示例:
@@ -63,7 +61,7 @@ async def ingest_telemetry(request: Request, payload: Dict[str, Any]):
             }
         )
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"写入失败: {e}")
+        raise HTTPException(status_code=500, detail=f"写入失败: {e}") from e
     finally:
         await runner.close()
 
@@ -72,7 +70,7 @@ async def ingest_telemetry(request: Request, payload: Dict[str, Any]):
 
 @router.post("/telemetry/batch")
 @limiter.limit("60/minute")  # 批量端点更贵，收紧
-async def ingest_telemetry_batch(request: Request, payloads: List[Dict[str, Any]]):
+async def ingest_telemetry_batch(request: Request, payloads: list[dict[str, Any]]):
     """批量接收遥测数据."""
     verify_gateway_token(request)
 
@@ -101,7 +99,7 @@ async def ingest_telemetry_batch(request: Request, payloads: List[Dict[str, Any]
     return {"success": True, "count": len(payloads)}
 
 
-def payload_guard(payload: Dict[str, Any]) -> None:
+def payload_guard(payload: dict[str, Any]) -> None:
     """最小化 payload 形状校验."""
     required = {"station_id", "device_code", "device_type", "data"}
     missing = required - payload.keys()

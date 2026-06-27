@@ -1,7 +1,5 @@
 """模拟器数据接入接口."""
 
-from typing import Dict, List
-
 from fastapi import APIRouter
 
 from app.services import alarm_service, metrics_service
@@ -22,7 +20,7 @@ async def ingest_inverter_data(data: dict) -> dict:
 
 
 @router.post("/inverter/batch")
-async def ingest_inverter_batch(data: List[Dict]) -> dict:
+async def ingest_inverter_batch(data: list[dict]) -> dict:
     """批量接收逆变器数据."""
     try:
         count = await metrics_service.batch_insert_inverter_data(data)

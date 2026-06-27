@@ -18,14 +18,14 @@
 """
 
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from app.protocols.base import BaseProtocolAdapter, CollectorPoint
 
 logger = logging.getLogger(__name__)
 
 
-SUNGROW_SG_REGISTER_MAP: List[CollectorPoint] = [
+SUNGROW_SG_REGISTER_MAP: list[CollectorPoint] = [
     CollectorPoint("dc_voltage_v", "input", 12, "int", 0.1, "V"),
     CollectorPoint("dc_current_a", "input", 14, "int", 0.1, "A"),
     CollectorPoint("active_power_w", "input", 20, "int", 1.0, "W"),
@@ -50,7 +50,7 @@ class SungrowSGAdapter(BaseProtocolAdapter):
         0x0004: "故障",
     }
 
-    def __init__(self, device_code: str, config: Optional[Dict[str, Any]] = None):
+    def __init__(self, device_code: str, config: dict[str, Any] | None = None):
         super().__init__(device_code, config)
         self.host = self.config.get("host", "127.0.0.1")
         self.port = int(self.config.get("port", 502))
@@ -79,11 +79,11 @@ class SungrowSGAdapter(BaseProtocolAdapter):
             self._client.close()
             self._client = None
 
-    async def read_points(self, points: List[CollectorPoint]) -> Dict[str, Any]:
+    async def read_points(self, points: list[CollectorPoint]) -> dict[str, Any]:
         if not self._client:
             raise RuntimeError("未连接设备")
 
-        result: Dict[str, Any] = {}
+        result: dict[str, Any] = {}
         for p in points:
             try:
                 rr = await self._client.read_input_registers(
@@ -98,10 +98,12 @@ class SungrowSGAdapter(BaseProtocolAdapter):
                 else:
                     result[p.name] = float(value)
             except Exception as exc:
-                logger.warning("Sungrow read %s reg %d exception: %s", self.device_code, p.address, exc)
+                logger.warning(
+                    "Sungrow read %s reg %d exception: %s", self.device_code, p.address, exc
+                )
         return result
 
-    async def collect_once(self) -> Dict[str, Any]:
+    async def collect_once(self) -> dict[str, Any]:
         raw = await self.read_points(SUNGROW_SG_REGISTER_MAP)
         active_power_w = raw.get("active_power_w", 0) or 0
         return {

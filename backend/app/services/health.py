@@ -1,13 +1,9 @@
 """健康度评分工具."""
 
-from typing import Optional
-
 from app.models.timeseries import InverterData, WeatherData
 
 
-def calculate_health_score(
-    inv_data: InverterData, weather_data: Optional[WeatherData]
-) -> float:
+def calculate_health_score(inv_data: InverterData, weather_data: WeatherData | None) -> float:
     """计算健康度评分（0-100）."""
     score = 100.0
 

@@ -9,8 +9,7 @@
 
 from __future__ import annotations
 
-from types import SimpleNamespace
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -24,7 +23,6 @@ from app.protocols.sungrow_sg import (
     SUNGROW_SG_REGISTER_MAP,
     SungrowSGAdapter,
 )
-
 
 # ─── _decode_huawei_register ──────────────────────────────
 
@@ -60,15 +58,27 @@ def test_decode_int_preserves_negative() -> None:
 def test_huawei_register_map_required_fields() -> None:
     """register map 必须覆盖 InverterData 核心字段."""
     names = {p.name for p in HUAWEI_SUN2000_REGISTER_MAP}
-    required = {"active_power_w", "dc_voltage_v", "dc_current_a",
-                "daily_energy_wh", "fault_code", "inverter_status"}
+    required = {
+        "active_power_w",
+        "dc_voltage_v",
+        "dc_current_a",
+        "daily_energy_wh",
+        "fault_code",
+        "inverter_status",
+    }
     assert required.issubset(names), f"缺字段: {required - names}"
 
 
 def test_sungrow_register_map_required_fields() -> None:
     names = {p.name for p in SUNGROW_SG_REGISTER_MAP}
-    required = {"active_power_w", "dc_voltage_v", "dc_current_a",
-                "daily_energy_wh", "fault_code", "inverter_status"}
+    required = {
+        "active_power_w",
+        "dc_voltage_v",
+        "dc_current_a",
+        "daily_energy_wh",
+        "fault_code",
+        "inverter_status",
+    }
     assert required.issubset(names)
 
 
@@ -96,20 +106,23 @@ def _mk_client_with_registers(registers: dict[int, int]):
 async def test_huawei_collect_once_unit_conversion() -> None:
     """active_power_w (W) → active_power_kw (kW)."""
     adapter = HuaweiSUN2000Adapter("INV-TEST", {"host": "127.0.0.1", "port": 5020})
-    adapter._client = _mk_client_with_registers({
-        32064: 5000,  # 5 kW
-        32065: 0,
-        32066: 990,   # power factor 0.99
-        32067: 5000,  # 50.00 Hz
-        32069: 12000, # daily energy
-        32071: 1_500_000,
-        32072: 350,   # 35.0°C
-        32080: 6200,  # 620.0 V
-        32082: 800,   # 8.00 A
-        32084: 0, 32086: 0,
-        32106: 2,     # on-grid
-        32114: 0,
-    })
+    adapter._client = _mk_client_with_registers(
+        {
+            32064: 5000,  # 5 kW
+            32065: 0,
+            32066: 990,  # power factor 0.99
+            32067: 5000,  # 50.00 Hz
+            32069: 12000,  # daily energy
+            32071: 1_500_000,
+            32072: 350,  # 35.0°C
+            32080: 6200,  # 620.0 V
+            32082: 800,  # 8.00 A
+            32084: 0,
+            32086: 0,
+            32106: 2,  # on-grid
+            32114: 0,
+        }
+    )
 
     data = await adapter.collect_once()
     assert data["active_power_kw"] == 5.0
@@ -165,18 +178,20 @@ async def test_huawei_collect_once_handles_read_errors() -> None:
 @pytest.mark.asyncio
 async def test_sungrow_collect_once_unit_conversion() -> None:
     adapter = SungrowSGAdapter("INV-TEST")
-    adapter._client = _mk_client_with_registers({
-        12: 6200,  # 620.0 V
-        14: 80,    # 8.0 A
-        20: 3000,  # 3 kW
-        22: 0,
-        26: 5000,
-        28: 35,
-        44: 2,     # on-grid
-        66: 0,
-        2: 12000,  # 120 kWh daily
-        4: 800_000,
-    })
+    adapter._client = _mk_client_with_registers(
+        {
+            12: 6200,  # 620.0 V
+            14: 80,  # 8.0 A
+            20: 3000,  # 3 kW
+            22: 0,
+            26: 5000,
+            28: 35,
+            44: 2,  # on-grid
+            66: 0,
+            2: 12000,  # 120 kWh daily
+            4: 800_000,
+        }
+    )
 
     data = await adapter.collect_once()
     assert data["active_power_kw"] == 3.0
@@ -217,6 +232,7 @@ def test_factory_case_insensitive() -> None:
 def test_factory_default_falls_back_to_simulator() -> None:
     adapter = create_adapter("", "INV")
     from app.protocols.simulator import SimulatorAdapter
+
     assert isinstance(adapter, SimulatorAdapter)
 
 
@@ -224,6 +240,7 @@ def test_factory_simulator_still_works() -> None:
     """向后兼容：simulator 协议不变."""
     adapter = create_adapter("simulator", "INV")
     from app.protocols.simulator import SimulatorAdapter
+
     assert isinstance(adapter, SimulatorAdapter)
 
 

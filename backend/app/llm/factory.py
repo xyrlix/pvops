@@ -13,7 +13,6 @@
 from __future__ import annotations
 
 import logging
-from typing import Dict, List, Optional
 
 from app.core.config import get_settings
 from app.llm.config import get_embedding_preset, get_llm_preset
@@ -44,7 +43,7 @@ class LLMClient:
 
     async def chat(
         self,
-        messages: List[Dict[str, str]],
+        messages: list[dict[str, str]],
         temperature: float = 0.2,
         timeout: float = 60.0,
     ) -> str:
@@ -68,7 +67,7 @@ class EmbeddingClient:
         self.base_url = base_url.rstrip("/")
         self.model = model
 
-    async def embed(self, texts: List[str], timeout: float = 60.0) -> Optional[List[List[float]]]:
+    async def embed(self, texts: list[str], timeout: float = 60.0) -> list[list[float]] | None:
         return await self.provider.embed(texts, timeout=timeout)
 
 
@@ -77,8 +76,8 @@ def _merge_preset(
     api_key: str,
     base_url: str,
     model: str,
-    preset: Optional[Dict[str, str]],
-) -> Dict[str, str]:
+    preset: dict[str, str] | None,
+) -> dict[str, str]:
     """合并用户配置与预置默认值."""
     if preset:
         return {
@@ -95,7 +94,7 @@ def _merge_preset(
     }
 
 
-def get_chat_llm() -> Optional[LLMClient]:
+def get_chat_llm() -> LLMClient | None:
     """获取聊天 LLM 客户端.
 
     通过 ``providers.registry`` 查找注册工厂；找不到时返回 None 并打 WARNING。
@@ -136,7 +135,7 @@ def get_chat_llm() -> Optional[LLMClient]:
     )
 
 
-def get_embeddings() -> Optional[EmbeddingClient]:
+def get_embeddings() -> EmbeddingClient | None:
     """获取 Embedding 客户端."""
     settings = get_settings()
     provider = (settings.embedding_provider or settings.llm_provider or "openai").lower()

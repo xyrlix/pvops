@@ -5,11 +5,10 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+from typing import Any
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
-from fastapi import HTTPException
 
 from app.core.tenant import (
     DEFAULT_TENANT_ID,
@@ -17,7 +16,6 @@ from app.core.tenant import (
     scoped_query,
     scoped_query_unrestricted,
 )
-
 
 # ─── TenantContext dataclass ────────────────────────────────
 
@@ -53,9 +51,9 @@ class _FakeQuery:
     """记录被调用的 .where(...) 入参."""
 
     def __init__(self) -> None:
-        self.where_calls: List[Any] = []
+        self.where_calls: list[Any] = []
 
-    def where(self, expr: Any) -> "_FakeQuery":
+    def where(self, expr: Any) -> _FakeQuery:
         self.where_calls.append(expr)
         return self
 
@@ -91,7 +89,7 @@ async def test_get_current_tenant_from_jwt(monkeypatch: pytest.MonkeyPatch) -> N
     """JWT 含 tenant_id 时优先使用."""
     from app.core import tenant as tenant_mod
 
-    def fake_decode(token: str) -> Optional[Dict[str, Any]]:
+    def fake_decode(token: str) -> dict[str, Any] | None:
         return {"sub": "alice", "role": "operator", "tenant_id": 99}
 
     monkeypatch.setattr(tenant_mod, "decode_token", fake_decode)
@@ -109,7 +107,7 @@ async def test_get_current_tenant_from_jwt(monkeypatch: pytest.MonkeyPatch) -> N
 async def test_get_current_tenant_superadmin_flag(monkeypatch: pytest.MonkeyPatch) -> None:
     from app.core import tenant as tenant_mod
 
-    def fake_decode(token: str) -> Optional[Dict[str, Any]]:
+    def fake_decode(token: str) -> dict[str, Any] | None:
         return {"sub": "root", "role": "superadmin", "tenant_id": 1}
 
     monkeypatch.setattr(tenant_mod, "decode_token", fake_decode)

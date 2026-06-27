@@ -1,6 +1,6 @@
 """AI Copilot 对话接口."""
 
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from fastapi import APIRouter, Depends, Request
 
@@ -13,13 +13,13 @@ router = APIRouter(dependencies=[Depends(get_current_user)])
 
 class ChatRequest:
     message: str
-    session_id: Optional[str] = None
-    context: Optional[Dict[str, Any]] = None
+    session_id: str | None = None
+    context: dict[str, Any] | None = None
 
 
 @router.post("")
 @limiter.limit("30/minute")  # LLM 调用配额与防滥用：每用户每分钟 30 次
-async def chat(request: Request, payload: Dict[str, Any]):
+async def chat(request: Request, payload: dict[str, Any]):
     """AI 对话."""
     message = payload.get("message", "")
     session_id = payload.get("session_id")

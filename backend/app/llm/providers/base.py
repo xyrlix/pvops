@@ -10,7 +10,7 @@ LLMClient 内部委托给当前选中的 provider。
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional, Protocol, runtime_checkable
+from typing import Any, Protocol, runtime_checkable
 
 
 @runtime_checkable
@@ -24,7 +24,7 @@ class LLMProvider(Protocol):
 
     async def chat(
         self,
-        messages: List[Dict[str, str]],
+        messages: list[dict[str, str]],
         temperature: float = 0.2,
         timeout: float = 60.0,
         **kwargs: Any,
@@ -41,15 +41,14 @@ class EmbeddingProvider(Protocol):
     """Embedding Provider 抽象接口."""
 
     @property
-    def name(self) -> str:
-        ...
+    def name(self) -> str: ...
 
     async def embed(
         self,
-        texts: List[str],
+        texts: list[str],
         timeout: float = 60.0,
         **kwargs: Any,
-    ) -> Optional[List[List[float]]]:
+    ) -> list[list[float]] | None:
         """批量嵌入，返回向量列表；失败时返回 None."""
         ...
 

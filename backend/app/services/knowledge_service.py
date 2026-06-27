@@ -2,7 +2,7 @@
 
 文档解析策略：
 - PDF：优先 pdfplumber（保留表格）→ pypdf（纯文本）→ 降级提示
-- DOCX：用标准库 zipfile + XML 解析，保留段落换行（不再粗暴去 \s+）
+- DOCX：用标准库 zipfile + XML 解析，保留段落换行（不再粗暴去 \\s+）
 - TXT/MD：直接读取，按行合并空行
 
 文本分块策略：
@@ -15,7 +15,6 @@ import logging
 import os
 import re
 import zipfile
-from typing import List, Optional
 
 from app.core.database import AsyncSessionLocal
 from app.models.knowledge import KnowledgeChunk, KnowledgeDoc
@@ -38,14 +37,14 @@ def _sanitize_filename(filename: str) -> str:
 # ─── 文本分块 ─────────────────────────────────────────────
 
 
-def _chunk_text(text: str, chunk_size: int = 800, overlap: int = 100) -> List[str]:
+def _chunk_text(text: str, chunk_size: int = 800, overlap: int = 100) -> list[str]:
     """按段落 → 句子 → 字符三层切分."""
     if not text or not text.strip():
         return []
 
     # 1. 按空行切段
     paragraphs = [p.strip() for p in re.split(r"\n\s*\n", text) if p.strip()]
-    chunks: List[str] = []
+    chunks: list[str] = []
     current = ""
 
     for para in paragraphs:
@@ -101,7 +100,12 @@ def _extract_docx_text(file_path: str) -> str:
         # 去除所有其他标签
         text = re.sub(r"<[^>]+>", "", xml)
         # 实体解码
-        text = text.replace("&amp;", "&").replace("&lt;", "<").replace("&gt;", ">").replace("&quot;", '"')
+        text = (
+            text.replace("&amp;", "&")
+            .replace("&lt;", "<")
+            .replace("&gt;", ">")
+            .replace("&quot;", '"')
+        )
         # 清理多余空白（保留段落换行）
         text = re.sub(r"[ \t]+", " ", text)
         text = re.sub(r"\n{3,}", "\n\n", text)
@@ -120,7 +124,7 @@ def _extract_pdf_text(file_path: str) -> str:
     try:
         import pdfplumber
 
-        parts: List[str] = []
+        parts: list[str] = []
         with pdfplumber.open(file_path) as pdf:
             for page in pdf.pages:
                 page_text = page.extract_text() or ""
@@ -146,9 +150,7 @@ def _extract_pdf_text(file_path: str) -> str:
         import pypdf
 
         reader = pypdf.PdfReader(file_path)
-        return "\n\n".join(
-            (page.extract_text() or "").strip() for page in reader.pages
-        )
+        return "\n\n".join((page.extract_text() or "").strip() for page in reader.pages)
     except ImportError:
         logger.warning("pypdf 未安装，PDF 文本提取不可用")
         return "[PDF 解析需要安装 pdfplumber 或 pypdf]"
@@ -160,7 +162,7 @@ def _extract_pdf_text(file_path: str) -> str:
 def extract_text(file_path: str, doc_type: str) -> str:
     """根据文档类型提取文本."""
     if doc_type == "txt":
-        with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
+        with open(file_path, encoding="utf-8", errors="ignore") as f:
             return f.read()
     if doc_type == "docx":
         return _extract_docx_text(file_path)
@@ -180,9 +182,7 @@ def detect_doc_type(filename: str) -> str:
     return "txt"
 
 
-async def save_upload(
-    filename: str, content: bytes, station_id: Optional[int] = None
-) -> KnowledgeDoc:
+async def save_upload(filename: str, content: bytes, station_id: int | None = None) -> KnowledgeDoc:
     """保存上传文件并提取文本."""
     _ensure_upload_dir()
     doc_type = detect_doc_type(filename)
@@ -210,8 +210,8 @@ async def save_upload(
 
 
 async def create_chunks(
-    doc_id: int, text: str, chunk_size: int = 800, station_id: Optional[int] = None
-) -> List[KnowledgeChunk]:
+    doc_id: int, text: str, chunk_size: int = 800, station_id: int | None = None
+) -> list[KnowledgeChunk]:
     """为文档创建文本块并入库，同时写入向量库."""
     chunks = _chunk_text(text, chunk_size)
     if not chunks:
@@ -254,7 +254,7 @@ async def create_chunks(
         ]
         try:
             await store.add_documents(documents, ids=vector_ids)
-            for chunk, vid in zip(db_chunks, vector_ids):
+            for chunk, vid in zip(db_chunks, vector_ids, strict=False):
                 chunk.vector_id = vid
             await session.commit()
         except Exception as e:
@@ -268,7 +268,7 @@ async def create_chunks(
         return db_chunks
 
 
-async def list_documents(station_id: Optional[int] = None) -> List[KnowledgeDoc]:
+async def list_documents(station_id: int | None = None) -> list[KnowledgeDoc]:
     from sqlalchemy import select
 
     async with AsyncSessionLocal() as session:
@@ -280,7 +280,7 @@ async def list_documents(station_id: Optional[int] = None) -> List[KnowledgeDoc]
         return result.scalars().all()
 
 
-async def get_document(doc_id: int) -> Optional[KnowledgeDoc]:
+async def get_document(doc_id: int) -> KnowledgeDoc | None:
     async with AsyncSessionLocal() as session:
         return await session.get(KnowledgeDoc, doc_id)
 
@@ -313,7 +313,9 @@ async def delete_document(doc_id: int) -> bool:
         return True
 
 
-async def save_case_document(title: str, content: str, station_id: Optional[int] = None) -> KnowledgeDoc:
+async def save_case_document(
+    title: str, content: str, station_id: int | None = None
+) -> KnowledgeDoc:
     """将工单案例沉淀为知识库文档."""
     async with AsyncSessionLocal() as session:
         doc = KnowledgeDoc(

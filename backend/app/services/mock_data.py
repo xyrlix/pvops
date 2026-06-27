@@ -7,7 +7,6 @@
 import hashlib
 import random
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional
 
 
 def _seed(value: str) -> random.Random:
@@ -16,7 +15,7 @@ def _seed(value: str) -> random.Random:
     return random.Random(hashed)
 
 
-def mock_latest_station_metrics(station_id: int, capacity_kw: float = 1000.0) -> Dict:
+def mock_latest_station_metrics(station_id: int, capacity_kw: float = 1000.0) -> dict:
     """模拟电站最新实时指标."""
     rng = _seed(f"latest-{station_id}-{datetime.now().strftime('%Y%m%d')}")
     # 白天功率曲线
@@ -45,10 +44,10 @@ def mock_latest_station_metrics(station_id: int, capacity_kw: float = 1000.0) ->
 def mock_metric_history(
     station_id: int,
     metric: str,
-    start: Optional[datetime] = None,
-    end: Optional[datetime] = None,
+    start: datetime | None = None,
+    end: datetime | None = None,
     points: int = 144,
-) -> List[Dict]:
+) -> list[dict]:
     """模拟指标历史曲线（功率/辐照/温度等）."""
     if end is None:
         end = datetime.now()
@@ -68,10 +67,7 @@ def mock_metric_history(
             else:
                 value = rng.uniform(0, 10)
         elif metric == "irradiance_w_m2":
-            if 6 <= hour <= 18:
-                value = max(0, ((hour - 6) / 12) * 1000 + rng.uniform(-50, 50))
-            else:
-                value = 0
+            value = max(0, (hour - 6) / 12 * 1000 + rng.uniform(-50, 50)) if 6 <= hour <= 18 else 0
         elif metric == "daily_energy_kwh":
             value = rng.uniform(2000, 3500)
         elif metric in ("dc_voltage_v", "ambient_temp_c"):
@@ -82,7 +78,7 @@ def mock_metric_history(
     return data
 
 
-def mock_station_overview(stations: List[Dict]) -> List[Dict]:
+def mock_station_overview(stations: list[dict]) -> list[dict]:
     """模拟集团总览数据（用于气泡图/TOP榜）."""
     overview = []
     for station in stations:
@@ -114,7 +110,7 @@ def mock_station_overview(stations: List[Dict]) -> List[Dict]:
     return overview
 
 
-def mock_health_trend(station_id: int, days: int = 30) -> List[Dict]:
+def mock_health_trend(station_id: int, days: int = 30) -> list[dict]:
     """模拟健康度趋势（用于热力图）."""
     rng = _seed(f"health-{station_id}")
     data = []
@@ -126,7 +122,7 @@ def mock_health_trend(station_id: int, days: int = 30) -> List[Dict]:
     return data
 
 
-def mock_inverter_comparison(station_id: int, inverters: List[Dict]) -> List[Dict]:
+def mock_inverter_comparison(station_id: int, inverters: list[dict]) -> list[dict]:
     """模拟逆变器群组对比."""
     result = []
     for idx, inv in enumerate(inverters):
@@ -149,7 +145,7 @@ def mock_inverter_comparison(station_id: int, inverters: List[Dict]) -> List[Dic
     return result
 
 
-def mock_string_dispersion(station_id: int, strings: List[Dict]) -> List[Dict]:
+def mock_string_dispersion(station_id: int, strings: list[dict]) -> list[dict]:
     """模拟组串电流离散."""
     if not strings:
         return []
@@ -178,7 +174,7 @@ def mock_string_dispersion(station_id: int, strings: List[Dict]) -> List[Dict]:
     return data
 
 
-def mock_efficiency(station_id: int, capacity_kw: float = 1000.0) -> Dict:
+def mock_efficiency(station_id: int, capacity_kw: float = 1000.0) -> dict:
     """模拟电站效率指标."""
     rng = _seed(f"eff-{station_id}")
     daily_energy = capacity_kw * rng.uniform(2.5, 4.5)
@@ -195,7 +191,7 @@ def mock_efficiency(station_id: int, capacity_kw: float = 1000.0) -> Dict:
     }
 
 
-def mock_loss_breakdown(station_id: int, capacity_kw: float = 1000.0) -> Dict:
+def mock_loss_breakdown(station_id: int, capacity_kw: float = 1000.0) -> dict:
     """模拟损失分解."""
     rng = _seed(f"loss-{station_id}")
     theoretical = capacity_kw * rng.uniform(3.8, 5.2)

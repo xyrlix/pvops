@@ -7,6 +7,7 @@
 from __future__ import annotations
 
 from types import SimpleNamespace
+from typing import Any
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
@@ -16,7 +17,6 @@ from app.services.alarm_service import (
     _level_to_priority,
     check_alarms,
 )
-
 
 # ─── _level_to_priority ──────────────────────────────────────
 
@@ -36,7 +36,7 @@ def test_level_to_priority_unknown_falls_back_to_medium() -> None:
 # ─── check_alarms 规则引擎 ──────────────────────────────────
 
 
-def _mock_session_with_recent(recent: List[Any]) -> Any:
+def _mock_session_with_recent(recent: list[Any]) -> Any:
     """构造 AsyncSession，最近数据查询返回 recent 列表."""
     session = MagicMock()
     session.__aenter__ = AsyncMock(return_value=session)
@@ -74,16 +74,22 @@ async def test_check_alarms_triggers_power_zero(monkeypatch: pytest.MonkeyPatch)
     monkeypatch.setattr(alarm_service, "AsyncSessionLocal", lambda: session)
 
     created: list = []
+
     async def fake_create(session, station_id, inverter_id, level, title, desc, code):
         alarm = SimpleNamespace(
-            station_id=station_id, inverter_id=inverter_id,
-            level=level, title=title, description=desc, code=code,
+            station_id=station_id,
+            inverter_id=inverter_id,
+            level=level,
+            title=title,
+            description=desc,
+            code=code,
         )
         created.append(alarm)
         return alarm
+
     monkeypatch.setattr(alarm_service, "_create_or_update_alarm", fake_create)
 
-    result = await check_alarms(1)
+    await check_alarms(1)
     codes = [a.code for a in created]
     assert "power_zero_when_sunny" in codes
     assert any(a.level == "critical" for a in created)
@@ -101,10 +107,12 @@ async def test_check_alarms_triggers_fault_code(monkeypatch: pytest.MonkeyPatch)
     monkeypatch.setattr(alarm_service, "AsyncSessionLocal", lambda: session)
 
     created: list = []
+
     async def fake_create(session, station_id, inverter_id, level, title, desc, code):
         a = SimpleNamespace(code=code, level=level)
         created.append(a)
         return a
+
     monkeypatch.setattr(alarm_service, "_create_or_update_alarm", fake_create)
 
     await check_alarms(1)
@@ -125,16 +133,20 @@ async def test_check_alarms_triggers_low_pr(monkeypatch: pytest.MonkeyPatch) -> 
     monkeypatch.setattr(alarm_service, "AsyncSessionLocal", lambda: session)
 
     created: list = []
+
     async def fake_create(session, station_id, inverter_id, level, title, desc, code):
         a = SimpleNamespace(code=code, level=level)
         created.append(a)
         return a
+
     monkeypatch.setattr(alarm_service, "_create_or_update_alarm", fake_create)
 
     await check_alarms(1)
     codes = [a.code for a in created]
     # 应该至少有 PR 偏低告警；若有 power_zero（功率 100 不触发）；fault=0 不触发
-    assert any("pr" in c.lower() or "PR" in c for c in codes) or any(a.level == "warning" for a in created)
+    assert any("pr" in c.lower() or "PR" in c for c in codes) or any(
+        a.level == "warning" for a in created
+    )
 
 
 @pytest.mark.asyncio
@@ -151,9 +163,11 @@ async def test_check_alarms_clean_state_no_alerts(monkeypatch: pytest.MonkeyPatc
     monkeypatch.setattr(alarm_service, "AsyncSessionLocal", lambda: session)
 
     created: list = []
+
     async def fake_create(session, station_id, inverter_id, level, title, desc, code):
         created.append(SimpleNamespace(code=code, level=level))
         return SimpleNamespace(code=code, level=level)
+
     monkeypatch.setattr(alarm_service, "_create_or_update_alarm", fake_create)
 
     result = await check_alarms(1)

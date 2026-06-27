@@ -1,7 +1,5 @@
 """依赖注入."""
 
-from typing import Optional
-
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy import select
@@ -24,7 +22,7 @@ async def get_db() -> AsyncSession:
 
 
 async def get_current_user(
-    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
+    credentials: HTTPAuthorizationCredentials | None = Depends(security),
 ) -> User:
     """获取当前登录用户."""
     if not credentials:

@@ -8,15 +8,14 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import pytest
 
 from app.llm import factory as llm_factory
-from app.llm.factory import LLMClient, EmbeddingClient
+from app.llm.factory import EmbeddingClient, LLMClient
 from app.llm.providers import registry
 from app.llm.providers.base import EmbeddingProvider, LLMProvider
-
 
 # ─── 内存 mock provider ──────────────────────────────────────
 
@@ -25,7 +24,7 @@ class _MockChatProvider:
     def __init__(self, name: str, reply: str = "mock-reply") -> None:
         self._name = name
         self.reply = reply
-        self.last_call: Dict[str, Any] | None = None
+        self.last_call: dict[str, Any] | None = None
 
     @property
     def name(self) -> str:
@@ -33,7 +32,7 @@ class _MockChatProvider:
 
     async def chat(
         self,
-        messages: List[Dict[str, str]],
+        messages: list[dict[str, str]],
         temperature: float = 0.2,
         timeout: float = 60.0,
         **kwargs: Any,
@@ -53,10 +52,10 @@ class _MockEmbedProvider:
 
     async def embed(
         self,
-        texts: List[str],
+        texts: list[str],
         timeout: float = 60.0,
         **kwargs: Any,
-    ) -> Optional[List[List[float]]]:
+    ) -> list[list[float]] | None:
         return [[float(i)] * self.dim for i in range(len(texts))]
 
 

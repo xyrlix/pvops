@@ -1,7 +1,6 @@
 """报告生成服务."""
 
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -14,7 +13,7 @@ from app.services import alarm_service
 
 async def generate_report(
     report_type: str,
-    station_id: Optional[int] = None,
+    station_id: int | None = None,
     created_by: str = "system",
 ) -> Report:
     """生成日报/周报/月报."""
@@ -67,10 +66,10 @@ async def generate_report(
 
 
 async def _calculate_stats(
-    station_id: Optional[int],
+    station_id: int | None,
     start: datetime,
     end: datetime,
-) -> Dict:
+) -> dict:
     """计算周期统计."""
     async with AsyncSessionLocal() as session:
         query = select(
@@ -85,8 +84,9 @@ async def _calculate_stats(
             query = query.where(InverterData.station_id == station_id)
 
         result = await session.execute(
-            query.group_by(func.strftime("%Y-%m-%d", InverterData.timestamp))
-            .order_by(func.strftime("%Y-%m-%d", InverterData.timestamp))
+            query.group_by(func.strftime("%Y-%m-%d", InverterData.timestamp)).order_by(
+                func.strftime("%Y-%m-%d", InverterData.timestamp)
+            )
         )
         rows = result.all()
 
@@ -113,7 +113,7 @@ async def _calculate_stats(
 
 
 async def _calculate_avg_pr(
-    station_id: Optional[int],
+    station_id: int | None,
     start: datetime,
     end: datetime,
 ) -> float:
@@ -145,7 +145,7 @@ async def _calculate_avg_pr(
         return sum(pr_values) / len(pr_values) if pr_values else 0.0
 
 
-async def get_report(session: AsyncSession, report_id: int) -> Optional[Report]:
+async def get_report(session: AsyncSession, report_id: int) -> Report | None:
     """获取单条报告."""
     result = await session.execute(select(Report).where(Report.id == report_id))
     return result.scalar_one_or_none()
@@ -153,10 +153,10 @@ async def get_report(session: AsyncSession, report_id: int) -> Optional[Report]:
 
 async def list_reports(
     session: AsyncSession,
-    station_id: Optional[int] = None,
-    report_type: Optional[str] = None,
+    station_id: int | None = None,
+    report_type: str | None = None,
     limit: int = 50,
-) -> List[Report]:
+) -> list[Report]:
     """获取报告列表."""
     query = select(Report)
     if station_id:

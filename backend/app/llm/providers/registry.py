@@ -10,7 +10,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Callable, Dict
+from collections.abc import Callable
 
 from app.llm.providers.base import EmbeddingProvider, LLMProvider
 from app.llm.providers.openai_compat import (
@@ -25,8 +25,8 @@ logger = logging.getLogger(__name__)
 ChatFactory = Callable[[str, str, str, str], LLMProvider]
 EmbedFactory = Callable[[str, str, str, str], EmbeddingProvider]
 
-_chat_factories: Dict[str, ChatFactory] = {}
-_embed_factories: Dict[str, EmbedFactory] = {}
+_chat_factories: dict[str, ChatFactory] = {}
+_embed_factories: dict[str, EmbedFactory] = {}
 
 
 def register_chat_provider(name: str, factory: ChatFactory) -> None:

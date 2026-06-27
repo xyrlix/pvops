@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta
 from types import SimpleNamespace
-from typing import Any, List, Optional
+from typing import Any
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
@@ -16,15 +16,14 @@ import pytest
 from app.services import report_service
 from app.services.report_service import _calculate_avg_pr, _calculate_stats
 
-
 # ─── helpers ────────────────────────────────────────────────
 
 
-def _row(day: str, daily_energy: Optional[float], avg_power: Optional[float]) -> Any:
+def _row(day: str, daily_energy: float | None, avg_power: float | None) -> Any:
     return SimpleNamespace(day=day, daily_energy=daily_energy, avg_power=avg_power)
 
 
-def _pr_row(avg_pr: Optional[float], active_power: Optional[float], irradiance: Optional[float]) -> Any:
+def _pr_row(avg_pr: float | None, active_power: float | None, irradiance: float | None) -> Any:
     return SimpleNamespace(avg_pr=avg_pr, active_power=active_power, irradiance=irradiance)
 
 
@@ -102,7 +101,7 @@ async def test_calculate_avg_pr_ignores_low_irradiance(
         # (pr_val, active_power, irradiance) — 直接给计算后的 PR
         _pr_row(avg_pr=None, active_power=200.0, irradiance=400.0),  # 计入 → 0.5
         _pr_row(avg_pr=None, active_power=300.0, irradiance=600.0),  # 计入 → 0.5
-        _pr_row(avg_pr=None, active_power=50.0, irradiance=100.0),   # 忽略
+        _pr_row(avg_pr=None, active_power=50.0, irradiance=100.0),  # 忽略
     ]
     result = MagicMock()
     result.all.return_value = rows

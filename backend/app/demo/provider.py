@@ -11,7 +11,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Protocol, runtime_checkable
+from typing import Any, Protocol, runtime_checkable
 
 
 @runtime_checkable
@@ -26,48 +26,48 @@ class DataProvider(Protocol):
 
     async def get_latest_station_metrics(
         self, station_id: int, capacity_kw: float = 1000.0
-    ) -> Dict[str, Any]: ...
+    ) -> dict[str, Any]: ...
 
     async def get_metric_history(
         self,
         station_id: int,
         metric: str,
-        start: Optional[datetime] = None,
-        end: Optional[datetime] = None,
+        start: datetime | None = None,
+        end: datetime | None = None,
         points: int = 144,
-    ) -> List[Dict[str, Any]]: ...
+    ) -> list[dict[str, Any]]: ...
 
     # —— 聚合视图 ——
 
-    async def get_station_overview(self, stations: List[Dict[str, Any]]) -> List[Dict[str, Any]]: ...
+    async def get_station_overview(
+        self, stations: list[dict[str, Any]]
+    ) -> list[dict[str, Any]]: ...
 
     async def get_efficiency(
         self, station_id: int, capacity_kw: float = 1000.0
-    ) -> Dict[str, Any]: ...
+    ) -> dict[str, Any]: ...
 
     async def get_loss_breakdown(
         self, station_id: int, capacity_kw: float = 1000.0
-    ) -> Dict[str, Any]: ...
+    ) -> dict[str, Any]: ...
 
-    async def get_health_trend(
-        self, station_id: int, days: int = 30
-    ) -> List[Dict[str, Any]]: ...
+    async def get_health_trend(self, station_id: int, days: int = 30) -> list[dict[str, Any]]: ...
 
     # —— 设备级 ——
 
     async def get_inverter_comparison(
-        self, station_id: int, inverters: List[Dict[str, Any]]
-    ) -> List[Dict[str, Any]]: ...
+        self, station_id: int, inverters: list[dict[str, Any]]
+    ) -> list[dict[str, Any]]: ...
 
     async def get_string_dispersion(
-        self, station_id: int, strings: List[Dict[str, Any]]
-    ) -> List[Dict[str, Any]]: ...
+        self, station_id: int, strings: list[dict[str, Any]]
+    ) -> list[dict[str, Any]]: ...
 
     # —— 群体基线（对标 §F3.3） ——
 
     async def get_peer_baseline(
-        self, stations: List[Dict[str, Any]], capacity_kw: float
-    ) -> Dict[str, Any]:
+        self, stations: list[dict[str, Any]], capacity_kw: float
+    ) -> dict[str, Any]:
         """同容量档位的群体基线（median + sample size）.
 
         返回结构::
@@ -85,8 +85,8 @@ class DataProvider(Protocol):
         ...
 
     async def get_peer_ranking(
-        self, stations: List[Dict[str, Any]], metric: str = "health_score"
-    ) -> List[Dict[str, Any]]:
+        self, stations: list[dict[str, Any]], metric: str = "health_score"
+    ) -> list[dict[str, Any]]:
         """同容量档位内电站排名（带 percentile 字段）."""
         ...
 

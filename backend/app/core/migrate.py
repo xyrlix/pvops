@@ -11,13 +11,12 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from typing import Optional
 
 from app.core.config import get_settings
 
 logger = logging.getLogger(__name__)
 
-_ALEMBIC_AVAILABLE: Optional[bool] = None
+_ALEMBIC_AVAILABLE: bool | None = None
 
 
 def _has_alembic() -> bool:

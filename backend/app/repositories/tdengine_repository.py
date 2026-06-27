@@ -3,7 +3,6 @@
 import logging
 import re
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional
 
 from app.core.config import get_settings
 from app.repositories.base import TimeSeriesRepository
@@ -120,9 +119,7 @@ class TDengineTimeSeriesRepository(TimeSeriesRepository):
                 logger.warning(f"关闭 TDengine 连接失败: {e}")
             self._connection = None
 
-    async def insert_inverter_data(
-        self, station_id: int, inverter_id: str, data: Dict
-    ) -> None:
+    async def insert_inverter_data(self, station_id: int, inverter_id: str, data: dict) -> None:
         if not self._taosws_available:
             return
         cursor = self._cursor()
@@ -153,9 +150,7 @@ class TDengineTimeSeriesRepository(TimeSeriesRepository):
         )
         cursor.close()
 
-    async def insert_weather_data(
-        self, station_id: int, device_id: str, data: Dict
-    ) -> None:
+    async def insert_weather_data(self, station_id: int, device_id: str, data: dict) -> None:
         if not self._taosws_available:
             return
         cursor = self._cursor()
@@ -181,9 +176,7 @@ class TDengineTimeSeriesRepository(TimeSeriesRepository):
         )
         cursor.close()
 
-    async def insert_meter_data(
-        self, station_id: int, device_id: str, data: Dict
-    ) -> None:
+    async def insert_meter_data(self, station_id: int, device_id: str, data: dict) -> None:
         if not self._taosws_available:
             return
         cursor = self._cursor()
@@ -212,7 +205,7 @@ class TDengineTimeSeriesRepository(TimeSeriesRepository):
         )
         cursor.close()
 
-    async def batch_insert_inverter_data(self, data_list: List[Dict]) -> int:
+    async def batch_insert_inverter_data(self, data_list: list[dict]) -> int:
         count = 0
         for data in data_list:
             try:
@@ -226,7 +219,7 @@ class TDengineTimeSeriesRepository(TimeSeriesRepository):
                 logger.warning(f"TDengine 批量插入失败: {e}")
         return count
 
-    async def get_latest_station_metrics(self, station_id: int) -> Dict:
+    async def get_latest_station_metrics(self, station_id: int) -> dict:
         if not self._taosws_available:
             return self._empty_metrics(station_id)
         try:
@@ -263,7 +256,7 @@ class TDengineTimeSeriesRepository(TimeSeriesRepository):
             logger.warning(f"获取 TDengine 最新指标失败: {e}")
         return self._empty_metrics(station_id)
 
-    def _empty_metrics(self, station_id: int) -> Dict:
+    def _empty_metrics(self, station_id: int) -> dict:
         return {
             "station_id": station_id,
             "station_name": "",
@@ -278,9 +271,9 @@ class TDengineTimeSeriesRepository(TimeSeriesRepository):
         self,
         station_id: int,
         metric: str,
-        start: Optional[datetime] = None,
-        end: Optional[datetime] = None,
-    ) -> List[Dict]:
+        start: datetime | None = None,
+        end: datetime | None = None,
+    ) -> list[dict]:
         if not self._taosws_available:
             return []
         if not end:
@@ -321,9 +314,7 @@ class TDengineTimeSeriesRepository(TimeSeriesRepository):
             logger.warning(f"获取 TDengine 历史指标失败: {e}")
             return []
 
-    async def get_daily_energy(
-        self, station_id: int, date: Optional[datetime] = None
-    ) -> float:
+    async def get_daily_energy(self, station_id: int, date: datetime | None = None) -> float:
         if not self._taosws_available:
             return 0.0
         if not date:

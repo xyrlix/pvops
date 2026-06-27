@@ -1,7 +1,5 @@
 """运维报告接口."""
 
-from typing import List, Optional
-
 from fastapi import APIRouter, Depends, HTTPException, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -14,13 +12,13 @@ from app.services import pdf_service, report_service
 router = APIRouter(dependencies=[Depends(get_current_user)])
 
 
-@router.get("", response_model=List[ReportResponse])
+@router.get("", response_model=list[ReportResponse])
 async def list_reports(
-    station_id: Optional[int] = None,
-    report_type: Optional[str] = None,
+    station_id: int | None = None,
+    report_type: str | None = None,
     limit: int = 50,
     db: AsyncSession = Depends(get_db),
-) -> List:
+) -> list:
     """获取报告列表."""
     return await report_service.list_reports(db, station_id, report_type, limit)
 

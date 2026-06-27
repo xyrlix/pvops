@@ -2,7 +2,6 @@
 
 import logging
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional
 
 from sqlalchemy import desc, select
 
@@ -23,9 +22,7 @@ class SQLiteTimeSeriesRepository(TimeSeriesRepository):
     async def close(self) -> None:
         pass
 
-    async def insert_inverter_data(
-        self, station_id: int, inverter_id: str, data: Dict
-    ) -> None:
+    async def insert_inverter_data(self, station_id: int, inverter_id: str, data: dict) -> None:
         async with AsyncSessionLocal() as session:
             record = InverterData(
                 timestamp=datetime.fromisoformat(data["timestamp"]),
@@ -44,9 +41,7 @@ class SQLiteTimeSeriesRepository(TimeSeriesRepository):
             session.add(record)
             await session.commit()
 
-    async def insert_weather_data(
-        self, station_id: int, device_id: str, data: Dict
-    ) -> None:
+    async def insert_weather_data(self, station_id: int, device_id: str, data: dict) -> None:
         async with AsyncSessionLocal() as session:
             record = WeatherData(
                 timestamp=datetime.fromisoformat(data["timestamp"]),
@@ -60,9 +55,7 @@ class SQLiteTimeSeriesRepository(TimeSeriesRepository):
             session.add(record)
             await session.commit()
 
-    async def insert_meter_data(
-        self, station_id: int, device_id: str, data: Dict
-    ) -> None:
+    async def insert_meter_data(self, station_id: int, device_id: str, data: dict) -> None:
         async with AsyncSessionLocal() as session:
             record = MeterData(
                 timestamp=datetime.fromisoformat(data["timestamp"]),
@@ -79,7 +72,7 @@ class SQLiteTimeSeriesRepository(TimeSeriesRepository):
             session.add(record)
             await session.commit()
 
-    async def batch_insert_inverter_data(self, data_list: List[Dict]) -> int:
+    async def batch_insert_inverter_data(self, data_list: list[dict]) -> int:
         count = 0
         async with AsyncSessionLocal() as session:
             for data in data_list:
@@ -105,7 +98,7 @@ class SQLiteTimeSeriesRepository(TimeSeriesRepository):
             await session.commit()
         return count
 
-    async def get_latest_station_metrics(self, station_id: int) -> Dict:
+    async def get_latest_station_metrics(self, station_id: int) -> dict:
         async with AsyncSessionLocal() as session:
             result = await session.execute(
                 select(InverterData)
@@ -160,9 +153,9 @@ class SQLiteTimeSeriesRepository(TimeSeriesRepository):
         self,
         station_id: int,
         metric: str,
-        start: Optional[datetime] = None,
-        end: Optional[datetime] = None,
-    ) -> List[Dict]:
+        start: datetime | None = None,
+        end: datetime | None = None,
+    ) -> list[dict]:
         if not end:
             end = datetime.now()
         if not start:
@@ -200,9 +193,7 @@ class SQLiteTimeSeriesRepository(TimeSeriesRepository):
                 for row in rows
             ]
 
-    async def get_daily_energy(
-        self, station_id: int, date: Optional[datetime] = None
-    ) -> float:
+    async def get_daily_energy(self, station_id: int, date: datetime | None = None) -> float:
         if not date:
             date = datetime.now()
 

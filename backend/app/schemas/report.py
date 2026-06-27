@@ -1,7 +1,6 @@
 """报告 schema."""
 
 from datetime import datetime
-from typing import List, Optional
 
 from pydantic import BaseModel
 
@@ -13,9 +12,9 @@ class Finding(BaseModel):
     severity: str
     title: str
     description: str
-    evidence: List[str]
+    evidence: list[str]
     root_cause: str
-    suggestions: List[str]
+    suggestions: list[str]
 
 
 class DiagnosisReportCreate(BaseModel):
@@ -23,7 +22,7 @@ class DiagnosisReportCreate(BaseModel):
 
     station_id: int
     report_type: str = "station"
-    device_id: Optional[str] = None
+    device_id: str | None = None
 
 
 class DiagnosisReportResponse(BaseModel):
@@ -35,11 +34,11 @@ class DiagnosisReportResponse(BaseModel):
     id: int
     station_id: int
     report_type: str
-    device_id: Optional[str]
+    device_id: str | None
     overall_health: float
     summary: str
-    findings: List[Finding]
-    suggestions: List[str]
+    findings: list[Finding]
+    suggestions: list[str]
     created_by: str
     created_at: datetime
 
@@ -47,7 +46,7 @@ class DiagnosisReportResponse(BaseModel):
 class ReportCreate(BaseModel):
     """创建运维报告请求."""
 
-    station_id: Optional[int] = None
+    station_id: int | None = None
 
 
 class ReportResponse(BaseModel):
@@ -57,16 +56,16 @@ class ReportResponse(BaseModel):
         orm_mode = True
 
     id: int
-    station_id: Optional[int]
+    station_id: int | None
     report_type: str
     title: str
     start_date: datetime
     end_date: datetime
     total_energy_kwh: float
-    avg_pr: Optional[float]
-    avg_health_score: Optional[float]
+    avg_pr: float | None
+    avg_health_score: float | None
     alarm_count: int
     summary: str
-    details: List[dict]
+    details: list[dict]
     created_by: str
     created_at: datetime

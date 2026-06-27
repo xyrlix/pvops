@@ -10,7 +10,7 @@ from __future__ import annotations
 import hashlib
 import random
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from app.demo.provider import DataProvider
 
@@ -26,7 +26,7 @@ class MockDataProvider(DataProvider):
 
     async def get_latest_station_metrics(
         self, station_id: int, capacity_kw: float = 1000.0
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         rng = _seed(f"latest-{station_id}-{datetime.now().strftime('%Y%m%d')}")
         hour = datetime.now().hour + datetime.now().minute / 60
         if 6 <= hour <= 18:
@@ -48,10 +48,10 @@ class MockDataProvider(DataProvider):
         self,
         station_id: int,
         metric: str,
-        start: Optional[datetime] = None,
-        end: Optional[datetime] = None,
+        start: datetime | None = None,
+        end: datetime | None = None,
         points: int = 144,
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         if end is None:
             end = datetime.now()
         if start is None:
@@ -85,9 +85,7 @@ class MockDataProvider(DataProvider):
             data.append({"timestamp": ts.isoformat(), "value": round(value, 2)})
         return data
 
-    async def get_station_overview(
-        self, stations: List[Dict[str, Any]]
-    ) -> List[Dict[str, Any]]:
+    async def get_station_overview(self, stations: list[dict[str, Any]]) -> list[dict[str, Any]]:
         overview = []
         for station in stations:
             sid = station["id"]
@@ -112,9 +110,7 @@ class MockDataProvider(DataProvider):
             )
         return overview
 
-    async def get_efficiency(
-        self, station_id: int, capacity_kw: float = 1000.0
-    ) -> Dict[str, Any]:
+    async def get_efficiency(self, station_id: int, capacity_kw: float = 1000.0) -> dict[str, Any]:
         rng = _seed(f"eff-{station_id}")
         daily_energy = capacity_kw * rng.uniform(2.5, 4.5)
         pr = rng.uniform(0.78, 0.92)
@@ -129,7 +125,7 @@ class MockDataProvider(DataProvider):
 
     async def get_loss_breakdown(
         self, station_id: int, capacity_kw: float = 1000.0
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         rng = _seed(f"loss-{station_id}")
         theoretical = capacity_kw * rng.uniform(3.8, 5.2)
         actual = theoretical * rng.uniform(0.78, 0.92)
@@ -145,30 +141,46 @@ class MockDataProvider(DataProvider):
             "total_loss_kwh": round(total_loss, 2),
             "total_loss_cny": round(total_loss * 0.42, 2),
             "breakdown": [
-                {"name": "辐照损失", "kwh": round(irradiance_loss, 2), "cny": round(irradiance_loss * 0.42, 2)},
-                {"name": "效率损失", "kwh": round(efficiency_loss, 2), "cny": round(efficiency_loss * 0.42, 2)},
-                {"name": "故障损失", "kwh": round(fault_loss, 2), "cny": round(fault_loss * 0.42, 2)},
-                {"name": "其他损失", "kwh": round(other_loss, 2), "cny": round(other_loss * 0.42, 2)},
+                {
+                    "name": "辐照损失",
+                    "kwh": round(irradiance_loss, 2),
+                    "cny": round(irradiance_loss * 0.42, 2),
+                },
+                {
+                    "name": "效率损失",
+                    "kwh": round(efficiency_loss, 2),
+                    "cny": round(efficiency_loss * 0.42, 2),
+                },
+                {
+                    "name": "故障损失",
+                    "kwh": round(fault_loss, 2),
+                    "cny": round(fault_loss * 0.42, 2),
+                },
+                {
+                    "name": "其他损失",
+                    "kwh": round(other_loss, 2),
+                    "cny": round(other_loss * 0.42, 2),
+                },
             ],
         }
 
-    async def get_health_trend(
-        self, station_id: int, days: int = 30
-    ) -> List[Dict[str, Any]]:
+    async def get_health_trend(self, station_id: int, days: int = 30) -> list[dict[str, Any]]:
         rng = _seed(f"health-{station_id}")
         data = []
         end = datetime.now()
         for i in range(days):
             day = end - timedelta(days=days - 1 - i)
-            data.append({
-                "date": day.strftime("%Y-%m-%d"),
-                "health_score": round(rng.uniform(70, 99), 1),
-            })
+            data.append(
+                {
+                    "date": day.strftime("%Y-%m-%d"),
+                    "health_score": round(rng.uniform(70, 99), 1),
+                }
+            )
         return data
 
     async def get_inverter_comparison(
-        self, station_id: int, inverters: List[Dict[str, Any]]
-    ) -> List[Dict[str, Any]]:
+        self, station_id: int, inverters: list[dict[str, Any]]
+    ) -> list[dict[str, Any]]:
         result = []
         for idx, inv in enumerate(inverters):
             rng = _seed(f"inv-{station_id}-{inv.get('inverter_id', idx)}")
@@ -189,8 +201,8 @@ class MockDataProvider(DataProvider):
         return result
 
     async def get_string_dispersion(
-        self, station_id: int, strings: List[Dict[str, Any]]
-    ) -> List[Dict[str, Any]]:
+        self, station_id: int, strings: list[dict[str, Any]]
+    ) -> list[dict[str, Any]]:
         if not strings:
             return []
         rng = _seed(f"string-{station_id}")
@@ -216,8 +228,8 @@ class MockDataProvider(DataProvider):
         return data
 
     async def get_peer_baseline(
-        self, stations: List[Dict[str, Any]], capacity_kw: float
-    ) -> Dict[str, Any]:
+        self, stations: list[dict[str, Any]], capacity_kw: float
+    ) -> dict[str, Any]:
         """同容量档位群体基线（mock）。
 
         容量档位：<1MW / 1-5MW / 5-10MW / 10-50MW / 50MW+
@@ -240,10 +252,9 @@ class MockDataProvider(DataProvider):
         prs = sorted([s.get("pr") or 0 for s in peers])
         crs = sorted([s.get("completion_rate") or 0 for s in peers])
         hs = sorted([s.get("health_score") or 0 for s in peers])
-        per_kw = sorted([
-            (s.get("daily_energy_kwh") or 0) / (s.get("capacity_kw") or 1)
-            for s in peers
-        ])
+        per_kw = sorted(
+            [(s.get("daily_energy_kwh") or 0) / (s.get("capacity_kw") or 1) for s in peers]
+        )
 
         return {
             "capacity_bucket": bucket,
@@ -256,19 +267,19 @@ class MockDataProvider(DataProvider):
         }
 
     async def get_peer_ranking(
-        self, stations: List[Dict[str, Any]], metric: str = "health_score"
-    ) -> List[Dict[str, Any]]:
+        self, stations: list[dict[str, Any]], metric: str = "health_score"
+    ) -> list[dict[str, Any]]:
         """同档位内电站排名 + percentile."""
         if not stations:
             return []
 
         # 按档位分组
-        buckets: Dict[str, List[Dict[str, Any]]] = {}
+        buckets: dict[str, list[dict[str, Any]]] = {}
         for s in stations:
             b = _capacity_bucket(s.get("capacity_kw") or 0)
             buckets.setdefault(b, []).append(s)
 
-        result: List[Dict[str, Any]] = []
+        result: list[dict[str, Any]] = []
         for b, peers in buckets.items():
             peers_sorted = sorted(
                 peers,
@@ -278,15 +289,17 @@ class MockDataProvider(DataProvider):
             n = len(peers_sorted)
             for i, p in enumerate(peers_sorted):
                 percentile = round((n - i) / n * 100, 1)
-                result.append({
-                    "station_id": p.get("station_id"),
-                    "name": p.get("name"),
-                    "capacity_bucket": b,
-                    "metric": p.get(metric),
-                    "rank_in_bucket": i + 1,
-                    "bucket_size": n,
-                    "percentile": percentile,
-                })
+                result.append(
+                    {
+                        "station_id": p.get("station_id"),
+                        "name": p.get("name"),
+                        "capacity_bucket": b,
+                        "metric": p.get(metric),
+                        "rank_in_bucket": i + 1,
+                        "bucket_size": n,
+                        "percentile": percentile,
+                    }
+                )
 
         # 全集团排名（按 station_id 升序给出最终顺序）
         return sorted(result, key=lambda x: (-x["percentile"], x["station_id"]))
@@ -305,7 +318,7 @@ def _capacity_bucket(capacity_kw: float) -> str:
     return "50MW+"
 
 
-def _percentile(sorted_values: List[float], p: int) -> float:
+def _percentile(sorted_values: list[float], p: int) -> float:
     """线性插值分位数."""
     if not sorted_values:
         return 0.0

@@ -21,7 +21,7 @@ from app.demo.real_provider import RealDataProvider
 logger = logging.getLogger(__name__)
 
 # 缓存每个事件循环的 provider 实例
-_loop_providers: "weakref.WeakKeyDictionary[asyncio.AbstractEventLoop, DataProvider]" = (
+_loop_providers: weakref.WeakKeyDictionary[asyncio.AbstractEventLoop, DataProvider] = (
     weakref.WeakKeyDictionary()
 )
 

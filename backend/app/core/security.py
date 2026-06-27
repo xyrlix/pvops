@@ -1,8 +1,8 @@
 """安全相关工具."""
 
 import hmac
-from datetime import datetime, timedelta, timezone
-from typing import Any, Optional
+from datetime import UTC, datetime, timedelta
+from typing import Any
 
 from fastapi import HTTPException, Request, status
 from jose import JWTError, jwt
@@ -56,18 +56,18 @@ def get_password_hash(password: str) -> str:
     return pwd_context.hash(password)
 
 
-def create_access_token(data: dict[str, Any], expires_delta: Optional[timedelta] = None) -> str:
+def create_access_token(data: dict[str, Any], expires_delta: timedelta | None = None) -> str:
     """创建访问令牌."""
     to_encode = data.copy()
     if expires_delta:
-        expire = datetime.now(timezone.utc) + expires_delta
+        expire = datetime.now(UTC) + expires_delta
     else:
-        expire = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+        expire = datetime.now(UTC) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     to_encode.update({"exp": expire, "type": "access"})
     return jwt.encode(to_encode, settings.secret_key, algorithm=ALGORITHM)
 
 
-def decode_token(token: str) -> Optional[dict[str, Any]]:
+def decode_token(token: str) -> dict[str, Any] | None:
     """解码令牌."""
     try:
         payload = jwt.decode(token, settings.secret_key, algorithms=[ALGORITHM])

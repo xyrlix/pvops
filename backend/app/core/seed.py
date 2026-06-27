@@ -6,7 +6,6 @@
 from __future__ import annotations
 
 import logging
-from typing import Optional
 
 from sqlalchemy import select
 
@@ -48,7 +47,7 @@ async def _ensure_admin(session) -> None:
     logger.info("已创建默认管理员 %s", DEMO_ADMIN_USERNAME)
 
 
-async def _ensure_demo_station(session) -> Optional[int]:
+async def _ensure_demo_station(session) -> int | None:
     result = await session.execute(select(Station).where(Station.code == DEMO_STATION_CODE))
     station = result.scalar_one_or_none()
     if station is None:

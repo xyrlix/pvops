@@ -1,7 +1,5 @@
 """电站接口."""
 
-from typing import List
-
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -10,17 +8,16 @@ from app.core.database import get_db
 from app.core.deps import get_current_user
 from app.core.tenant import TenantContext, get_current_tenant, scoped_query
 from app.models.station import Station
-from app.models.user import User
 from app.schemas.station import StationCreate, StationResponse, StationUpdate
 
 router = APIRouter(dependencies=[Depends(get_current_user)])
 
 
-@router.get("", response_model=List[StationResponse])
+@router.get("", response_model=list[StationResponse])
 async def list_stations(
     db: AsyncSession = Depends(get_db),
     tenant: TenantContext = Depends(get_current_tenant),
-) -> List[Station]:
+) -> list[Station]:
     """获取电站列表（仅当前租户可见）."""
     query = scoped_query(select(Station), Station, tenant).order_by(Station.id)
     result = await db.execute(query)

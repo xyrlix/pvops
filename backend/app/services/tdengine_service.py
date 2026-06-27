@@ -13,6 +13,7 @@ _taosws_available = False
 
 try:
     import taosws
+
     _taosws_available = True
 except ImportError:
     logger.warning("taosws 未安装，TDengine 功能将使用模拟数据")

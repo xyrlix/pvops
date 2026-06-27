@@ -1,7 +1,5 @@
 """设备资产服务."""
 
-from typing import List, Optional
-
 from sqlalchemy import select
 
 from app.core.database import AsyncSessionLocal
@@ -9,8 +7,8 @@ from app.models.device import Device
 
 
 async def list_devices(
-    station_id: Optional[int] = None, device_type: Optional[str] = None
-) -> List[Device]:
+    station_id: int | None = None, device_type: str | None = None
+) -> list[Device]:
     async with AsyncSessionLocal() as session:
         query = select(Device)
         if station_id:
@@ -22,7 +20,7 @@ async def list_devices(
         return result.scalars().all()
 
 
-async def get_device(device_id: int) -> Optional[Device]:
+async def get_device(device_id: int) -> Device | None:
     async with AsyncSessionLocal() as session:
         result = await session.execute(select(Device).where(Device.id == device_id))
         return result.scalar_one_or_none()
@@ -37,7 +35,7 @@ async def create_device(data: dict) -> Device:
         return device
 
 
-async def update_device(device_id: int, data: dict) -> Optional[Device]:
+async def update_device(device_id: int, data: dict) -> Device | None:
     async with AsyncSessionLocal() as session:
         result = await session.execute(select(Device).where(Device.id == device_id))
         device = result.scalar_one_or_none()
@@ -62,7 +60,7 @@ async def delete_device(device_id: int) -> bool:
         return True
 
 
-def _build_tree(devices: List[Device], parent_id: Optional[int] = None) -> List[dict]:
+def _build_tree(devices: list[Device], parent_id: int | None = None) -> list[dict]:
     nodes = []
     for device in devices:
         if device.parent_id == parent_id:
@@ -87,6 +85,6 @@ def _build_tree(devices: List[Device], parent_id: Optional[int] = None) -> List[
     return nodes
 
 
-async def get_station_topology(station_id: int) -> List[dict]:
+async def get_station_topology(station_id: int) -> list[dict]:
     devices = await list_devices(station_id=station_id)
     return _build_tree(devices)

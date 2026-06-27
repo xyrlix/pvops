@@ -1,7 +1,5 @@
 """指标 schema."""
 
-from typing import Optional
-
 from pydantic import BaseModel
 
 
@@ -20,5 +18,5 @@ class StationMetrics(BaseModel):
     timestamp: str
     active_power_kw: float
     daily_energy_kwh: float
-    pr: Optional[float] = None
-    health_score: Optional[float] = None
+    pr: float | None = None
+    health_score: float | None = None

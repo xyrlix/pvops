@@ -2,7 +2,6 @@
 
 import logging
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional
 
 from sqlalchemy import desc, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -19,7 +18,7 @@ def _level_to_priority(level: str) -> str:
     return {"critical": "urgent", "warning": "high", "info": "medium"}.get(level, "medium")
 
 
-async def check_alarms(station_id: int, tenant_id: Optional[int] = None) -> List[Alarm]:
+async def check_alarms(station_id: int, tenant_id: int | None = None) -> list[Alarm]:
     """检查并生成告警（生成的告警归属指定 tenant）."""
     new_alarms = []
 
@@ -76,12 +75,12 @@ async def check_alarms(station_id: int, tenant_id: Optional[int] = None) -> List
                     session,
                     station_id,
                     latest.inverter_id,
-                "warning",
-                "PR 偏低",
-                f"逆变器 {latest.inverter_id} PR 为 {pr*100:.1f}%，低于 50%",
-                "low_pr",
-                tenant_id=tenant_id,
-            )
+                    "warning",
+                    "PR 偏低",
+                    f"逆变器 {latest.inverter_id} PR 为 {pr*100:.1f}%，低于 50%",
+                    "low_pr",
+                    tenant_id=tenant_id,
+                )
                 if alarm:
                     new_alarms.append(alarm)
 
@@ -98,8 +97,8 @@ async def _create_or_update_alarm(
     title: str,
     description: str,
     rule_name: str,
-    tenant_id: Optional[int] = None,
-) -> Optional[Alarm]:
+    tenant_id: int | None = None,
+) -> Alarm | None:
     """创建或更新告警（避免重复）."""
     one_hour_ago = datetime.now() - timedelta(hours=1)
     query = _apply_tenant_filter(
@@ -135,7 +134,7 @@ async def _create_or_update_alarm(
     return alarm
 
 
-def _apply_tenant_filter(query, tenant_id: Optional[int]):
+def _apply_tenant_filter(query, tenant_id: int | None):
     """给 alarm query 注入 tenant_id 过滤；tenant_id=None 时跳过（超管）."""
     if tenant_id is None:
         return query
@@ -143,11 +142,11 @@ def _apply_tenant_filter(query, tenant_id: Optional[int]):
 
 
 async def list_alarms(
-    station_id: Optional[int] = None,
-    status: Optional[str] = None,
+    station_id: int | None = None,
+    status: str | None = None,
     limit: int = 50,
-    tenant_id: Optional[int] = None,
-) -> List[Dict]:
+    tenant_id: int | None = None,
+) -> list[dict]:
     """获取告警列表（按 tenant 过滤）."""
     async with AsyncSessionLocal() as session:
         query = _apply_tenant_filter(select(Alarm), tenant_id)
@@ -156,9 +155,7 @@ async def list_alarms(
         if status:
             query = query.where(Alarm.status == status)
 
-        result = await session.execute(
-            query.order_by(desc(Alarm.created_at)).limit(limit)
-        )
+        result = await session.execute(query.order_by(desc(Alarm.created_at)).limit(limit))
         alarms = result.scalars().all()
 
         return [
@@ -178,7 +175,7 @@ async def list_alarms(
         ]
 
 
-async def get_alarm_summary(tenant_id: Optional[int] = None) -> List[Dict]:
+async def get_alarm_summary(tenant_id: int | None = None) -> list[dict]:
     """按规则聚合未处理告警（按 tenant 过滤）."""
     async with AsyncSessionLocal() as session:
         query = _apply_tenant_filter(
@@ -188,13 +185,11 @@ async def get_alarm_summary(tenant_id: Optional[int] = None) -> List[Dict]:
                 Alarm.station_id,
                 func.count(Alarm.id).label("count"),
                 func.max(Alarm.created_at).label("latest_at"),
-            )
-            .where(Alarm.status.in_(["open", "acknowledged"])),
+            ).where(Alarm.status.in_(["open", "acknowledged"])),
             tenant_id,
         )
         result = await session.execute(
-            query.group_by(Alarm.rule_name, Alarm.level, Alarm.station_id)
-            .order_by(desc("count"))
+            query.group_by(Alarm.rule_name, Alarm.level, Alarm.station_id).order_by(desc("count"))
         )
         rows = result.all()
         return [
@@ -209,7 +204,7 @@ async def get_alarm_summary(tenant_id: Optional[int] = None) -> List[Dict]:
         ]
 
 
-async def acknowledge_alarm(alarm_id: int, tenant_id: Optional[int] = None) -> bool:
+async def acknowledge_alarm(alarm_id: int, tenant_id: int | None = None) -> bool:
     """确认告警（跨租户返回 False）."""
     async with AsyncSessionLocal() as session:
         query = _apply_tenant_filter(select(Alarm), tenant_id).where(Alarm.id == alarm_id)
@@ -222,7 +217,7 @@ async def acknowledge_alarm(alarm_id: int, tenant_id: Optional[int] = None) -> b
         return True
 
 
-async def close_alarm(alarm_id: int, tenant_id: Optional[int] = None) -> bool:
+async def close_alarm(alarm_id: int, tenant_id: int | None = None) -> bool:
     """关闭告警（跨租户返回 False）."""
     async with AsyncSessionLocal() as session:
         query = _apply_tenant_filter(select(Alarm), tenant_id).where(Alarm.id == alarm_id)
@@ -238,9 +233,9 @@ async def close_alarm(alarm_id: int, tenant_id: Optional[int] = None) -> bool:
 
 async def create_work_order_from_alarm(
     alarm_id: int,
-    assignee: Optional[str] = None,
-    tenant_id: Optional[int] = None,
-) -> Optional[Dict]:
+    assignee: str | None = None,
+    tenant_id: int | None = None,
+) -> dict | None:
     """根据告警创建工单（跨租户返回 None）."""
     async with AsyncSessionLocal() as session:
         alarm_q = _apply_tenant_filter(select(Alarm), tenant_id).where(Alarm.id == alarm_id)

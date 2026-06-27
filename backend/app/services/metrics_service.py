@@ -2,24 +2,21 @@
 
 import logging
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional
 
 from sqlalchemy import desc, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.config import get_settings
 from app.core.database import AsyncSessionLocal
 from app.demo import get_data_provider
 from app.models.device import Inverter, StringUnit
 from app.models.station import Station
-from app.models.timeseries import InverterData, WeatherData
+from app.models.timeseries import InverterData
 from app.repositories import get_repository
-from app.services.health import calculate_health_score
 
 logger = logging.getLogger(__name__)
 
 
-async def get_latest_station_metrics(station_id: int) -> Dict:
+async def get_latest_station_metrics(station_id: int) -> dict:
     """获取电站最新指标.
 
     通过 ``DataProvider`` 获取，provider 内部决定 mock / real。
@@ -41,30 +38,28 @@ async def get_latest_station_metrics(station_id: int) -> Dict:
 
 async def _get_station_capacity_from_db(station_id: int) -> float:
     async with AsyncSessionLocal() as session:
-        result = await session.execute(
-            select(Station.capacity_kw).where(Station.id == station_id)
-        )
+        result = await session.execute(select(Station.capacity_kw).where(Station.id == station_id))
         return float(result.scalar_one_or_none() or 1000)
 
 
 async def get_metric_history(
     station_id: int,
     metric: str,
-    start: Optional[datetime] = None,
-    end: Optional[datetime] = None,
-) -> List[Dict]:
+    start: datetime | None = None,
+    end: datetime | None = None,
+) -> list[dict]:
     """获取指标历史曲线."""
     provider = get_data_provider()
     return await provider.get_metric_history(station_id, metric, start, end)
 
 
-async def get_daily_energy(station_id: int, date: Optional[datetime] = None) -> float:
+async def get_daily_energy(station_id: int, date: datetime | None = None) -> float:
     """获取某日发电量（通过统一仓库）."""
     repo = get_repository()
     return await repo.get_daily_energy(station_id, date)
 
 
-async def insert_inverter_data(data: Dict) -> None:
+async def insert_inverter_data(data: dict) -> None:
     """插入逆变器数据（通过统一仓库）."""
     repo = get_repository()
     await repo.insert_inverter_data(
@@ -74,7 +69,7 @@ async def insert_inverter_data(data: Dict) -> None:
     )
 
 
-async def insert_weather_data(data: Dict) -> None:
+async def insert_weather_data(data: dict) -> None:
     """插入气象数据（通过统一仓库）."""
     repo = get_repository()
     await repo.insert_weather_data(
@@ -84,7 +79,7 @@ async def insert_weather_data(data: Dict) -> None:
     )
 
 
-async def batch_insert_inverter_data(data_list: List[Dict]) -> int:
+async def batch_insert_inverter_data(data_list: list[dict]) -> int:
     """批量插入逆变器数据（通过统一仓库）."""
     repo = get_repository()
     return await repo.batch_insert_inverter_data(data_list)
@@ -97,12 +92,13 @@ async def batch_insert_inverter_data(data_list: List[Dict]) -> int:
 DEFAULT_ELECTRICITY_PRICE = 0.42  # 元/kWh（可通过 .env ELECTRICITY_PRICE 覆盖）
 
 
-_ELECTRICITY_PRICE: Optional[float] = None
+_ELECTRICITY_PRICE: float | None = None
 
 
 def _get_price() -> float:
     """获取电价（优先 env，回退 0.42 元/kWh）."""
     import os
+
     global _ELECTRICITY_PRICE
     if _ELECTRICITY_PRICE is None:
         try:
@@ -113,11 +109,12 @@ def _get_price() -> float:
 
 
 # 温度系数（晶硅典型值 -0.0045 / °C，可通过 .env PV_TEMP_COEFF 覆盖）
-_TEMP_COEFF: Optional[float] = None
+_TEMP_COEFF: float | None = None
 
 
 def _get_temp_coeff() -> float:
     import os
+
     global _TEMP_COEFF
     if _TEMP_COEFF is None:
         try:
@@ -161,13 +158,11 @@ def _pr_with_temp_correction(
 
 
 async def _get_station_capacity(session: AsyncSession, station_id: int) -> float:
-    result = await session.execute(
-        select(Station.capacity_kw).where(Station.id == station_id)
-    )
+    result = await session.execute(select(Station.capacity_kw).where(Station.id == station_id))
     return float(result.scalar_one_or_none() or 0)
 
 
-async def get_stations_overview() -> List[Dict]:
+async def get_stations_overview() -> list[dict]:
     """集团总览：用于气泡图/TOP榜."""
     async with AsyncSessionLocal() as session:
         result = await session.execute(select(Station))
@@ -211,7 +206,7 @@ async def get_stations_overview() -> List[Dict]:
         return overview
 
 
-async def get_stations_ranking(metric: str = "health_score", limit: int = 10) -> List[Dict]:
+async def get_stations_ranking(metric: str = "health_score", limit: int = 10) -> list[dict]:
     """电站排名."""
     overview = await get_stations_overview()
     reverse = metric not in ("loss_cny", "loss_kwh")
@@ -219,7 +214,7 @@ async def get_stations_ranking(metric: str = "health_score", limit: int = 10) ->
     return overview[:limit]
 
 
-async def get_station_peer_baseline(station_id: int) -> Dict:
+async def get_station_peer_baseline(station_id: int) -> dict:
     """获取同容量档位的群体基线（中位数 + top quartile）.
 
     复用 get_stations_overview 拿到全集团快照，喂给 provider.get_peer_baseline 计算。
@@ -251,21 +246,19 @@ async def get_station_peer_baseline(station_id: int) -> Dict:
     return baseline
 
 
-async def get_station_peer_ranking(station_id: int, metric: str = "health_score") -> Dict:
+async def get_station_peer_ranking(station_id: int, metric: str = "health_score") -> dict:
     """获取同档位内电站排名（高亮本电站位置）."""
     overview = await get_stations_overview()
     provider = get_data_provider()
     ranking = await provider.get_peer_ranking(overview, metric)
     return {
         "metric": metric,
-        "self_rank": next(
-            (r for r in ranking if r.get("station_id") == station_id), None
-        ),
+        "self_rank": next((r for r in ranking if r.get("station_id") == station_id), None),
         "ranking": ranking,
     }
 
 
-async def get_station_efficiency(station_id: int) -> Dict:
+async def get_station_efficiency(station_id: int) -> dict:
     """电站效率指标（PR 按 IEEE 61724 温度修正，等效小时按实际/装机）."""
     async with AsyncSessionLocal() as session:
         capacity = await _get_station_capacity(session, station_id)
@@ -311,7 +304,7 @@ async def get_station_efficiency(station_id: int) -> Dict:
         }
 
 
-async def get_station_losses(station_id: int) -> Dict:
+async def get_station_losses(station_id: int) -> dict:
     """损失分解（元/kWh）."""
     async with AsyncSessionLocal() as session:
         capacity = await _get_station_capacity(session, station_id)
@@ -344,15 +337,23 @@ async def get_station_losses(station_id: int) -> Dict:
             "total_loss_kwh": round(total_loss, 2),
             "total_loss_cny": to_cny(total_loss),
             "breakdown": [
-                {"name": "辐照损失", "kwh": round(irradiance_loss, 2), "cny": to_cny(irradiance_loss)},
-                {"name": "效率损失", "kwh": round(efficiency_loss, 2), "cny": to_cny(efficiency_loss)},
+                {
+                    "name": "辐照损失",
+                    "kwh": round(irradiance_loss, 2),
+                    "cny": to_cny(irradiance_loss),
+                },
+                {
+                    "name": "效率损失",
+                    "kwh": round(efficiency_loss, 2),
+                    "cny": to_cny(efficiency_loss),
+                },
                 {"name": "故障损失", "kwh": round(fault_loss, 2), "cny": to_cny(fault_loss)},
                 {"name": "其他损失", "kwh": round(other_loss, 2), "cny": to_cny(other_loss)},
             ],
         }
 
 
-async def get_health_trend(station_id: int, days: int = 30) -> List[Dict]:
+async def get_health_trend(station_id: int, days: int = 30) -> list[dict]:
     """健康度趋势（用于热力图）."""
     async with AsyncSessionLocal() as session:
         end = datetime.now()
@@ -381,9 +382,13 @@ async def get_health_trend(station_id: int, days: int = 30) -> List[Dict]:
         data = []
         for row in rows:
             score = 100.0
-            if row.max_irradiance and row.max_irradiance > 200:
-                if row.avg_power and row.avg_power < row.max_irradiance / 1000 * 1000 * 0.2:
-                    score -= 40
+            if (
+                row.max_irradiance
+                and row.max_irradiance > 200
+                and row.avg_power
+                and row.avg_power < row.max_irradiance / 1000 * 1000 * 0.2
+            ):
+                score -= 40
             if row.max_fault and row.max_fault > 0:
                 score -= 30
             score = max(0, min(100, score))
@@ -391,18 +396,21 @@ async def get_health_trend(station_id: int, days: int = 30) -> List[Dict]:
         return data
 
 
-async def get_inverter_comparison(station_id: int) -> List[Dict]:
+async def get_inverter_comparison(station_id: int) -> list[dict]:
     """逆变器群组对比."""
     async with AsyncSessionLocal() as session:
-        result = await session.execute(
-            select(Inverter).where(Inverter.station_id == station_id)
-        )
+        result = await session.execute(select(Inverter).where(Inverter.station_id == station_id))
         inverters = result.scalars().all()
 
         if not inverters:
             provider = get_data_provider()
             demo_inverters = [
-                {"inverter_id": f"INV{i:03d}", "name": f"逆变器 {i}", "capacity_kw": 100.0, "status": "online"}
+                {
+                    "inverter_id": f"INV{i:03d}",
+                    "name": f"逆变器 {i}",
+                    "capacity_kw": 100.0,
+                    "status": "online",
+                }
                 for i in range(1, 7)
             ]
             return await provider.get_inverter_comparison(station_id, demo_inverters)
@@ -423,7 +431,11 @@ async def get_inverter_comparison(station_id: int) -> List[Dict]:
             )
             record = latest.scalar_one_or_none()
 
-            active_power = record.active_power_kw if record else inv.capacity_kw * (0.5 + 0.3 * hash(inv.inverter_id) % 10 / 10)
+            active_power = (
+                record.active_power_kw
+                if record
+                else inv.capacity_kw * (0.5 + 0.3 * hash(inv.inverter_id) % 10 / 10)
+            )
             daily_energy = record.daily_energy_kwh if record else inv.capacity_kw * 3.5
             utilization = active_power / inv.capacity_kw if inv.capacity_kw > 0 else 0
 
@@ -441,9 +453,7 @@ async def get_inverter_comparison(station_id: int) -> List[Dict]:
         return comparison
 
 
-async def get_string_dispersion(
-    station_id: int, inverter_id: Optional[str] = None
-) -> List[Dict]:
+async def get_string_dispersion(station_id: int, inverter_id: str | None = None) -> list[dict]:
     """组串离散率."""
     async with AsyncSessionLocal() as session:
         query = select(StringUnit).where(StringUnit.station_id == station_id)
@@ -455,7 +465,12 @@ async def get_string_dispersion(
         if not strings:
             provider = get_data_provider()
             demo_strings = [
-                {"string_id": f"STR{i:03d}", "name": f"组串 {i}", "inverter_id": inverter_id or "INV001", "capacity_kw": 10}
+                {
+                    "string_id": f"STR{i:03d}",
+                    "name": f"组串 {i}",
+                    "inverter_id": inverter_id or "INV001",
+                    "capacity_kw": 10,
+                }
                 for i in range(1, 13)
             ]
             return await provider.get_string_dispersion(station_id, demo_strings)

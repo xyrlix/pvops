@@ -1,7 +1,6 @@
 """电站 schema."""
 
 from datetime import datetime
-from typing import Optional
 
 from pydantic import BaseModel
 
@@ -12,11 +11,11 @@ class StationBase(BaseModel):
     name: str
     code: str
     capacity_kw: float
-    location: Optional[str] = None
-    longitude: Optional[float] = None
-    latitude: Optional[float] = None
-    contact_name: Optional[str] = None
-    contact_phone: Optional[str] = None
+    location: str | None = None
+    longitude: float | None = None
+    latitude: float | None = None
+    contact_name: str | None = None
+    contact_phone: str | None = None
     status: str = "active"
 
 
@@ -29,14 +28,14 @@ class StationCreate(StationBase):
 class StationUpdate(BaseModel):
     """更新电站 schema."""
 
-    name: Optional[str] = None
-    capacity_kw: Optional[float] = None
-    location: Optional[str] = None
-    longitude: Optional[float] = None
-    latitude: Optional[float] = None
-    contact_name: Optional[str] = None
-    contact_phone: Optional[str] = None
-    status: Optional[str] = None
+    name: str | None = None
+    capacity_kw: float | None = None
+    location: str | None = None
+    longitude: float | None = None
+    latitude: float | None = None
+    contact_name: str | None = None
+    contact_phone: str | None = None
+    status: str | None = None
 
 
 class StationResponse(StationBase):
@@ -47,4 +46,4 @@ class StationResponse(StationBase):
 
     id: int
     created_at: datetime
-    updated_at: Optional[datetime] = None
+    updated_at: datetime | None = None

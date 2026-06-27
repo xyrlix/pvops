@@ -22,8 +22,7 @@
 """
 
 import logging
-import struct
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from app.protocols.base import BaseProtocolAdapter, CollectorPoint
 
@@ -31,7 +30,7 @@ logger = logging.getLogger(__name__)
 
 
 # 华为 SUN2000 寄存器表（基于公开 Modbus 接口定义）
-HUAWEI_SUN2000_REGISTER_MAP: List[CollectorPoint] = [
+HUAWEI_SUN2000_REGISTER_MAP: list[CollectorPoint] = [
     # 功率
     CollectorPoint("active_power_w", "input", 32064, "int", 1.0, "W"),
     CollectorPoint("reactive_power_var", "input", 32065, "int", 1.0, "var"),
@@ -93,7 +92,7 @@ class HuaweiSUN2000Adapter(BaseProtocolAdapter):
         6: "升级中",
     }
 
-    def __init__(self, device_code: str, config: Optional[Dict[str, Any]] = None):
+    def __init__(self, device_code: str, config: dict[str, Any] | None = None):
         super().__init__(device_code, config)
         self.host = self.config.get("host", "127.0.0.1")
         self.port = int(self.config.get("port", 502))
@@ -122,12 +121,12 @@ class HuaweiSUN2000Adapter(BaseProtocolAdapter):
             self._client.close()
             self._client = None
 
-    async def read_points(self, points: List[CollectorPoint]) -> Dict[str, Any]:
+    async def read_points(self, points: list[CollectorPoint]) -> dict[str, Any]:
         """按点位批量读."""
         if not self._client:
             raise RuntimeError("未连接设备")
 
-        result: Dict[str, Any] = {}
+        result: dict[str, Any] = {}
         # 按 register_type 分组，连续读 block
         for p in points:
             try:
@@ -135,16 +134,20 @@ class HuaweiSUN2000Adapter(BaseProtocolAdapter):
                     address=p.address, count=2, slave=self.unit_id
                 )
                 if rr.isError():
-                    logger.warning("SUN2000 read %s reg %d failed: %s", self.device_code, p.address, rr)
+                    logger.warning(
+                        "SUN2000 read %s reg %d failed: %s", self.device_code, p.address, rr
+                    )
                     continue
                 # 取第一个寄存器作为值（双寄存器读取，仅用低位；高位用于校验）
                 raw = rr.registers[0]
                 result[p.name] = _decode_huawei_register(raw, p)
             except Exception as exc:
-                logger.warning("SUN2000 read %s reg %d exception: %s", self.device_code, p.address, exc)
+                logger.warning(
+                    "SUN2000 read %s reg %d exception: %s", self.device_code, p.address, exc
+                )
         return result
 
-    async def collect_once(self) -> Dict[str, Any]:
+    async def collect_once(self) -> dict[str, Any]:
         """采集一次完整数据，返回标准 schema（与 InverterData 模型对齐）."""
         raw = await self.read_points(HUAWEI_SUN2000_REGISTER_MAP)
 

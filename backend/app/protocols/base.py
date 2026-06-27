@@ -2,7 +2,7 @@
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 @dataclass
@@ -20,7 +20,7 @@ class CollectorPoint:
 class BaseProtocolAdapter(ABC):
     """协议适配器抽象基类."""
 
-    def __init__(self, device_code: str, config: Optional[Dict[str, Any]] = None):
+    def __init__(self, device_code: str, config: dict[str, Any] | None = None):
         self.device_code = device_code
         self.config = config or {}
 
@@ -35,11 +35,11 @@ class BaseProtocolAdapter(ABC):
         ...
 
     @abstractmethod
-    async def read_points(self, points: List[CollectorPoint]) -> Dict[str, Any]:
+    async def read_points(self, points: list[CollectorPoint]) -> dict[str, Any]:
         """按采集点批量读数，返回 {point_name: raw_value}."""
         ...
 
     @abstractmethod
-    async def collect_once(self) -> Dict[str, Any]:
+    async def collect_once(self) -> dict[str, Any]:
         """采集一次完整数据，返回可用于写入仓库的字典."""
         ...

@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta
 from types import SimpleNamespace
-from typing import Any, Dict, List
+from typing import Any
 
 import pytest
 
@@ -19,7 +19,6 @@ from app.services.diagnosis_service import (
     _check_high_module_temperature,
     _check_irradiance_power_mismatch,
     _check_night_power_consumption,
-    _check_power_factor,
     _check_power_generation,
     _check_pr_performance,
     _check_repeated_fault,
@@ -28,7 +27,6 @@ from app.services.diagnosis_service import (
     _check_voltage_imbalance,
     _check_weather_data_gap,
 )
-
 
 # ─── helpers ────────────────────────────────────────────────
 
@@ -88,8 +86,13 @@ async def test_check_power_generation_triggers_on_daytime_zero_power() -> None:
     """白天高辐照但功率为 0 → critical 告警."""
     r = _result()
     records = [
-        _rec(timestamp=datetime.now(), active_power_kw=0.0, irradiance_w_m2=600.0,
-             dc_voltage_v=620.0, dc_current_a=12.0),
+        _rec(
+            timestamp=datetime.now(),
+            active_power_kw=0.0,
+            irradiance_w_m2=600.0,
+            dc_voltage_v=620.0,
+            dc_current_a=12.0,
+        ),
     ]
     await _check_power_generation(r, "INV001", records)
     assert len(r.findings) == 1
@@ -128,9 +131,11 @@ async def test_check_pr_performance_warns_when_pr_below_threshold() -> None:
     r = _result()
     now = datetime.now()
     records = [
-        _rec(timestamp=now - timedelta(minutes=i * 10),
-             active_power_kw=400.0,  # theoretical=irradiance_w_m2/1000*1000=900
-             irradiance_w_m2=900.0)
+        _rec(
+            timestamp=now - timedelta(minutes=i * 10),
+            active_power_kw=400.0,  # theoretical=irradiance_w_m2/1000*1000=900
+            irradiance_w_m2=900.0,
+        )
         for i in range(5)
     ]
     await _check_pr_performance(r, "INV001", records)
@@ -257,15 +262,19 @@ async def test_combined_health_score_penalizes_critical() -> None:
     r = _result()
     now = datetime.now()
     records = [
-        _rec(timestamp=now - timedelta(minutes=i), active_power_kw=0.0,
-             irradiance_w_m2=600.0, dc_voltage_v=620.0, dc_current_a=10.0)
+        _rec(
+            timestamp=now - timedelta(minutes=i),
+            active_power_kw=0.0,
+            irradiance_w_m2=600.0,
+            dc_voltage_v=620.0,
+            dc_current_a=10.0,
+        )
         for i in range(2)
     ]
     await _check_power_generation(r, "INV001", records)
     # 再触发 PR warning
     pr_records = [
-        _rec(timestamp=now - timedelta(minutes=i * 5), active_power_kw=400.0,
-             irradiance_w_m2=900.0)
+        _rec(timestamp=now - timedelta(minutes=i * 5), active_power_kw=400.0, irradiance_w_m2=900.0)
         for i in range(5)
     ]
     await _check_pr_performance(r, "INV001", pr_records)
@@ -364,8 +373,12 @@ async def test_power_mismatch_triggers() -> None:
     r = _result()
     now = datetime.now()
     # theoretical=800/1000*1000=800, pr=100/800=0.125 < 0.5
-    records = [_rec(timestamp=now - timedelta(minutes=i * 10),
-                     active_power_kw=100.0, irradiance_w_m2=800.0) for i in range(3)]
+    records = [
+        _rec(
+            timestamp=now - timedelta(minutes=i * 10), active_power_kw=100.0, irradiance_w_m2=800.0
+        )
+        for i in range(3)
+    ]
     await _check_irradiance_power_mismatch(r, "INV001", records)
     assert len(r.findings) >= 1
 

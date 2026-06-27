@@ -21,7 +21,7 @@ from app.repositories.sqlite_repository import SQLiteTimeSeriesRepository
 
 logger = logging.getLogger(__name__)
 
-_loop_repos: "weakref.WeakKeyDictionary[asyncio.AbstractEventLoop, TimeSeriesRepository]" = (
+_loop_repos: weakref.WeakKeyDictionary[asyncio.AbstractEventLoop, TimeSeriesRepository] = (
     weakref.WeakKeyDictionary()
 )
 
@@ -75,7 +75,7 @@ async def initialize_repository() -> TimeSeriesRepository:
 
 async def close_all_repositories() -> None:
     """关闭所有已缓存的仓库实例（应用 shutdown 时调用）."""
-    for loop, repo in list(_loop_repos.items()):
+    for _loop, repo in list(_loop_repos.items()):
         try:
             await repo.close()
         except Exception:  # pragma: no cover - best-effort cleanup

@@ -38,9 +38,7 @@ class LocalVectorStore(VectorStore):
                 )
             """
             )
-            await db.execute(
-                "CREATE INDEX IF NOT EXISTS idx_kb_doc_id ON kb_documents(doc_id)"
-            )
+            await db.execute("CREATE INDEX IF NOT EXISTS idx_kb_doc_id ON kb_documents(doc_id)")
             await db.commit()
 
     async def is_available(self) -> bool:
@@ -106,11 +104,11 @@ class LocalVectorStore(VectorStore):
         if not terms:
             return []
 
-        async with aiosqlite.connect(self.db_path) as db, \
-                db.execute(
-                "SELECT id, doc_id, content, metadata FROM kb_documents"
-            ) as cursor:
-                rows = await cursor.fetchall()
+        async with (
+            aiosqlite.connect(self.db_path) as db,
+            db.execute("SELECT id, doc_id, content, metadata FROM kb_documents") as cursor,
+        ):
+            rows = await cursor.fetchall()
 
         results = []
         for row in rows:
@@ -131,8 +129,6 @@ class LocalVectorStore(VectorStore):
         await self.init()
         async with aiosqlite.connect(self.db_path) as db:
             placeholders = ",".join("?" * len(ids))
-            await db.execute(
-                f"DELETE FROM kb_documents WHERE id IN ({placeholders})", ids
-            )
+            await db.execute(f"DELETE FROM kb_documents WHERE id IN ({placeholders})", ids)
             await db.commit()
         return True

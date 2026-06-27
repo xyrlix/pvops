@@ -1,8 +1,8 @@
 """Modbus RTU 协议适配器."""
 
 import logging
-from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
+from datetime import UTC, datetime
+from typing import Any
 
 from app.protocols.base import BaseProtocolAdapter, CollectorPoint
 
@@ -19,7 +19,7 @@ def _decode_value(raw: int, point: CollectorPoint) -> Any:
 class ModbusRTUAdapter(BaseProtocolAdapter):
     """Modbus RTU 适配器（串口）."""
 
-    def __init__(self, device_code: str, config: Optional[Dict[str, Any]] = None):
+    def __init__(self, device_code: str, config: dict[str, Any] | None = None):
         super().__init__(device_code, config)
         self.port = self.config.get("serial_port", "/dev/ttyUSB0")
         self.baudrate = int(self.config.get("baudrate", 9600))
@@ -48,7 +48,7 @@ class ModbusRTUAdapter(BaseProtocolAdapter):
             self._client.close()
             self._client = None
 
-    async def read_points(self, points: List[CollectorPoint]) -> Dict[str, Any]:
+    async def read_points(self, points: list[CollectorPoint]) -> dict[str, Any]:
         if not self._client:
             await self.connect()
         result = {}
@@ -74,7 +74,7 @@ class ModbusRTUAdapter(BaseProtocolAdapter):
                 logger.warning(f"读取 {point.name} 异常: {e}")
         return result
 
-    async def collect_once(self) -> Dict[str, Any]:
+    async def collect_once(self) -> dict[str, Any]:
         from app.protocols.register_map import DEVICE_REGISTER_MAPS
 
         device_type = self.config.get("device_type", "inverter")
@@ -82,6 +82,6 @@ class ModbusRTUAdapter(BaseProtocolAdapter):
         values = await self.read_points(points)
 
         return {
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             **values,
         }

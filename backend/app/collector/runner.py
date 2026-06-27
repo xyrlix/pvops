@@ -2,7 +2,7 @@
 
 import asyncio
 import logging
-from typing import Any, Dict, List
+from typing import Any
 
 from app.collector.local_queue import LocalQueue
 from app.protocols import create_adapter
@@ -35,12 +35,14 @@ class CollectorRunner:
         target_types = {"inverter", "weather_station", "meter"}
         devices = [d for d in devices if d.device_type in target_types and d.status == "active"]
 
-        failed: List[Dict[str, Any]] = []
+        failed: list[dict[str, Any]] = []
 
         for device in devices:
-            data: Dict[str, Any] = {}
+            data: dict[str, Any] = {}
             try:
-                adapter = create_adapter(device.protocol or "simulator", device.device_code, device.config or {})
+                adapter = create_adapter(
+                    device.protocol or "simulator", device.device_code, device.config or {}
+                )
                 await adapter.connect()
                 data = await adapter.collect_once()
                 await adapter.disconnect()
@@ -68,7 +70,7 @@ class CollectorRunner:
 
         await self._flush_queue()
 
-    async def _write_payload(self, payload: Dict[str, Any]) -> None:
+    async def _write_payload(self, payload: dict[str, Any]) -> None:
         device_type = payload.get("device_type")
         data = payload["data"]
         if device_type == "inverter":
@@ -76,13 +78,9 @@ class CollectorRunner:
                 payload["station_id"], payload["device_code"], data
             )
         elif device_type == "weather_station":
-            await self.repo.insert_weather_data(
-                payload["station_id"], payload["device_code"], data
-            )
+            await self.repo.insert_weather_data(payload["station_id"], payload["device_code"], data)
         elif device_type == "meter":
-            await self.repo.insert_meter_data(
-                payload["station_id"], payload["device_code"], data
-            )
+            await self.repo.insert_meter_data(payload["station_id"], payload["device_code"], data)
 
     async def _flush_queue(self) -> None:
         payloads = await self.queue.dequeue_all()

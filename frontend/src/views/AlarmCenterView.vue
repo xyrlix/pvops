@@ -97,12 +97,13 @@
               @click="batchClose"
             >批量关闭</el-button>
           </template>
-          <el-table
-            v-loading="loading"
-            :data="alarms"
-            stripe
-            @selection-change="handleSelectionChange"
-          >
+          <PvStateView :state="alarmsTableState" variant="table" :rows="6" empty-text="暂无告警" @retry="fetchAlarms">
+            <el-table
+              v-if="alarms.length"
+              :data="alarms"
+              stripe
+              @selection-change="handleSelectionChange"
+            >
             <el-table-column type="selection" width="50" />
             <el-table-column prop="id" label="ID" width="60" />
             <el-table-column prop="title" label="告警标题" min-width="180" />
@@ -160,6 +161,7 @@
               </template>
             </el-table-column>
           </el-table>
+          </PvStateView>
         </PvCard>
       </el-col>
     </el-row>
@@ -172,6 +174,7 @@ import DashboardLayout from '@/components/DashboardLayout.vue'
 import PvCard from '@/components/PvCard.vue'
 import PvTag from '@/components/PvTag.vue'
 import PvSkeleton from '@/components/PvSkeleton.vue'
+import PvStateView from '@/components/PvStateView.vue'
 import AlarmDonutChart from '@/components/AlarmDonutChart.vue'
 import { alarmApi } from '@/services/api'
 import { useCopilotStore } from '@/stores/copilot'
@@ -186,6 +189,12 @@ const alarms = ref<any[]>([])
 const summary = ref<any[]>([])
 const loading = ref(false)
 const statsLoading = ref(false)
+
+const alarmsTableState = computed<'normal' | 'loading' | 'empty'>(() => {
+  if (loading.value) return 'loading'
+  if (!alarms.value.length) return 'empty'
+  return 'normal'
+})
 const filterStatus = ref('')
 // TODO(typing): replace any with explicit type; suppressed to keep CI green
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

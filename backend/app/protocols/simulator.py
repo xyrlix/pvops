@@ -2,8 +2,8 @@
 
 import math
 import random
-from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
+from datetime import UTC, datetime
+from typing import Any
 
 from app.protocols.base import BaseProtocolAdapter, CollectorPoint
 
@@ -11,7 +11,7 @@ from app.protocols.base import BaseProtocolAdapter, CollectorPoint
 class SimulatorAdapter(BaseProtocolAdapter):
     """本地模拟数据适配器，用于无真实设备时的演示."""
 
-    def __init__(self, device_code: str, config: Optional[Dict[str, Any]] = None):
+    def __init__(self, device_code: str, config: dict[str, Any] | None = None):
         super().__init__(device_code, config)
         self.capacity_kw = float(self.config.get("capacity_kw", 350.0))
         self._phase = random.random() * 2 * math.pi
@@ -22,11 +22,11 @@ class SimulatorAdapter(BaseProtocolAdapter):
     async def disconnect(self) -> None:
         pass
 
-    async def read_points(self, points: List[CollectorPoint]) -> Dict[str, Any]:
+    async def read_points(self, points: list[CollectorPoint]) -> dict[str, Any]:
         return {p.name: self._mock_value(p.name) for p in points}
 
-    async def collect_once(self) -> Dict[str, Any]:
-        now = datetime.now(timezone.utc)
+    async def collect_once(self) -> dict[str, Any]:
+        now = datetime.now(UTC)
         hour = now.hour + now.minute / 60.0
         # 简化日照曲线：6~18 点有辐照
         irradiance = 0.0

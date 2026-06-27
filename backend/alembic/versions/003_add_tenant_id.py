@@ -12,9 +12,9 @@ Create Date: 2026-06-27
 - 业务层通过 app.core.tenant.scoped_query() 显式过滤
 """
 
-from alembic import op
 import sqlalchemy as sa
 
+from alembic import op
 
 revision = "003"
 down_revision = "002"
@@ -61,9 +61,7 @@ def upgrade() -> None:
             sa.Column("tenant_id", sa.Integer(), nullable=True),
         )
         # 回填所有 NULL 为默认 tenant
-        op.execute(
-            f"UPDATE {tbl} SET tenant_id = {DEFAULT_TENANT_ID} WHERE tenant_id IS NULL"
-        )
+        op.execute(f"UPDATE {tbl} SET tenant_id = {DEFAULT_TENANT_ID} WHERE tenant_id IS NULL")
         # 加索引（注意：必须在数据回填后）
         op.create_index(op.f(f"ix_{tbl}_tenant_id"), tbl, ["tenant_id"], unique=False)
 

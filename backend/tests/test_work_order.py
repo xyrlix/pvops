@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from datetime import datetime
 from types import SimpleNamespace
-from typing import Any, Optional
+from typing import Any
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
@@ -16,7 +16,6 @@ from app.services.work_order_service import (
     create_work_order,
     update_work_order_status,
 )
-
 
 # ─── helpers ────────────────────────────────────────────────
 
@@ -104,9 +103,7 @@ async def test_update_status_appends_feedback_entry() -> None:
     )
     session = _mock_session_for_wo(wo)
 
-    result = await update_work_order_status(
-        session, 1, status="in_progress", comment="开始处理"
-    )
+    result = await update_work_order_status(session, 1, status="in_progress", comment="开始处理")
     assert result is wo
     assert wo.status == "in_progress"
     assert len(wo.feedback) == 1
@@ -122,16 +119,24 @@ async def test_update_status_appends_feedback_entry() -> None:
 async def test_update_status_appends_solution_to_description() -> None:
     """solution 非空时追加到 description."""
     wo = SimpleNamespace(
-        id=2, title="t", description="原始描述", status="pending",
-        feedback=[{"status": "pending", "comment": "已派单", "solution": "",
-                   "created_at": datetime.now().isoformat()}],
+        id=2,
+        title="t",
+        description="原始描述",
+        status="pending",
+        feedback=[
+            {
+                "status": "pending",
+                "comment": "已派单",
+                "solution": "",
+                "created_at": datetime.now().isoformat(),
+            }
+        ],
         updated_at=None,
     )
     session = _mock_session_for_wo(wo)
 
     await update_work_order_status(
-        session, 2, status="completed",
-        comment="已修复", solution="重启逆变器并更换保险丝"
+        session, 2, status="completed", comment="已修复", solution="重启逆变器并更换保险丝"
     )
     assert "原始描述" in wo.description
     assert "【解决方案】" in wo.description
@@ -143,8 +148,12 @@ async def test_update_status_appends_solution_to_description() -> None:
 async def test_update_status_solution_does_not_duplicate_marker() -> None:
     """多次更新 solution 不重复追加 【解决方案】 段."""
     wo = SimpleNamespace(
-        id=3, title="t", description="desc", status="pending",
-        feedback=[], updated_at=None,
+        id=3,
+        title="t",
+        description="desc",
+        status="pending",
+        feedback=[],
+        updated_at=None,
     )
     session = _mock_session_for_wo(wo)
 

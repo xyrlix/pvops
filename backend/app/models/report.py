@@ -1,6 +1,6 @@
 """报告模型."""
 
-from sqlalchemy import Column, DateTime, Float, ForeignKey, Integer, JSON, String, Text
+from sqlalchemy import JSON, Column, DateTime, Float, ForeignKey, Integer, String, Text
 from sqlalchemy.sql import func
 
 from app.core.database import Base

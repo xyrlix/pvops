@@ -5,7 +5,6 @@
 """
 
 import logging
-from typing import Dict, List
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -21,12 +20,12 @@ logger = logging.getLogger(__name__)
 DEFAULT_ELECTRICITY_PRICE = 0.42
 
 
-async def _list_stations(session: AsyncSession) -> List[Station]:
+async def _list_stations(session: AsyncSession) -> list[Station]:
     result = await session.execute(select(Station))
     return list(result.scalars().all())
 
 
-async def get_dashboard_overview() -> Dict:
+async def get_dashboard_overview() -> dict:
     """总览大屏顶部 KPI."""
     async with AsyncSessionLocal() as session:
         stations = await _list_stations(session)
@@ -61,7 +60,7 @@ async def get_dashboard_overview() -> Dict:
         }
 
 
-async def get_stations_overview() -> List[Dict]:
+async def get_stations_overview() -> list[dict]:
     """集团场站分布（气泡图/TOP榜）.
 
     委托给 ``DataProvider.get_station_overview``，mock 模式生成演示数据；
@@ -89,14 +88,14 @@ async def get_stations_overview() -> List[Dict]:
         return await provider.get_station_overview(station_dicts)
 
 
-async def get_risk_top_stations(limit: int = 5) -> List[Dict]:
+async def get_risk_top_stations(limit: int = 5) -> list[dict]:
     """高风险场站 TOP."""
     overview = await get_stations_overview()
     overview.sort(key=lambda x: x.get("health_score", 100))
     return overview[:limit]
 
 
-async def get_alarm_stats(station_id: int = None) -> Dict:
+async def get_alarm_stats(station_id: int = None) -> dict:
     """告警统计."""
     async with AsyncSessionLocal() as session:
         query = select(Alarm.level, func.count(Alarm.id)).where(Alarm.status == "open")

@@ -4,7 +4,7 @@ import json
 import logging
 import os
 from datetime import datetime
-from typing import Any, Dict, List
+from typing import Any
 
 import aiosqlite
 
@@ -32,7 +32,7 @@ class LocalQueue:
             )
             await db.commit()
 
-    async def enqueue(self, payload: Dict[str, Any]) -> None:
+    async def enqueue(self, payload: dict[str, Any]) -> None:
         async with aiosqlite.connect(self.db_path) as db:
             await db.execute(
                 "INSERT INTO collector_queue (payload, created_at) VALUES (?, ?)",
@@ -40,7 +40,7 @@ class LocalQueue:
             )
             await db.commit()
 
-    async def dequeue_all(self) -> List[Dict[str, Any]]:
+    async def dequeue_all(self) -> list[dict[str, Any]]:
         async with aiosqlite.connect(self.db_path) as db:
             async with db.execute(
                 "SELECT id, payload FROM collector_queue ORDER BY id ASC"
@@ -58,15 +58,15 @@ class LocalQueue:
 
             if ids:
                 placeholders = ",".join("?" * len(ids))
-                await db.execute(
-                    f"DELETE FROM collector_queue WHERE id IN ({placeholders})", ids
-                )
+                await db.execute(f"DELETE FROM collector_queue WHERE id IN ({placeholders})", ids)
                 await db.commit()
 
             return payloads
 
     async def size(self) -> int:
-        async with aiosqlite.connect(self.db_path) as db:
-            async with db.execute("SELECT COUNT(*) FROM collector_queue") as cursor:
-                row = await cursor.fetchone()
-                return row[0] if row else 0
+        async with (
+            aiosqlite.connect(self.db_path) as db,
+            db.execute("SELECT COUNT(*) FROM collector_queue") as cursor,
+        ):
+            row = await cursor.fetchone()
+            return row[0] if row else 0

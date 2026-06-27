@@ -1,7 +1,5 @@
 """设备资产接口."""
 
-from typing import List, Optional
-
 from fastapi import APIRouter, Depends, Query
 
 from app.core.deps import get_current_user
@@ -11,10 +9,10 @@ from app.services import device_service
 router = APIRouter(dependencies=[Depends(get_current_user)])
 
 
-@router.get("", response_model=List[DeviceResponse])
+@router.get("", response_model=list[DeviceResponse])
 async def list_devices(
-    station_id: Optional[int] = Query(None),
-    device_type: Optional[str] = Query(None),
+    station_id: int | None = Query(None),
+    device_type: str | None = Query(None),
 ):
     """列出设备资产."""
     devices = await device_service.list_devices(station_id, device_type)

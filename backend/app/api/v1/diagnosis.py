@@ -1,18 +1,17 @@
 """诊断接口."""
 
-from typing import Any, Dict, List, Optional
+from typing import Any
 from urllib.parse import quote
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from sqlalchemy import desc, select
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.agents.diagnosis_agent import DiagnosisAgent
-from app.core.database import AsyncSessionLocal, get_db
+from app.core.database import AsyncSessionLocal
 from app.core.deps import get_current_user
 from app.core.limiter import limiter
 from app.models.report import DiagnosisFeedback, DiagnosisReport
-from app.schemas.report import DiagnosisReportCreate, DiagnosisReportResponse
+from app.schemas.report import DiagnosisReportResponse
 from app.services.pdf_service import generate_diagnosis_report_pdf
 
 router = APIRouter(dependencies=[Depends(get_current_user)])
@@ -41,11 +40,11 @@ async def diagnose_station(request: Request, station_id: int) -> DiagnosisReport
         return report
 
 
-@router.get("/reports", response_model=List[DiagnosisReportResponse])
+@router.get("/reports", response_model=list[DiagnosisReportResponse])
 async def list_reports(
-    station_id: Optional[int] = None,
+    station_id: int | None = None,
     limit: int = 20,
-) -> List[DiagnosisReport]:
+) -> list[DiagnosisReport]:
     """获取诊断报告列表."""
     async with AsyncSessionLocal() as session:
         query = select(DiagnosisReport)
@@ -93,16 +92,18 @@ async def export_report_pdf(report_id: int):
 
     # 转换 findings 字段名：suggestions -> suggestion（pdf_service 模板用的是单数）
     raw_findings = report.findings or []
-    findings_for_pdf: List[Dict[str, Any]] = []
+    findings_for_pdf: list[dict[str, Any]] = []
     for item in raw_findings:
-        findings_for_pdf.append({
-            "title": item.get("title", "未命名"),
-            "category": item.get("category", ""),
-            "severity": item.get("severity", "info"),
-            "evidence": "\n".join(item.get("evidence", []) or []),
-            "root_cause": item.get("root_cause", "-"),
-            "suggestion": "\n".join(item.get("suggestions", []) or []),
-        })
+        findings_for_pdf.append(
+            {
+                "title": item.get("title", "未命名"),
+                "category": item.get("category", ""),
+                "severity": item.get("severity", "info"),
+                "evidence": "\n".join(item.get("evidence", []) or []),
+                "root_cause": item.get("root_cause", "-"),
+                "suggestion": "\n".join(item.get("suggestions", []) or []),
+            }
+        )
 
     overall = report.overall_health
     if overall is None:
@@ -114,12 +115,14 @@ async def export_report_pdf(report_id: int):
     else:
         health_text = f"{overall:.1f}（异常）"
 
-    report_dict: Dict[str, Any] = {
+    report_dict: dict[str, Any] = {
         "title": "诊断报告",
         "station_name": station_name,
         "report_id": report.id,
         "created_at": report.created_at.strftime("%Y-%m-%d %H:%M:%S") if report.created_at else "-",
-        "diagnosis_time": report.diagnosis_time.strftime("%Y-%m-%d %H:%M:%S") if report.diagnosis_time else "-",
+        "diagnosis_time": report.diagnosis_time.strftime("%Y-%m-%d %H:%M:%S")
+        if report.diagnosis_time
+        else "-",
         "overall_health": health_text,
         "summary": report.summary or "（无总结）",
         "findings": findings_for_pdf,
@@ -137,7 +140,7 @@ async def export_report_pdf(report_id: int):
         media_type="application/pdf",
         headers={
             "Content-Disposition": (
-                f"attachment; filename=\"diagnosis_report_{report_id}.pdf\"; "
+                f'attachment; filename="diagnosis_report_{report_id}.pdf"; '
                 f"filename*=UTF-8''{encoded}"
             )
         },

@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import requests
 
@@ -31,7 +31,7 @@ class OpenAICompatChatProvider(LLMProvider):
 
     async def chat(
         self,
-        messages: List[Dict[str, str]],
+        messages: list[dict[str, str]],
         temperature: float = 0.2,
         timeout: float = 60.0,
         **kwargs: Any,
@@ -39,7 +39,7 @@ class OpenAICompatChatProvider(LLMProvider):
         if not self.api_key:
             return "请配置 LLM API Key 以启用 AI 对话功能。"
 
-        def _call() -> Dict[str, Any]:
+        def _call() -> dict[str, Any]:
             response = requests.post(
                 f"{self.base_url}/chat/completions",
                 headers={
@@ -82,14 +82,14 @@ class OpenAICompatEmbeddingProvider(EmbeddingProvider):
 
     async def embed(
         self,
-        texts: List[str],
+        texts: list[str],
         timeout: float = 60.0,
         **kwargs: Any,
-    ) -> Optional[List[List[float]]]:
+    ) -> list[list[float]] | None:
         if not self.api_key:
             return None
 
-        def _call() -> Dict[str, Any]:
+        def _call() -> dict[str, Any]:
             response = requests.post(
                 f"{self.base_url}/embeddings",
                 headers={

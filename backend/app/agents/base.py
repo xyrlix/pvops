@@ -16,8 +16,9 @@ from __future__ import annotations
 import json
 import logging
 from abc import ABC, abstractmethod
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
-from typing import Any, Awaitable, Callable, Dict, List, Optional, Protocol, runtime_checkable
+from typing import Any, Protocol, runtime_checkable
 
 from app.llm.factory import get_chat_llm
 
@@ -35,7 +36,7 @@ class Tool:
     description: str
     func: Callable[..., Awaitable[Any]]
     # JSON Schema 形式的参数定义
-    parameters: Dict[str, Any] = field(default_factory=lambda: {"type": "object", "properties": {}})
+    parameters: dict[str, Any] = field(default_factory=lambda: {"type": "object", "properties": {}})
 
 
 # ─── Agent 抽象 ─────────────────────────────────────────────
@@ -48,7 +49,7 @@ class Agent(Protocol):
     @property
     def name(self) -> str: ...
 
-    async def run(self, query: str, **kwargs: Any) -> Dict[str, Any]: ...
+    async def run(self, query: str, **kwargs: Any) -> dict[str, Any]: ...
 
 
 # ─── ReAct 循环 ─────────────────────────────────────────────
@@ -72,7 +73,7 @@ class AgentRunResult:
     """agent 执行结果."""
 
     final_answer: str
-    tool_calls: List[Dict[str, Any]] = field(default_factory=list)
+    tool_calls: list[dict[str, Any]] = field(default_factory=list)
     iterations: int = 0
 
 
@@ -85,16 +86,16 @@ class ReactAgent(ABC):
     def __init__(self, max_iterations: int = 5, temperature: float = 0.2) -> None:
         self.max_iterations = max_iterations
         self.temperature = temperature
-        self._tools: Dict[str, Tool] = {}
+        self._tools: dict[str, Tool] = {}
 
     @property
     @abstractmethod
     def name(self) -> str: ...
 
     @abstractmethod
-    def _build_tools(self) -> List[Tool]: ...
+    def _build_tools(self) -> list[Tool]: ...
 
-    def _register_tools(self, tools: List[Tool]) -> None:
+    def _register_tools(self, tools: list[Tool]) -> None:
         self._tools = {t.name: t for t in tools}
 
     def _format_tool_descriptions(self) -> str:
@@ -106,7 +107,7 @@ class ReactAgent(ABC):
                 lines.append(f"  参数: {params}")
         return "\n".join(lines) or "（无可用工具）"
 
-    async def _maybe_call_tool(self, content: str) -> Optional[Dict[str, Any]]:
+    async def _maybe_call_tool(self, content: str) -> dict[str, Any] | None:
         """从 LLM 输出中解析 tool call JSON."""
         content = content.strip()
         if not content.startswith("{"):
@@ -121,12 +122,12 @@ class ReactAgent(ABC):
             return {"action": data["action"], "action_input": data["action_input"]}
         return None
 
-    async def run(self, query: str, **kwargs: Any) -> Dict[str, Any]:
+    async def run(self, query: str, **kwargs: Any) -> dict[str, Any]:
         """执行 ReAct 循环."""
         self._register_tools(self._build_tools())
 
         llm = get_chat_llm()
-        tool_calls: List[Dict[str, Any]] = []
+        tool_calls: list[dict[str, Any]] = []
         iterations = 0
 
         if llm is None:
@@ -138,8 +139,10 @@ class ReactAgent(ABC):
                 "agent": self.name,
             }
 
-        system_prompt = TOOL_CALL_PROMPT_TEMPLATE.format(tool_descriptions=self._format_tool_descriptions())
-        messages: List[Dict[str, str]] = [
+        system_prompt = TOOL_CALL_PROMPT_TEMPLATE.format(
+            tool_descriptions=self._format_tool_descriptions()
+        )
+        messages: list[dict[str, str]] = [
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": query},
         ]
@@ -165,7 +168,12 @@ class ReactAgent(ABC):
                 messages.append({"role": "user", "content": f"错误：未注册的工具 {call['action']}"})
                 continue
 
-            tool_record = {"tool": call["action"], "input": call["action_input"], "output": None, "error": None}
+            tool_record = {
+                "tool": call["action"],
+                "input": call["action_input"],
+                "output": None,
+                "error": None,
+            }
             try:
                 tool_record["output"] = await tool.func(**call["action_input"])
             except Exception as exc:
@@ -174,10 +182,12 @@ class ReactAgent(ABC):
             tool_calls.append(tool_record)
 
             messages.append({"role": "assistant", "content": content})
-            messages.append({
-                "role": "user",
-                "content": f"工具 {call['action']} 返回: {tool_record['output']!r}\n请基于此继续回答用户问题，或继续调用其他工具。",
-            })
+            messages.append(
+                {
+                    "role": "user",
+                    "content": f"工具 {call['action']} 返回: {tool_record['output']!r}\n请基于此继续回答用户问题，或继续调用其他工具。",
+                }
+            )
 
         return {
             "answer": f"达到最大迭代次数 {self.max_iterations}，未能收敛。已执行的工具调用：{tool_calls}",

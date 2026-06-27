@@ -8,11 +8,8 @@ router = APIRouter()
 settings = get_settings()
 
 
-from typing import Dict
-
-
 @router.get("")
-async def health_check() -> Dict[str, str]:
+async def health_check() -> dict[str, str]:
     """健康检查."""
     return {
         "status": "ok",
@@ -22,6 +19,6 @@ async def health_check() -> Dict[str, str]:
 
 
 @router.get("/ping")
-async def ping() -> Dict[str, str]:
+async def ping() -> dict[str, str]:
     """简单 ping 测试."""
     return {"message": "pong"}

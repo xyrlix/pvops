@@ -11,22 +11,21 @@
 from __future__ import annotations
 
 import json
-from typing import Any, Dict, List
+from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
 from app.agents import base as agent_base
+from app.agents import tools as tool_registry
 from app.agents.base import ReactAgent, Tool
 from app.agents.diagnosis_agent import DiagnosisAgent
 from app.agents.rag_agent import RAGAgent
-from app.agents import tools as tool_registry
-
 
 # ─── helpers ────────────────────────────────────────────────
 
 
-def _mk_llm_mock(responses: List[str]) -> Any:
+def _mk_llm_mock(responses: list[str]) -> Any:
     """模拟 LLMClient，按顺序返回预设字符串."""
     llm = MagicMock()
     llm.chat = AsyncMock(side_effect=responses)
@@ -47,7 +46,7 @@ class _EmptyAgent(ReactAgent):
     def name(self) -> str:
         return "EmptyAgent"
 
-    def _build_tools(self) -> List[Tool]:
+    def _build_tools(self) -> list[Tool]:
         return []
 
 
@@ -58,7 +57,7 @@ class _EchoAgent(ReactAgent):
     def name(self) -> str:
         return "EchoAgent"
 
-    def _build_tools(self) -> List[Tool]:
+    def _build_tools(self) -> list[Tool]:
         return [
             Tool(
                 name="echo",
@@ -110,7 +109,9 @@ async def test_parse_tool_call_missing_keys() -> None:
 @pytest.mark.asyncio
 async def test_run_returns_natural_language_without_tools() -> None:
     a = _EmptyAgent()
-    with patch.object(agent_base, "get_chat_llm", return_value=_mk_llm_mock(["你好，有什么可以帮你？"])):
+    with patch.object(
+        agent_base, "get_chat_llm", return_value=_mk_llm_mock(["你好，有什么可以帮你？"])
+    ):
         out = await a.run("hi")
     assert out["answer"] == "你好，有什么可以帮你？"
     assert out["tool_calls"] == []
@@ -181,12 +182,13 @@ async def test_run_unknown_tool_records_error() -> None:
 @pytest.mark.asyncio
 async def test_run_tool_exception_captured_in_record() -> None:
     """工具抛异常时，error 字段被填充，循环继续."""
+
     class _BoomAgent(ReactAgent):
         @property
         def name(self) -> str:
             return "BoomAgent"
 
-        def _build_tools(self) -> List[Tool]:
+        def _build_tools(self) -> list[Tool]:
             async def boom() -> str:
                 raise RuntimeError("kaboom")
 
@@ -210,7 +212,12 @@ async def test_run_tool_exception_captured_in_record() -> None:
 
 def test_tools_registry_has_builtin() -> None:
     names = {t.name for t in tool_registry.all_tools()}
-    for expected in ("get_station_metrics", "get_recent_alarms", "search_knowledge", "diagnose_station"):
+    for expected in (
+        "get_station_metrics",
+        "get_recent_alarms",
+        "search_knowledge",
+        "diagnose_station",
+    ):
         assert expected in names
 
 

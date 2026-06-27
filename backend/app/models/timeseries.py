@@ -26,9 +26,7 @@ class InverterData(Base):
     ambient_temp_c = Column(Float, default=0.0)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
-    __table_args__ = (
-        Index("ix_inverter_data_station_time", "station_id", "timestamp"),
-    )
+    __table_args__ = (Index("ix_inverter_data_station_time", "station_id", "timestamp"),)
 
 
 class WeatherData(Base):
@@ -65,6 +63,4 @@ class MeterData(Base):
     power_factor = Column(Float, default=0.0, comment="功率因数")
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
-    __table_args__ = (
-        Index("ix_meter_data_station_time", "station_id", "timestamp"),
-    )
+    __table_args__ = (Index("ix_meter_data_station_time", "station_id", "timestamp"),)

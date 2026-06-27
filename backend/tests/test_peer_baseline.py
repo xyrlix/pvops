@@ -5,18 +5,16 @@
 
 from __future__ import annotations
 
-import asyncio
-from typing import Any, Dict, List
+from typing import Any
 
 import pytest
 
 from app.demo.mock_provider import MockDataProvider, _capacity_bucket, _percentile
 
-
 # ─── helpers ────────────────────────────────────────────────
 
 
-def _mk_station(sid: int, capacity_kw: float, **metrics: float) -> Dict[str, Any]:
+def _mk_station(sid: int, capacity_kw: float, **metrics: float) -> dict[str, Any]:
     return {
         "station_id": sid,
         "name": f"电站{sid}",
@@ -149,11 +147,13 @@ async def test_peer_ranking_empty() -> None:
 
 
 @pytest.mark.asyncio
-async def test_metrics_service_peer_baseline_calls_provider(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_metrics_service_peer_baseline_calls_provider(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """验证 facade 正确调用 provider，并把 self 字段注入."""
     from app.services import metrics_service
 
-    async def fake_overview() -> List[Dict[str, Any]]:
+    async def fake_overview() -> list[dict[str, Any]]:
         return [
             _mk_station(1, 800, pr=0.9, completion_rate=0.9, health_score=95),
             _mk_station(2, 1200, pr=0.85, completion_rate=0.85, health_score=90),
@@ -173,7 +173,6 @@ async def test_metrics_service_peer_baseline_calls_provider(monkeypatch: pytest.
                 "top_quartile_pr": 0.9,
             }
 
-    from app.demo import get_data_provider
     monkeypatch.setattr(metrics_service, "get_data_provider", lambda: FakeProvider())
 
     result = await metrics_service.get_station_peer_baseline(1)
@@ -183,11 +182,13 @@ async def test_metrics_service_peer_baseline_calls_provider(monkeypatch: pytest.
 
 
 @pytest.mark.asyncio
-async def test_metrics_service_peer_baseline_handles_missing_station(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_metrics_service_peer_baseline_handles_missing_station(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """overview 中找不到 station_id 时返回空基线."""
     from app.services import metrics_service
 
-    async def fake_overview() -> List[Dict[str, Any]]:
+    async def fake_overview() -> list[dict[str, Any]]:
         return [_mk_station(999, 1000)]
 
     monkeypatch.setattr(metrics_service, "get_stations_overview", fake_overview)

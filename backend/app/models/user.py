@@ -16,7 +16,9 @@ class User(Base):
     email = Column(String(100), nullable=True)
     hashed_password = Column(String(255), nullable=False)
     full_name = Column(String(50), nullable=True)
-    role = Column(String(20), default="operator")  # admin / manager / operator / viewer / superadmin
+    role = Column(
+        String(20), default="operator"
+    )  # admin / manager / operator / viewer / superadmin
     status = Column(String(20), default="active")  # active / disabled
     # 租户 ID：null 表示超管（跨租户访问）；否则限定到单一租户。
     tenant_id = Column(Integer, nullable=True, index=True)

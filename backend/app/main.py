@@ -69,7 +69,9 @@ app.add_middleware(SlowAPIMiddleware)
 
 # CORS
 _cors_raw = settings.cors_allow_origins.strip()
-_cors_origins = ["*"] if _cors_raw in ("", "*") else [o.strip() for o in _cors_raw.split(",") if o.strip()]
+_cors_origins = (
+    ["*"] if _cors_raw in ("", "*") else [o.strip() for o in _cors_raw.split(",") if o.strip()]
+)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_cors_origins,

@@ -1,7 +1,7 @@
 """协议适配器工厂."""
 
 import logging
-from typing import Any, Dict, Optional
+from typing import Any
 
 from app.protocols.base import BaseProtocolAdapter
 
@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 
 
 def create_adapter(
-    protocol: str, device_code: str, config: Optional[Dict[str, Any]] = None
+    protocol: str, device_code: str, config: dict[str, Any] | None = None
 ) -> BaseProtocolAdapter:
     """根据协议名称创建设备适配器."""
     protocol = (protocol or "simulator").lower()

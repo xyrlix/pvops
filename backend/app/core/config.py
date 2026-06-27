@@ -170,7 +170,7 @@ def validate_settings_on_startup(settings: Settings | None = None) -> None:
     if settings.secret_key in _DEFAULT_SECRET_KEYS:
         msg = (
             "FATAL: secret_key 仍为默认值，必须在 .env 中显式设置一个高熵值。\n"
-            "       生成方式: python -c \"import secrets; print(secrets.token_urlsafe(64))\""
+            '       生成方式: python -c "import secrets; print(secrets.token_urlsafe(64))"'
         )
         logger.critical(msg)
         print(msg, file=sys.stderr)

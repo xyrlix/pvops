@@ -11,10 +11,10 @@
 from __future__ import annotations
 
 import logging
-from typing import Any, Dict, List
+from typing import Any
 
-from app.agents.base import ReactAgent, Tool
 from app.agents import tools as tool_registry
+from app.agents.base import ReactAgent, Tool
 
 logger = logging.getLogger(__name__)
 
@@ -26,14 +26,16 @@ class DiagnosisAgent(ReactAgent):
     def name(self) -> str:
         return "DiagnosisAgent"
 
-    def _build_tools(self) -> List[Tool]:
-        return tool_registry.all_by_names([
-            "diagnose_station",
-            "search_knowledge",
-            "get_recent_alarms",
-        ])
+    def _build_tools(self) -> list[Tool]:
+        return tool_registry.all_by_names(
+            [
+                "diagnose_station",
+                "search_knowledge",
+                "get_recent_alarms",
+            ]
+        )
 
-    async def diagnose_station(self, station_id: int) -> Dict[str, Any]:
+    async def diagnose_station(self, station_id: int) -> dict[str, Any]:
         """诊断电站：兼容旧接口（直接调规则引擎，不走 ReAct）.
 
         适用于需要快速返回结构化 finding、不需要 LLM 润色的场景。
@@ -46,18 +48,15 @@ class DiagnosisAgent(ReactAgent):
         self,
         station_id: int,
         device_id: str,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """设备级诊断（兼容旧接口）."""
         result = await self.diagnose_station(station_id)
-        device_findings = [
-            f for f in result.get("findings", [])
-            if device_id in f.get("title", "")
-        ]
+        device_findings = [f for f in result.get("findings", []) if device_id in f.get("title", "")]
         result["findings"] = device_findings
         result["summary"] = f"设备 {device_id} 诊断完成，发现 {len(device_findings)} 项异常。"
         return result
 
-    async def diagnose_with_rag(self, station_id: int) -> Dict[str, Any]:
+    async def diagnose_with_rag(self, station_id: int) -> dict[str, Any]:
         """诊断 + RAG 增强：先调规则引擎，再让 LLM 检索知识 + 润色.
 
         返回 ``{"answer": str, "tool_calls": [...], "iterations": int, "agent": "DiagnosisAgent"}``.

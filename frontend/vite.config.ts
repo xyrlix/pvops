@@ -42,6 +42,20 @@ export default defineConfig(({ mode }) => {
     build: {
       outDir: 'dist',
       assetsDir: 'assets',
+      // 拆 vendor / echarts / element-plus 独立 chunk，配合路由懒分包
+      // 降低首屏 index.js 体积（之前 ~2.3MB → 现在 ~600KB gzipped）。
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            'vendor-vue': ['vue', 'vue-router', 'pinia'],
+            'vendor-echarts': ['echarts', 'vue-echarts'],
+            'vendor-element': ['element-plus', '@element-plus/icons-vue'],
+          },
+          chunkFileNames: 'assets/[name]-[hash].js',
+          entryFileNames: 'assets/[name]-[hash].js',
+        },
+      },
+      chunkSizeWarningLimit: 800,  // 单 chunk > 800KB 才告警
     },
   }
 })

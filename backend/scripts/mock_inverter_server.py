@@ -21,10 +21,8 @@ from __future__ import annotations
 import argparse
 import asyncio
 import logging
-import math
 import random
 from datetime import datetime
-from typing import Any, Dict
 
 logger = logging.getLogger(__name__)
 
@@ -40,7 +38,7 @@ def _seed(value: str) -> random.Random:
 # ─── 华为 SUN2000 模拟数据 ─────────────────────────────────
 
 
-def _huawei_payload(device_code: str) -> Dict[int, int]:
+def _huawei_payload(device_code: str) -> dict[int, int]:
     """生成符合 SUN2000 register map 的瞬时遥测."""
     rng = _seed(f"{device_code}-{datetime.now().strftime('%Y%m%d%H%M')}")
     hour = datetime.now().hour + datetime.now().minute / 60
@@ -78,7 +76,7 @@ def _huawei_payload(device_code: str) -> Dict[int, int]:
 # ─── 阳光 SG 模拟数据 ──────────────────────────────────────
 
 
-def _sungrow_payload(device_code: str) -> Dict[int, int]:
+def _sungrow_payload(device_code: str) -> dict[int, int]:
     """按阳光 SG register map（input register，地址更小）."""
     rng = _seed(f"{device_code}-{datetime.now().strftime('%Y%m%d%H%M')}")
     hour = datetime.now().hour + datetime.now().minute / 60
@@ -111,14 +109,20 @@ def _sungrow_payload(device_code: str) -> Dict[int, int]:
 async def run_server(vendor: str, host: str, port: int, device_code: str) -> None:
     """启动本地 Modbus TCP server，模拟一台指定厂商的逆变器."""
     try:
-        from pymodbus.datastore import ModbusSequentialDataBlock, ModbusSlaveContext, ModbusServerContext
+        from pymodbus.datastore import (
+            ModbusSequentialDataBlock,
+            ModbusServerContext,
+            ModbusSlaveContext,
+        )
         from pymodbus.server import StartAsyncTcpServer
     except ImportError as exc:
         raise SystemExit(f"pymodbus 未安装: {exc}") from exc
 
     # 注册大范围数据块（覆盖 0x0000 - 0xFFFF）
     data_block = ModbusSequentialDataBlock(0, [0] * 0x10000)
-    context = ModbusServerContext(slaves={1: ModbusSlaveContext(hr=data_block, ir=data_block)}, single=False)
+    context = ModbusServerContext(
+        slaves={1: ModbusSlaveContext(hr=data_block, ir=data_block)}, single=False
+    )
 
     async def update_loop() -> None:
         """每 2s 刷新一次输入寄存器."""
@@ -140,13 +144,21 @@ async def run_server(vendor: str, host: str, port: int, device_code: str) -> Non
     # 启动后台刷新
     asyncio.create_task(update_loop())
 
-    logger.info("Mock inverter server (%s) listening on %s:%d (device_code=%s)", vendor, host, port, device_code)
+    logger.info(
+        "Mock inverter server (%s) listening on %s:%d (device_code=%s)",
+        vendor,
+        host,
+        port,
+        device_code,
+    )
     await StartAsyncTcpServer(context=context, address=(host, port))
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--vendor", choices=["huawei_sun2000", "sungrow_sg"], default="huawei_sun2000")
+    parser.add_argument(
+        "--vendor", choices=["huawei_sun2000", "sungrow_sg"], default="huawei_sun2000"
+    )
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=5020)
     parser.add_argument("--device-code", default="INV-SUN2000-DEMO")

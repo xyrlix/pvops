@@ -2,7 +2,7 @@
 
 import logging
 from io import BytesIO
-from typing import Any, Dict, List
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -14,17 +14,19 @@ SEVERITY_COLORS = {
 }
 
 
-def _para(text: str, style) -> "Paragraph":
+def _para(text: str, style):  # -> Paragraph
     from reportlab.platypus import Paragraph
+
     return Paragraph((text or "-").replace("\n", "<br/>"), style)
 
 
-def generate_diagnosis_report_pdf(report: Dict[str, Any]) -> bytes:
+def generate_diagnosis_report_pdf(report: dict[str, Any]) -> bytes:
     """生成诊断报告 PDF 字节流."""
     try:
         from reportlab.lib import colors
+        from reportlab.lib.enums import TA_LEFT
         from reportlab.lib.pagesizes import A4
-        from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+        from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
         from reportlab.lib.units import cm
         from reportlab.platypus import (
             Paragraph,
@@ -33,7 +35,6 @@ def generate_diagnosis_report_pdf(report: Dict[str, Any]) -> bytes:
             Table,
             TableStyle,
         )
-        from reportlab.lib.enums import TA_LEFT
     except ImportError as e:
         logger.error("reportlab 未安装，无法生成 PDF")
         raise RuntimeError("reportlab 未安装，请在 Docker 环境或安装依赖后使用") from e
@@ -59,7 +60,7 @@ def generate_diagnosis_report_pdf(report: Dict[str, Any]) -> bytes:
         "small", parent=normal_style, fontSize=9, textColor=colors.grey, alignment=TA_LEFT
     )
 
-    story: List[Any] = []
+    story: list[Any] = []
     story.append(Paragraph(report.get("title", "光伏运维智能体 - 诊断报告"), title_style))
     story.append(Spacer(1, 0.5 * cm))
 
@@ -90,7 +91,7 @@ def generate_diagnosis_report_pdf(report: Dict[str, Any]) -> bytes:
     if findings:
         story.append(Paragraph(f"异常项（共 {len(findings)} 条）", heading_style))
         story.append(Spacer(1, 0.3 * cm))
-        for idx, item in enumerate(findings, 1):
+        for _idx, item in enumerate(findings, 1):
             sev = item.get("severity", "info")
             sev_color = SEVERITY_COLORS.get(sev, "#475569")
             sev_label = {"critical": "严重", "warning": "警告", "info": "信息"}.get(sev, sev)
@@ -131,7 +132,7 @@ def generate_diagnosis_report_pdf(report: Dict[str, Any]) -> bytes:
     return pdf_bytes
 
 
-def generate_operation_report_pdf(report: Dict[str, Any]) -> bytes:
+def generate_operation_report_pdf(report: dict[str, Any]) -> bytes:
     """生成运维报告（日报/周报/月报）PDF 字节流."""
     try:
         from reportlab.lib import colors
@@ -197,11 +198,13 @@ def generate_operation_report_pdf(report: Dict[str, Any]) -> bytes:
         story.append(Spacer(1, 0.3 * cm))
         data = [["日期", "日发电量 (kWh)", "平均功率 (kW)"]]
         for item in details:
-            data.append([
-                item.get("date", "-"),
-                f"{item.get('daily_energy_kwh', 0):.2f}",
-                f"{item.get('avg_power_kw', 0):.2f}",
-            ])
+            data.append(
+                [
+                    item.get("date", "-"),
+                    f"{item.get('daily_energy_kwh', 0):.2f}",
+                    f"{item.get('avg_power_kw', 0):.2f}",
+                ]
+            )
         detail_table = Table(data, colWidths=[5 * cm, 5 * cm, 5 * cm])
         detail_table.setStyle(
             TableStyle(

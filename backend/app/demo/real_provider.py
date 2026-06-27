@@ -7,7 +7,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from app.demo.provider import DataProvider
 from app.repositories import get_repository
@@ -22,7 +22,7 @@ class RealDataProvider(DataProvider):
 
     async def get_latest_station_metrics(
         self, station_id: int, capacity_kw: float = 1000.0
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         repo = get_repository()
         metrics = await repo.get_latest_station_metrics(station_id)
         metrics.setdefault("capacity_kw", capacity_kw)
@@ -32,16 +32,14 @@ class RealDataProvider(DataProvider):
         self,
         station_id: int,
         metric: str,
-        start: Optional[datetime] = None,
-        end: Optional[datetime] = None,
+        start: datetime | None = None,
+        end: datetime | None = None,
         points: int = 144,
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         repo = get_repository()
         return await repo.get_metric_history(station_id, metric, start, end)
 
-    async def get_station_overview(
-        self, stations: List[Dict[str, Any]]
-    ) -> List[Dict[str, Any]]:
+    async def get_station_overview(self, stations: list[dict[str, Any]]) -> list[dict[str, Any]]:
         # 真实模式下：仅返回基础字段，由 dashboard_service 自己做实际计算。
         return [
             {
@@ -53,9 +51,7 @@ class RealDataProvider(DataProvider):
             for s in stations
         ]
 
-    async def get_efficiency(
-        self, station_id: int, capacity_kw: float = 1000.0
-    ) -> Dict[str, Any]:
+    async def get_efficiency(self, station_id: int, capacity_kw: float = 1000.0) -> dict[str, Any]:
         # TODO: 接入 PR 计算服务；当前返回 0 占位避免业务代码崩。
         return {
             "station_id": station_id,
@@ -68,7 +64,7 @@ class RealDataProvider(DataProvider):
 
     async def get_loss_breakdown(
         self, station_id: int, capacity_kw: float = 1000.0
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         # TODO: 接入损失分解服务
         return {
             "station_id": station_id,
@@ -79,15 +75,13 @@ class RealDataProvider(DataProvider):
             "breakdown": [],
         }
 
-    async def get_health_trend(
-        self, station_id: int, days: int = 30
-    ) -> List[Dict[str, Any]]:
+    async def get_health_trend(self, station_id: int, days: int = 30) -> list[dict[str, Any]]:
         # TODO: 接入 health_score 历史；当前返回空，前端会显示 PvEmpty
         return []
 
     async def get_inverter_comparison(
-        self, station_id: int, inverters: List[Dict[str, Any]]
-    ) -> List[Dict[str, Any]]:
+        self, station_id: int, inverters: list[dict[str, Any]]
+    ) -> list[dict[str, Any]]:
         # TODO: 接入逆变器效率对比；当前返回入参透传
         return [
             {
@@ -103,8 +97,8 @@ class RealDataProvider(DataProvider):
         ]
 
     async def get_string_dispersion(
-        self, station_id: int, strings: List[Dict[str, Any]]
-    ) -> List[Dict[str, Any]]:
+        self, station_id: int, strings: list[dict[str, Any]]
+    ) -> list[dict[str, Any]]:
         # TODO: 接入组串电流离散率计算
         return [
             {
@@ -120,8 +114,8 @@ class RealDataProvider(DataProvider):
         ]
 
     async def get_peer_baseline(
-        self, stations: List[Dict[str, Any]], capacity_kw: float
-    ) -> Dict[str, Any]:
+        self, stations: list[dict[str, Any]], capacity_kw: float
+    ) -> dict[str, Any]:
         """真实模式：基于真实数据库聚合同档位中位数."""
         # TODO: 接 TDengine / 时序库做 24h 聚合后再计算 median
         # 当前返回 0/None 占位，前端展示"暂无基线"
@@ -136,20 +130,22 @@ class RealDataProvider(DataProvider):
         }
 
     async def get_peer_ranking(
-        self, stations: List[Dict[str, Any]], metric: str = "health_score"
-    ) -> List[Dict[str, Any]]:
+        self, stations: list[dict[str, Any]], metric: str = "health_score"
+    ) -> list[dict[str, Any]]:
         """真实模式：直接透传 station 字段."""
         result = []
         for p in stations:
-            result.append({
-                "station_id": p.get("station_id"),
-                "name": p.get("name"),
-                "capacity_bucket": _capacity_bucket(p.get("capacity_kw") or 0),
-                "metric": p.get(metric),
-                "rank_in_bucket": 0,
-                "bucket_size": 0,
-                "percentile": None,
-            })
+            result.append(
+                {
+                    "station_id": p.get("station_id"),
+                    "name": p.get("name"),
+                    "capacity_bucket": _capacity_bucket(p.get("capacity_kw") or 0),
+                    "metric": p.get(metric),
+                    "rank_in_bucket": 0,
+                    "bucket_size": 0,
+                    "percentile": None,
+                }
+            )
         return result
 
 

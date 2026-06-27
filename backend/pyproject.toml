@@ -12,7 +12,12 @@ select = [
     "C4", # flake8-comprehensions
     "SIM",# flake8-simplify
 ]
-ignore = ["E501"]
+ignore = [
+    "E501",
+    # B008: FastAPI Depends/File/Body 等函数调用在默认参数中是预期用法，
+    # 不是真正 bug。
+    "B008",
+]
 
 [tool.ruff.format]
 quote-style = "double"

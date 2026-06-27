@@ -1,7 +1,6 @@
 """用户 schema."""
 
 from datetime import datetime
-from typing import Optional
 
 from pydantic import BaseModel
 
@@ -10,8 +9,8 @@ class UserBase(BaseModel):
     """用户基础 schema."""
 
     username: str
-    email: Optional[str] = None
-    full_name: Optional[str] = None
+    email: str | None = None
+    full_name: str | None = None
     role: str = "operator"
     status: str = "active"
 
@@ -25,10 +24,10 @@ class UserCreate(UserBase):
 class UserUpdate(BaseModel):
     """更新用户 schema."""
 
-    email: Optional[str] = None
-    full_name: Optional[str] = None
-    role: Optional[str] = None
-    status: Optional[str] = None
+    email: str | None = None
+    full_name: str | None = None
+    role: str | None = None
+    status: str | None = None
 
 
 class UserResponse(UserBase):
@@ -38,7 +37,7 @@ class UserResponse(UserBase):
         orm_mode = True
 
     id: int
-    last_login: Optional[datetime]
+    last_login: datetime | None
     created_at: datetime
 
 

@@ -14,9 +14,9 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Optional
+from typing import Any
 
-from fastapi import Depends, HTTPException, Request, status
+from fastapi import Depends, Request
 from sqlalchemy import Column
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -49,12 +49,12 @@ async def get_current_tenant(
     """
     # 优先从 Authorization 头解析
     auth = request.headers.get("Authorization", "")
-    tenant_id: Optional[int] = None
+    tenant_id: int | None = None
     role = "viewer"
     if auth.startswith("Bearer "):
         token = auth[7:]
         payload = decode_token(token) or {}
-        sub = payload.get("sub")  # username
+        payload.get("sub")  # username
         tid = payload.get("tenant_id")
         if isinstance(tid, int):
             tenant_id = tid
@@ -87,7 +87,7 @@ def scoped_query(
     superadmin 默认仍受 tenant 约束（避免误操作）；如需跨租户，
     请使用 ``scoped_query_unrestricted()``。
     """
-    tenant_col: Optional[Column] = getattr(model, "tenant_id", None)
+    tenant_col: Column | None = getattr(model, "tenant_id", None)
     if tenant_col is None:
         return query
     return query.where(tenant_col == tenant.tenant_id)

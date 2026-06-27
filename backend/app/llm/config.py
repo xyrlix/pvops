@@ -1,9 +1,7 @@
 """LLM Provider 配置."""
 
-from typing import Dict, Optional
-
 # 预置常见 OpenAI 兼容厂商配置
-PROVIDER_PRESETS: Dict[str, Dict[str, str]] = {
+PROVIDER_PRESETS: dict[str, dict[str, str]] = {
     "openai": {
         "base_url": "https://api.openai.com/v1",
         "model": "gpt-3.5-turbo",
@@ -26,7 +24,7 @@ PROVIDER_PRESETS: Dict[str, Dict[str, str]] = {
     },
 }
 
-EMBEDDING_PRESETS: Dict[str, Dict[str, str]] = {
+EMBEDDING_PRESETS: dict[str, dict[str, str]] = {
     "openai": {
         "base_url": "https://api.openai.com/v1",
         "model": "text-embedding-3-small",
@@ -34,9 +32,9 @@ EMBEDDING_PRESETS: Dict[str, Dict[str, str]] = {
 }
 
 
-def get_llm_preset(provider: str) -> Optional[Dict[str, str]]:
+def get_llm_preset(provider: str) -> dict[str, str] | None:
     return PROVIDER_PRESETS.get(provider.lower())
 
 
-def get_embedding_preset(provider: str) -> Optional[Dict[str, str]]:
+def get_embedding_preset(provider: str) -> dict[str, str] | None:
     return EMBEDDING_PRESETS.get(provider.lower())
