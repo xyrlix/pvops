@@ -108,7 +108,9 @@ async def _tool_outstanding_workorders(limit: int = 10) -> list[dict[str, Any]]:
                 "priority": w.priority,
                 "station_id": w.station_id,
                 "created_at": w.created_at.isoformat() if w.created_at else None,
-                "age_hours": round((now - w.created_at).total_seconds() / 3600, 1) if w.created_at else 0,
+                "age_hours": round((now - w.created_at).total_seconds() / 3600, 1)
+                if w.created_at
+                else 0,
             }
             for w in wos
         ]
@@ -304,59 +306,69 @@ def _build_template_items(raw: dict[str, Any]) -> list[dict[str, Any]]:
 
     # 1. critical 告警
     for a in raw["critical_alarms"][:3]:
-        items.append({
-            "level": "critical" if a["level"] == "critical" else "warning",
-            "category": "alarm",
-            "title": f"{a['title']}（电站 {a['station_id']}）",
-            "detail": f"告警代码 {a['code'] or '未知'}，状态 {a['status']}",
-            "action": "立即诊断 / 创建工单",
-            "ref": {"type": "alarm", "id": a["id"]},
-        })
+        items.append(
+            {
+                "level": "critical" if a["level"] == "critical" else "warning",
+                "category": "alarm",
+                "title": f"{a['title']}（电站 {a['station_id']}）",
+                "detail": f"告警代码 {a['code'] or '未知'}，状态 {a['status']}",
+                "action": "立即诊断 / 创建工单",
+                "ref": {"type": "alarm", "id": a["id"]},
+            }
+        )
 
     # 2. 健康度下降电站
     for h in raw["health_declines"][:2]:
-        items.append({
-            "level": "warning",
-            "category": "health",
-            "title": f"{h['name']} 有 {h['open_alarms']} 条未处理告警",
-            "detail": "健康度可能受告警累积影响",
-            "action": "查看电站详情",
-            "ref": {"type": "station", "id": h["station_id"]},
-        })
+        items.append(
+            {
+                "level": "warning",
+                "category": "health",
+                "title": f"{h['name']} 有 {h['open_alarms']} 条未处理告警",
+                "detail": "健康度可能受告警累积影响",
+                "action": "查看电站详情",
+                "ref": {"type": "station", "id": h["station_id"]},
+            }
+        )
 
     # 3. 待处理工单
     for w in raw["outstanding_workorders"][:2]:
-        items.append({
-            "level": "info" if w["age_hours"] < 24 else "warning",
-            "category": "workorder",
-            "title": f"工单 #{w['id']}: {w['title']}",
-            "detail": f"状态 {w['status']}, 已等待 {w['age_hours']} 小时",
-            "action": "处理工单",
-            "ref": {"type": "workorder", "id": w["id"]},
-        })
+        items.append(
+            {
+                "level": "info" if w["age_hours"] < 24 else "warning",
+                "category": "workorder",
+                "title": f"工单 #{w['id']}: {w['title']}",
+                "detail": f"状态 {w['status']}, 已等待 {w['age_hours']} 小时",
+                "action": "处理工单",
+                "ref": {"type": "workorder", "id": w["id"]},
+            }
+        )
 
     # 4. 新增知识
     if raw["new_knowledge"]:
-        items.append({
-            "level": "info",
-            "category": "knowledge",
-            "title": f"知识库新增 {len(raw['new_knowledge'])} 篇文档",
-            "detail": "建议浏览并收藏",
-            "action": "查看知识库",
-            "ref": {"type": "doc", "id": raw["new_knowledge"][0]["id"]},
-        })
+        items.append(
+            {
+                "level": "info",
+                "category": "knowledge",
+                "title": f"知识库新增 {len(raw['new_knowledge'])} 篇文档",
+                "detail": "建议浏览并收藏",
+                "action": "查看知识库",
+                "ref": {"type": "doc", "id": raw["new_knowledge"][0]["id"]},
+            }
+        )
 
     # 5. 总览
     total = len(raw["station_overview"])
     if total == 0:
-        items.append({
-            "level": "info",
-            "category": "summary",
-            "title": "尚未配置任何电站",
-            "detail": "请先在电站管理中添加电站",
-            "action": "去添加",
-            "ref": {"type": "station", "id": 0},
-        })
+        items.append(
+            {
+                "level": "info",
+                "category": "summary",
+                "title": "尚未配置任何电站",
+                "detail": "请先在电站管理中添加电站",
+                "action": "去添加",
+                "ref": {"type": "station", "id": 0},
+            }
+        )
 
     return items[:5]
 

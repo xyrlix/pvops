@@ -97,18 +97,22 @@ async def diagnose_and_create_work_order(
                 station_id=station_id,
                 tenant_id=None,
             )
-        workorders.append({
-            "id": wo.id,
-            "title": wo.title,
-            "priority": wo.priority,
-        })
+        workorders.append(
+            {
+                "id": wo.id,
+                "title": wo.title,
+                "priority": wo.priority,
+            }
+        )
 
     return {
         "diagnosis_id": None,  # 暂时不存盘诊断报告
         "station_id": station_id,
         "findings_count": len(findings),
         "workorders_created": workorders,
-        "summary": f"AI 智能体基于诊断报告自动创建 {len(workorders)} 个工单" if workorders else "无 critical/warning 级发现，无需建工单",
+        "summary": f"AI 智能体基于诊断报告自动创建 {len(workorders)} 个工单"
+        if workorders
+        else "无 critical/warning 级发现，无需建工单",
     }
 
 
