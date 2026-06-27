@@ -63,5 +63,32 @@ class DataProvider(Protocol):
         self, station_id: int, strings: List[Dict[str, Any]]
     ) -> List[Dict[str, Any]]: ...
 
+    # —— 群体基线（对标 §F3.3） ——
+
+    async def get_peer_baseline(
+        self, stations: List[Dict[str, Any]], capacity_kw: float
+    ) -> Dict[str, Any]:
+        """同容量档位的群体基线（median + sample size）.
+
+        返回结构::
+
+            {
+                "capacity_bucket": "1-5MW",
+                "sample_size": 8,
+                "median_pr": 0.85,
+                "median_completion_rate": 0.88,
+                "median_health_score": 92.1,
+                "median_daily_energy_per_kw": 3.2,
+                "top_quartile_pr": 0.91,
+            }
+        """
+        ...
+
+    async def get_peer_ranking(
+        self, stations: List[Dict[str, Any]], metric: str = "health_score"
+    ) -> List[Dict[str, Any]]:
+        """同容量档位内电站排名（带 percentile 字段）."""
+        ...
+
 
 __all__ = ["DataProvider"]

@@ -156,6 +156,52 @@ async def get_stations_ranking(metric: str = "health_score", limit: int = 10) ->
     return overview[:limit]
 
 
+async def get_station_peer_baseline(station_id: int) -> Dict:
+    """获取同容量档位的群体基线（中位数 + top quartile）.
+
+    复用 get_stations_overview 拿到全集团快照，喂给 provider.get_peer_baseline 计算。
+    """
+    overview = await get_stations_overview()
+    target = next((s for s in overview if s.get("station_id") == station_id), None)
+    if target is None:
+        return {
+            "capacity_bucket": "未知",
+            "sample_size": 0,
+            "median_pr": None,
+            "median_completion_rate": None,
+            "median_health_score": None,
+            "median_daily_energy_per_kw": None,
+            "top_quartile_pr": None,
+            "self": None,
+        }
+    capacity_kw = target.get("capacity_kw") or 0
+    provider = get_data_provider()
+    baseline = await provider.get_peer_baseline(overview, capacity_kw)
+    baseline["self"] = {
+        "station_id": station_id,
+        "name": target.get("name"),
+        "pr": target.get("pr"),
+        "completion_rate": target.get("completion_rate"),
+        "health_score": target.get("health_score"),
+        "daily_energy_per_kw": (target.get("daily_energy_kwh") or 0) / max(capacity_kw, 1),
+    }
+    return baseline
+
+
+async def get_station_peer_ranking(station_id: int, metric: str = "health_score") -> Dict:
+    """获取同档位内电站排名（高亮本电站位置）."""
+    overview = await get_stations_overview()
+    provider = get_data_provider()
+    ranking = await provider.get_peer_ranking(overview, metric)
+    return {
+        "metric": metric,
+        "self_rank": next(
+            (r for r in ranking if r.get("station_id") == station_id), None
+        ),
+        "ranking": ranking,
+    }
+
+
 async def get_station_efficiency(station_id: int) -> Dict:
     """电站效率指标."""
     async with AsyncSessionLocal() as session:

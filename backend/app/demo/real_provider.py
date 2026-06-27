@@ -118,3 +118,49 @@ class RealDataProvider(DataProvider):
             }
             for i, s in enumerate(strings)
         ]
+
+    async def get_peer_baseline(
+        self, stations: List[Dict[str, Any]], capacity_kw: float
+    ) -> Dict[str, Any]:
+        """真实模式：基于真实数据库聚合同档位中位数."""
+        # TODO: 接 TDengine / 时序库做 24h 聚合后再计算 median
+        # 当前返回 0/None 占位，前端展示"暂无基线"
+        return {
+            "capacity_bucket": _capacity_bucket(capacity_kw),
+            "sample_size": len(stations),
+            "median_pr": None,
+            "median_completion_rate": None,
+            "median_health_score": None,
+            "median_daily_energy_per_kw": None,
+            "top_quartile_pr": None,
+        }
+
+    async def get_peer_ranking(
+        self, stations: List[Dict[str, Any]], metric: str = "health_score"
+    ) -> List[Dict[str, Any]]:
+        """真实模式：直接透传 station 字段."""
+        result = []
+        for p in stations:
+            result.append({
+                "station_id": p.get("station_id"),
+                "name": p.get("name"),
+                "capacity_bucket": _capacity_bucket(p.get("capacity_kw") or 0),
+                "metric": p.get(metric),
+                "rank_in_bucket": 0,
+                "bucket_size": 0,
+                "percentile": None,
+            })
+        return result
+
+
+def _capacity_bucket(capacity_kw: float) -> str:
+    """容量档位分组."""
+    if capacity_kw < 1000:
+        return "<1MW"
+    if capacity_kw < 5000:
+        return "1-5MW"
+    if capacity_kw < 10000:
+        return "5-10MW"
+    if capacity_kw < 50000:
+        return "10-50MW"
+    return "50MW+"

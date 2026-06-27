@@ -214,3 +214,106 @@ class MockDataProvider(DataProvider):
             d["avg_current_a"] = round(avg, 2)
             d["dispersion_rate"] = round(dispersion, 4)
         return data
+
+    async def get_peer_baseline(
+        self, stations: List[Dict[str, Any]], capacity_kw: float
+    ) -> Dict[str, Any]:
+        """同容量档位群体基线（mock）。
+
+        容量档位：<1MW / 1-5MW / 5-10MW / 10-50MW / 50MW+
+        """
+        bucket = _capacity_bucket(capacity_kw)
+        # 同档位电站子集
+        peers = [s for s in stations if _capacity_bucket(s.get("capacity_kw") or 0) == bucket]
+        sample_size = len(peers)
+        if sample_size == 0:
+            return {
+                "capacity_bucket": bucket,
+                "sample_size": 0,
+                "median_pr": None,
+                "median_completion_rate": None,
+                "median_health_score": None,
+                "median_daily_energy_per_kw": None,
+                "top_quartile_pr": None,
+            }
+
+        prs = sorted([s.get("pr") or 0 for s in peers])
+        crs = sorted([s.get("completion_rate") or 0 for s in peers])
+        hs = sorted([s.get("health_score") or 0 for s in peers])
+        per_kw = sorted([
+            (s.get("daily_energy_kwh") or 0) / (s.get("capacity_kw") or 1)
+            for s in peers
+        ])
+
+        return {
+            "capacity_bucket": bucket,
+            "sample_size": sample_size,
+            "median_pr": round(_percentile(prs, 50), 4),
+            "median_completion_rate": round(_percentile(crs, 50), 4),
+            "median_health_score": round(_percentile(hs, 50), 1),
+            "median_daily_energy_per_kw": round(_percentile(per_kw, 50), 2),
+            "top_quartile_pr": round(_percentile(prs, 75), 4),
+        }
+
+    async def get_peer_ranking(
+        self, stations: List[Dict[str, Any]], metric: str = "health_score"
+    ) -> List[Dict[str, Any]]:
+        """同档位内电站排名 + percentile."""
+        if not stations:
+            return []
+
+        # 按档位分组
+        buckets: Dict[str, List[Dict[str, Any]]] = {}
+        for s in stations:
+            b = _capacity_bucket(s.get("capacity_kw") or 0)
+            buckets.setdefault(b, []).append(s)
+
+        result: List[Dict[str, Any]] = []
+        for b, peers in buckets.items():
+            peers_sorted = sorted(
+                peers,
+                key=lambda x: (x.get(metric) or 0),
+                reverse=(metric not in ("loss_kwh", "loss_cny")),
+            )
+            n = len(peers_sorted)
+            for i, p in enumerate(peers_sorted):
+                percentile = round((n - i) / n * 100, 1)
+                result.append({
+                    "station_id": p.get("station_id"),
+                    "name": p.get("name"),
+                    "capacity_bucket": b,
+                    "metric": p.get(metric),
+                    "rank_in_bucket": i + 1,
+                    "bucket_size": n,
+                    "percentile": percentile,
+                })
+
+        # 全集团排名（按 station_id 升序给出最终顺序）
+        return sorted(result, key=lambda x: (-x["percentile"], x["station_id"]))
+
+
+def _capacity_bucket(capacity_kw: float) -> str:
+    """容量档位分组."""
+    if capacity_kw < 1000:
+        return "<1MW"
+    if capacity_kw < 5000:
+        return "1-5MW"
+    if capacity_kw < 10000:
+        return "5-10MW"
+    if capacity_kw < 50000:
+        return "10-50MW"
+    return "50MW+"
+
+
+def _percentile(sorted_values: List[float], p: int) -> float:
+    """线性插值分位数."""
+    if not sorted_values:
+        return 0.0
+    n = len(sorted_values)
+    if n == 1:
+        return sorted_values[0]
+    rank = (p / 100) * (n - 1)
+    lower = int(rank)
+    upper = min(lower + 1, n - 1)
+    frac = rank - lower
+    return sorted_values[lower] * (1 - frac) + sorted_values[upper] * frac

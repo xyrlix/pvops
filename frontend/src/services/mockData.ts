@@ -305,6 +305,46 @@ export const metricMock = {
     const dispersion = (Math.max(...values) - Math.min(...values)) / avg
     return strings.map((s) => ({ ...s, avg_current_a: Math.round(avg * 100) / 100, dispersion_rate: Math.round(dispersion * 100) / 100 }))
   },
+  // 群体基线 mock（同容量档位中位数 + top quartile）
+  getPeerBaseline: async (id: number) => {
+    const rng = seededRandom(`peer-baseline-${id}`)
+    const capBucket = id <= 2 ? '<1MW' : id <= 4 ? '1-5MW' : id <= 6 ? '5-10MW' : '10-50MW'
+    const sampleSize = 8 + Math.floor(rng() * 5)
+    return {
+      capacity_bucket: capBucket,
+      sample_size: sampleSize,
+      median_pr: 0.85 + (rng() - 0.5) * 0.06,
+      median_completion_rate: 0.88 + (rng() - 0.5) * 0.05,
+      median_health_score: 92 + (rng() - 0.5) * 8,
+      median_daily_energy_per_kw: 3.2 + (rng() - 0.5) * 0.4,
+      top_quartile_pr: 0.91 + (rng() - 0.5) * 0.04,
+      self: {
+        station_id: id,
+        name: `电站 ${id}`,
+        pr: 0.82 + (rng() - 0.5) * 0.08,
+        completion_rate: 0.85 + (rng() - 0.5) * 0.1,
+        health_score: 88 + (rng() - 0.5) * 12,
+        daily_energy_per_kw: 3.0 + (rng() - 0.5) * 0.6,
+      },
+    }
+  },
+  getPeerRanking: async (id: number, metric = 'health_score') => {
+    const rng = seededRandom(`peer-ranking-${id}-${metric}`)
+    const stations = Array.from({ length: 8 }).map((_, i) => ({
+      station_id: i + 1,
+      name: `电站 ${i + 1}`,
+      capacity_bucket: i < 3 ? '1-5MW' : '5-10MW',
+      metric: 70 + rng() * 30,
+      rank_in_bucket: i + 1,
+      bucket_size: 8,
+      percentile: Math.round((8 - i) / 8 * 100 * 10) / 10,
+    }))
+    return {
+      metric,
+      self_rank: stations.find((s) => s.station_id === id) || null,
+      ranking: stations,
+    }
+  },
 }
 
 export const reportMock = {

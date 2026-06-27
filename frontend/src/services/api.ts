@@ -152,6 +152,14 @@ export const metricApi = {
     USE_MOCK
       ? (await loadMock()).metricMock.getStationInverters(id)
       : apiClient.get(`/metrics/station/${id}/inverters`),
+  getPeerBaseline: async (id: number) =>
+    USE_MOCK
+      ? (await loadMock()).metricMock.getPeerBaseline(id)
+      : apiClient.get(`/metrics/station/${id}/peer-baseline`),
+  getPeerRanking: async (id: number, metric?: string) =>
+    USE_MOCK
+      ? (await loadMock()).metricMock.getPeerRanking(id, metric)
+      : apiClient.get(`/metrics/station/${id}/peer-ranking`, { params: { metric } }),
   getStationStrings: async (id: number, inverterId?: string) =>
     USE_MOCK
       ? (await loadMock()).metricMock.getStationStrings(id, inverterId)

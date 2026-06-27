@@ -104,3 +104,21 @@ async def get_station_strings(
 ) -> List[Dict]:
     """组串离散率."""
     return await metrics_service.get_string_dispersion(station_id, inverter_id)
+
+
+@router.get("/station/{station_id}/peer-baseline")
+async def get_station_peer_baseline(station_id: int) -> Dict:
+    """群体基线（同容量档位中位数 + top quartile）.
+
+    对标竞品 V3.2 §F3.3：同区域/同厂家/同容量横向对比。
+    """
+    return await metrics_service.get_station_peer_baseline(station_id)
+
+
+@router.get("/station/{station_id}/peer-ranking")
+async def get_station_peer_ranking(
+    station_id: int,
+    metric: str = Query("health_score", description="排序指标"),
+) -> Dict:
+    """同档位内电站排名（高亮本电站）."""
+    return await metrics_service.get_station_peer_ranking(station_id, metric)
