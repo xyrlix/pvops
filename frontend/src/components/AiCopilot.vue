@@ -23,6 +23,31 @@
             <div class="message-bubble">
               <div class="message-role">{{ msg.role === 'user' ? '我' : 'AI' }}</div>
               <div class="message-content">{{ msg.content }}</div>
+              <!-- ThoughtTrace: 推理链展开 -->
+              <div v-if="msg.tool_calls?.length" class="thought-trace">
+                <div class="trace-toggle" @click="msg._traceOpen = !msg._traceOpen">
+                  <el-icon :size="14">
+                    <ArrowRight v-if="!msg._traceOpen" />
+                    <ArrowDown v-else />
+                  </el-icon>
+                  <span>Agent 推理轨迹（{{ msg.tool_calls.length }} 步）</span>
+                </div>
+                <div v-if="msg._traceOpen" class="trace-steps">
+                  <div v-for="(tc, tIdx) in msg.tool_calls" :key="tIdx" class="trace-step">
+                    <div class="trace-call">
+                      <el-icon :size="12"><Aim /></el-icon>
+                      <span>调用工具：<code>{{ tc.tool }}</code></span>
+                    </div>
+                    <div class="trace-input">
+                      输入：<code>{{ JSON.stringify(tc.input, null, 1) }}</code>
+                    </div>
+                    <div v-if="tc.error" class="trace-error">错误：{{ tc.error }}</div>
+                    <div v-else class="trace-output">
+                      返回：<code>{{ truncate(JSON.stringify(tc.output), 200) }}</code>
+                    </div>
+                  </div>
+                </div>
+              </div>
               <div v-if="msg.sources && msg.sources.length" class="message-sources">
                 <div class="sources-title">参考来源：</div>
                 <div
@@ -77,18 +102,25 @@
 
 <script setup lang="ts">
 import { computed, nextTick, ref, watch } from 'vue'
-import { ChatDotRound, Promotion } from '@element-plus/icons-vue'
+import { ChatDotRound, Promotion, Aim, ArrowRight, ArrowDown } from '@element-plus/icons-vue'
 import { chatApi } from '@/services/api'
 import { useCopilotStore } from '@/stores/copilot'
+
+interface ToolCall {
+  tool: string
+  input: Record<string, unknown>
+  output?: unknown
+  error?: string
+}
 
 interface ChatMessage {
   role: 'user' | 'assistant'
   content: string
   // TODO(typing): replace any with explicit type; suppressed to keep CI green
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  // TODO(typing): replace any with explicit type; suppressed to keep CI green
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   sources?: any[]
+  tool_calls?: ToolCall[]
+  _traceOpen?: boolean
 }
 
 const copilotStore = useCopilotStore()
@@ -124,6 +156,11 @@ const quickQuestions = computed(() => {
   return base
 })
 
+const truncate = (val: unknown, max = 200) => {
+  const s = typeof val === 'string' ? val : JSON.stringify(val)
+  return s.length > max ? s.slice(0, max) + '...' : s
+}
+
 const scrollToBottom = () => {
   nextTick(() => {
     if (messagesRef.value) {
@@ -147,15 +184,15 @@ const sendMessage = async (text: string) => {
       context: copilotStore.context,
     // TODO(typing): replace any with explicit type; suppressed to keep CI green
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    // TODO(typing): replace any with explicit type; suppressed to keep CI green
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    })) as unknown as { session_id: string; answer: string; sources?: any[] }
+    })) as unknown as { session_id: string; answer: string; tool_calls?: ToolCall[]; sources?: any[] }
 
     sessionId.value = res.session_id
     messages.value.push({
       role: 'assistant',
       content: res.answer,
+      tool_calls: res.tool_calls,
       sources: res.sources,
+      _traceOpen: (res.tool_calls?.length ?? 0) > 0,
     })
   } catch (err) {
     messages.value.push({
@@ -265,6 +302,80 @@ const sendMessage = async (text: string) => {
 
 .source-item {
   margin-bottom: 4px;
+}
+
+.thought-trace {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(96, 165, 250, 0.2);
+  font-size: 12px;
+}
+
+.trace-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  color: var(--pv-primary);
+  font-weight: 600;
+  font-size: 12px;
+}
+
+.trace-toggle:hover {
+  opacity: 0.8;
+}
+
+.trace-steps {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.trace-step {
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: rgba(96, 165, 250, 0.06);
+  border: 1px solid rgba(96, 165, 250, 0.12);
+}
+
+.trace-call {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 600;
+  color: var(--pv-accent);
+  font-size: 11px;
+  margin-bottom: 4px;
+}
+
+.trace-call code {
+  font-family: var(--pv-font-mono);
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 3px;
+  padding: 1px 6px;
+  font-size: 11px;
+}
+
+.trace-input,
+.trace-output {
+  font-family: var(--pv-font-mono);
+  font-size: 10px;
+  color: var(--pv-text-tertiary);
+  margin-top: 2px;
+}
+
+.trace-input code,
+.trace-output code {
+  color: var(--pv-text-secondary);
+  word-break: break-all;
+}
+
+.trace-error {
+  color: var(--pv-danger);
+  font-weight: 600;
+  font-size: 11px;
+  margin-top: 2px;
 }
 
 .typing {
