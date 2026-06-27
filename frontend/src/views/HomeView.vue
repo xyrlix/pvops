@@ -186,23 +186,24 @@ title="月度健康度热力图（6 月）" icon="Grid" :loading="dashboardLoadi
           subtitle="每格=一天 · 颜色=健康度"
         >
           <!-- 自定义热力图：横向时间轴，纵向电站 -->
-          <div class="pv-heatmap">
+          <PvEmpty v-if="!heatmapRows.length" description="暂无电站数据" />
+          <div v-else class="pv-heatmap">
             <div v-for="row in heatmapRows" :key="row.name" class="pv-heatmap-row">
               <div class="pv-heatmap-label">{{ row.name }}</div>
               <div
                 v-for="(cell, ci) in row.cells"
                 :key="ci"
                 class="pv-heatmap-cell"
-                :class="`pv-heatmap-cell--${cell}`"
-                :title="`${row.name} · 6月${ci + 1}日 · 健康度${cell === 'green' ? '≥80' : cell === 'yellow' ? '60-80' : '<60'}`"
+                :class="`pv-heatmap-cell--${cell.tone}`"
+                :title="`${row.name} · ${cell.score != null ? cell.score.toFixed(0) : '--'} · ${cell.tone === 'green' ? '健康' : cell.tone === 'yellow' ? '亚健康' : '异常'}`"
               />
             </div>
           </div>
-          <div class="pv-heatmap-legend">
+          <div v-if="heatmapRows.length" class="pv-heatmap-legend">
             <span class="lg">健康(≥80)</span>
             <span class="ly">亚健康(60-80)</span>
             <span class="lr">异常(&lt;60)</span>
-            <span style="margin-left:auto;color:rgba(255,255,255,0.2)">← 6月1日 ............... 6月22日 →</span>
+            <span style="margin-left:auto;color:rgba(255,255,255,0.2)">← {{ heatmapRows[0]?.cells?.length || 0 }} 天 · 每日一格</span>
           </div>
         </PvCard>
       </div>
@@ -310,7 +311,7 @@ title="电力市场 · 现货价格" icon="TrendCharts" :loading="dashboardLoadi
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { useCopilotStore } from '@/stores/copilot'
-import { dashboardApi, workOrderApi } from '@/services/api'
+import { dashboardApi, metricApi, workOrderApi } from '@/services/api'
 import DashboardLayout from '@/components/DashboardLayout.vue'
 import PvCard from '@/components/PvCard.vue'
 import PvSkeleton from '@/components/PvSkeleton.vue'
@@ -422,14 +423,39 @@ const tradeData = ref({
   low: '0.215',
 })
 
-// 热力图数据
-const heatmapRows = ref([
-  { name: '上海XX厂', cells: ['green','green','yellow','yellow','red','red','red','yellow','yellow','green','green','green','green','yellow','yellow','red','red','red','red','yellow','green','green'] },
-  { name: '江苏XX园', cells: ['green','green','green','green','green','green','yellow','yellow','red','red','red','red','red','red','red','yellow','yellow','yellow','green','green','green','green'] },
-  { name: '杭州A站', cells: ['green','green','green','green','green','green','green','green','green','green','green','green','green','green','yellow','green','green','green','green','green','green','green'] },
-  { name: '嘉兴XX站', cells: ['green','green','green','yellow','yellow','green','green','green','yellow','yellow','yellow','red','yellow','yellow','green','green','green','green','green','green','green','green'] },
-  { name: '宁波C站', cells: ['green','green','green','green','green','green','green','green','green','green','green','yellow','green','green','green','green','green','green','green','green','green','green'] },
-])
+// 热力图数据：日 × 场站 × 健康度（用 mock fallback 保证初次加载有内容）
+const heatmapRows = ref<Array<{ name: string; cells: Array<{ tone: 'green' | 'yellow' | 'red'; score: number }> }>>([])
+const heatmapDays = ref(22)
+
+function scoreToTone(score: number | null): 'green' | 'yellow' | 'red' {
+  if (score === null || score === undefined) return 'yellow'
+  if (score >= 80) return 'green'
+  if (score >= 60) return 'yellow'
+  return 'red'
+}
+
+async function fetchHeatmap() {
+  try {
+    // 拉 overview 拿到电站列表 + 名字
+    const overview = (await dashboardApi.stationsOverview()) as unknown as Array<{ station_id: number; name: string }>
+    if (!overview.length) {
+      heatmapRows.value = []
+      return
+    }
+    const top = overview.slice(0, 6)  // 最多展示 6 个电站
+    const trends = await Promise.all(
+      top.map((s) => metricApi.getStationHealthTrend(s.station_id, heatmapDays.value) as unknown as Promise<Array<{ date: string; health_score: number }>>)
+    )
+    heatmapRows.value = top.map((s, idx) => {
+      const trend = trends[idx] || []
+      // 用 monthlyHealth mock 数据填充缺的日期，确保每天有数据
+      const cells = trend.map((d) => ({ tone: scoreToTone(d.health_score), score: d.health_score }))
+      return { name: s.name, cells }
+    })
+  } catch (err) {
+    console.error('获取热力图数据失败:', err)
+  }
+}
 
 const formatNumber = (n: number, digits = 1) => {
   if (Number.isNaN(n)) return '--'
@@ -482,6 +508,7 @@ const fetchWorkOrders = async () => {
 onMounted(() => {
   fetchDashboard()
   fetchWorkOrders()
+  fetchHeatmap()
 })
 </script>
 
