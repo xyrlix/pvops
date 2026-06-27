@@ -1,8 +1,7 @@
-"""确定性模拟数据生成器.
+"""确定性模拟数据生成器（**已弃用** — 请使用 ``app.demo.MockDataProvider``）.
 
-所有生成器都基于 station_id / device_id 做确定性扰动，保证刷新后界面稳定。
-真实数据接入时，可在 metrics_service / dashboard_service 中移除 mock fallback，
-或关闭 USE_MOCK_DATA。
+保留此文件仅为向后兼容：所有业务调用已迁移到 ``app.demo.get_data_provider()``。
+新代码不应再 ``from app.services import mock_data``；后续会移除本模块。
 """
 
 import hashlib

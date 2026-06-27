@@ -9,25 +9,33 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import get_settings
 from app.core.database import AsyncSessionLocal
+from app.demo import get_data_provider
 from app.models.device import Inverter, StringUnit
 from app.models.station import Station
 from app.models.timeseries import InverterData, WeatherData
 from app.repositories import get_repository
 from app.services.health import calculate_health_score
-from app.services import mock_data
 
 logger = logging.getLogger(__name__)
 
 
 async def get_latest_station_metrics(station_id: int) -> Dict:
-    """获取电站最新指标（通过统一仓库，空数据时可选 mock fallback）."""
-    repo = get_repository()
-    metrics = await repo.get_latest_station_metrics(station_id)
-    settings = get_settings()
-    if settings.use_mock_data and (metrics.get("active_power_kw") == 0 and metrics.get("daily_energy_kwh") == 0):
-        capacity = await _get_station_capacity_from_db(station_id)
-        mock = mock_data.mock_latest_station_metrics(station_id, capacity)
-        metrics.update(mock)
+    """获取电站最新指标.
+
+    通过 ``DataProvider`` 获取，provider 内部决定 mock / real。
+    当 provider 为 RealDataProvider 且真实数据全 0 时，本函数显式触发
+    fallback：填充 ``health_score`` 等计算字段以避免下游 None 异常。
+    """
+    capacity = await _get_station_capacity_from_db(station_id)
+    provider = get_data_provider()
+    metrics = await provider.get_latest_station_metrics(station_id, capacity)
+
+    # 真实模式 + 全零数据：补齐 health_score 等下游字段
+    if metrics.get("active_power_kw", 0) == 0 and metrics.get("daily_energy_kwh", 0) == 0:
+        metrics.setdefault("health_score", 100.0)
+        metrics.setdefault("pr", 0.0)
+        metrics.setdefault("timestamp", datetime.now().isoformat())
+        metrics.setdefault("station_name", f"电站 {station_id}")
     return metrics
 
 
@@ -45,13 +53,9 @@ async def get_metric_history(
     start: Optional[datetime] = None,
     end: Optional[datetime] = None,
 ) -> List[Dict]:
-    """获取指标历史（通过统一仓库，空数据时可选 mock fallback）."""
-    repo = get_repository()
-    data = await repo.get_metric_history(station_id, metric, start, end)
-    settings = get_settings()
-    if settings.use_mock_data and not data:
-        return mock_data.mock_metric_history(station_id, metric, start, end)
-    return data
+    """获取指标历史曲线."""
+    provider = get_data_provider()
+    return await provider.get_metric_history(station_id, metric, start, end)
 
 
 async def get_daily_energy(station_id: int, date: Optional[datetime] = None) -> float:
@@ -106,12 +110,16 @@ async def get_stations_overview() -> List[Dict]:
         result = await session.execute(select(Station))
         stations = result.scalars().all()
 
-        if not stations and get_settings().use_mock_data:
+        provider = get_data_provider()
+
+        if not stations:
+            # 没有真实电站：演示电站字典喂给 provider（mock 模式会生成随机数；
+            # real 模式只透传字段，前端会显示 PvEmpty）。
             station_dicts = [
                 {"id": i, "name": f"演示电站 {i}", "capacity_kw": 500.0 * i, "status": "active"}
                 for i in range(1, 7)
             ]
-            return mock_data.mock_station_overview(station_dicts)
+            return await provider.get_station_overview(station_dicts)
 
         overview = []
         for station in stations:
@@ -156,8 +164,10 @@ async def get_station_efficiency(station_id: int) -> Dict:
         daily_energy = metrics.get("daily_energy_kwh") or 0
         pr = metrics.get("pr") or 0
 
-        if get_settings().use_mock_data and daily_energy == 0:
-            return mock_data.mock_efficiency(station_id, capacity)
+        provider = get_data_provider()
+        if daily_energy == 0:
+            # provider 在 mock 模式下生成演示数据；real 模式下返回 0 占位
+            return await provider.get_efficiency(station_id, capacity)
 
         equivalent_hours = daily_energy / capacity if capacity > 0 else 0
         system_efficiency = pr * 100  # 简化
@@ -180,8 +190,9 @@ async def get_station_losses(station_id: int) -> Dict:
         actual = metrics.get("daily_energy_kwh") or 0
         pr = metrics.get("pr") or 0
 
-        if get_settings().use_mock_data and actual == 0:
-            return mock_data.mock_loss_breakdown(station_id, capacity)
+        provider = get_data_provider()
+        if actual == 0:
+            return await provider.get_loss_breakdown(station_id, capacity)
 
         theoretical = capacity * 5.0
         total_loss = max(0, theoretical - actual)
@@ -232,8 +243,9 @@ async def get_health_trend(station_id: int, days: int = 30) -> List[Dict]:
         )
         rows = result.all()
 
-        if not rows and get_settings().use_mock_data:
-            return mock_data.mock_health_trend(station_id, days)
+        if not rows:
+            provider = get_data_provider()
+            return await provider.get_health_trend(station_id, days)
 
         data = []
         for row in rows:
@@ -256,13 +268,13 @@ async def get_inverter_comparison(station_id: int) -> List[Dict]:
         )
         inverters = result.scalars().all()
 
-        if not inverters and get_settings().use_mock_data:
-            # 生成演示逆变器
+        if not inverters:
+            provider = get_data_provider()
             demo_inverters = [
                 {"inverter_id": f"INV{i:03d}", "name": f"逆变器 {i}", "capacity_kw": 100.0, "status": "online"}
                 for i in range(1, 7)
             ]
-            return mock_data.mock_inverter_comparison(station_id, demo_inverters)
+            return await provider.get_inverter_comparison(station_id, demo_inverters)
 
         if not inverters:
             return []
@@ -309,12 +321,13 @@ async def get_string_dispersion(
         result = await session.execute(query)
         strings = result.scalars().all()
 
-        if not strings and get_settings().use_mock_data:
+        if not strings:
+            provider = get_data_provider()
             demo_strings = [
                 {"string_id": f"STR{i:03d}", "name": f"组串 {i}", "inverter_id": inverter_id or "INV001", "capacity_kw": 10}
                 for i in range(1, 13)
             ]
-            return mock_data.mock_string_dispersion(station_id, demo_strings)
+            return await provider.get_string_dispersion(station_id, demo_strings)
 
         data = []
         for s in strings:

@@ -1,6 +1,7 @@
 """Dashboard 聚合数据服务.
 
-优先使用真实数据（Station/Alarm/TSDB），数据不足时调用 mock_data 补齐。
+优先使用真实数据（Station/Alarm/TSDB），数据不足时调用 DataProvider 补齐。
+所有 mock 逻辑下沉到 ``app.demo`` 命名空间，本模块不再直接 import mock_data。
 """
 
 import logging
@@ -9,11 +10,11 @@ from typing import Dict, List
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.config import get_settings
 from app.core.database import AsyncSessionLocal
+from app.demo import get_data_provider
 from app.models.alarm import Alarm
 from app.models.station import Station
-from app.services import mock_data, metrics_service
+from app.services import metrics_service
 
 logger = logging.getLogger(__name__)
 
@@ -31,7 +32,7 @@ async def get_dashboard_overview() -> Dict:
         stations = await _list_stations(session)
         total_capacity = sum((s.capacity_kw or 0) for s in stations)
 
-        # 实时功率 / 日发电：优先用 TSDB，否则 mock
+        # 实时功率 / 日发电：metrics_service 通过 DataProvider 获取
         total_power = 0.0
         total_energy = 0.0
         for s in stations:
@@ -61,7 +62,11 @@ async def get_dashboard_overview() -> Dict:
 
 
 async def get_stations_overview() -> List[Dict]:
-    """集团场站分布（气泡图/TOP榜）."""
+    """集团场站分布（气泡图/TOP榜）.
+
+    委托给 ``DataProvider.get_station_overview``，mock 模式生成演示数据；
+    real 模式直接透传基础字段，由前端 PvEmpty 兜底。
+    """
     async with AsyncSessionLocal() as session:
         stations = await _list_stations(session)
         station_dicts = [
@@ -75,18 +80,13 @@ async def get_stations_overview() -> List[Dict]:
         ]
 
         if not station_dicts:
-            # 完全没有电站时给一组演示数据
             station_dicts = [
                 {"id": i, "name": f"演示电站 {i}", "capacity_kw": 500.0 * i, "status": "active"}
                 for i in range(1, 7)
             ]
 
-        settings = get_settings()
-        if settings.use_mock_data:
-            return mock_data.mock_station_overview(station_dicts)
-
-        # 真实数据路径：复用 metrics_service 中的 overview 计算
-        return await metrics_service.get_stations_overview()
+        provider = get_data_provider()
+        return await provider.get_station_overview(station_dicts)
 
 
 async def get_risk_top_stations(limit: int = 5) -> List[Dict]:
