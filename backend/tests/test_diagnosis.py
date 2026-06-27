@@ -16,9 +16,17 @@ from app.services.diagnosis_service import (
     DiagnosisResult,
     _check_communication_gap,
     _check_fault_codes,
+    _check_high_module_temperature,
+    _check_irradiance_power_mismatch,
+    _check_night_power_consumption,
+    _check_power_factor,
     _check_power_generation,
     _check_pr_performance,
+    _check_repeated_fault,
+    _check_sudden_power_drop,
     _check_voltage_current,
+    _check_voltage_imbalance,
+    _check_weather_data_gap,
 )
 
 
@@ -267,3 +275,126 @@ async def test_combined_health_score_penalizes_critical() -> None:
     expected = max(0, 100 - critical * 25 - warning * 10)
     assert r.overall_health == expected
     assert r.overall_health < 100
+
+
+# ─── 新增规则 6-13 ──────────────────────────────────────
+
+
+@pytest.mark.asyncio
+async def test_check_high_module_temperature_triggers() -> None:
+    """高辐照 + 高温 → warning."""
+    r = _result()
+    now = datetime.now()
+    records = [_rec(timestamp=now, irradiance_w_m2=1000.0, ambient_temp_c=40.0) for _ in range(3)]
+    await _check_high_module_temperature(r, "INV001", records)
+    assert len(r.findings) >= 1
+    assert "温度异常" in r.findings[0]["category"]
+
+
+@pytest.mark.asyncio
+async def test_check_high_module_temperature_ok() -> None:
+    """正常温度 → 无告警."""
+    r = _result()
+    records = [_rec(irradiance_w_m2=200.0, ambient_temp_c=15.0)]
+    await _check_high_module_temperature(r, "INV001", records)
+    assert r.findings == []
+
+
+@pytest.mark.asyncio
+async def test_night_power_triggers() -> None:
+    """夜间有功率 ≥3 次 → warning."""
+    r = _result()
+    records = [_rec(irradiance_w_m2=0.0, active_power_kw=1.0) for _ in range(5)]
+    await _check_night_power_consumption(r, "INV001", records)
+    assert len(r.findings) >= 1
+
+
+@pytest.mark.asyncio
+async def test_night_power_ok() -> None:
+    r = _result()
+    records = [_rec(irradiance_w_m2=0.0, active_power_kw=0.0) for _ in range(3)]
+    await _check_night_power_consumption(r, "INV001", records)
+    assert r.findings == []
+
+
+@pytest.mark.asyncio
+async def test_sudden_power_drop_triggers() -> None:
+    r = _result()
+    now = datetime.now()
+    records = [
+        _rec(timestamp=now - timedelta(minutes=5), active_power_kw=200.0, irradiance_w_m2=600.0),
+        _rec(timestamp=now, active_power_kw=30.0, irradiance_w_m2=600.0),
+    ]
+    await _check_sudden_power_drop(r, "INV001", records)
+    assert len(r.findings) >= 1
+    assert r.findings[0]["severity"] == "critical"
+
+
+@pytest.mark.asyncio
+async def test_sudden_power_drop_no_false_positive() -> None:
+    r = _result()
+    now = datetime.now()
+    records = [
+        _rec(timestamp=now - timedelta(minutes=5), active_power_kw=200.0),
+        _rec(timestamp=now, active_power_kw=180.0),
+    ]
+    await _check_sudden_power_drop(r, "INV001", records)
+    assert r.findings == []
+
+
+@pytest.mark.asyncio
+async def test_repeated_fault_triggers() -> None:
+    r = _result()
+    records = [_rec(fault_code=7) for _ in range(5)]
+    await _check_repeated_fault(r, "INV001", records)
+    assert len(r.findings) >= 1
+
+
+@pytest.mark.asyncio
+async def test_barely_repeated_fault_no_alert() -> None:
+    """相同故障码只出现 1 次 → 不触发."""
+    r = _result()
+    records = [_rec(fault_code=7)]
+    await _check_repeated_fault(r, "INV001", records)
+    assert r.findings == []
+
+
+@pytest.mark.asyncio
+async def test_power_mismatch_triggers() -> None:
+    r = _result()
+    now = datetime.now()
+    # theoretical=800/1000*1000=800, pr=100/800=0.125 < 0.5
+    records = [_rec(timestamp=now - timedelta(minutes=i * 10),
+                     active_power_kw=100.0, irradiance_w_m2=800.0) for i in range(3)]
+    await _check_irradiance_power_mismatch(r, "INV001", records)
+    assert len(r.findings) >= 1
+
+
+@pytest.mark.asyncio
+async def test_weather_data_gap_triggers() -> None:
+    r = _result()
+    records = [_rec(irradiance_w_m2=0.0, ambient_temp_c=-20.0) for _ in range(10)]
+    await _check_weather_data_gap(r, "INV001", records)
+    assert len(r.findings) >= 1
+
+
+@pytest.mark.asyncio
+async def test_voltage_imbalance_triggers() -> None:
+    r = _result()
+    records = [
+        _rec(dc_voltage_v=600.0, dc_current_a=10.0),
+        _rec(dc_voltage_v=680.0, dc_current_a=10.0),
+    ]
+    await _check_voltage_imbalance(r, "INV001", records)
+    assert len(r.findings) >= 1
+
+
+@pytest.mark.asyncio
+async def test_voltage_imbalance_no_alert() -> None:
+    r = _result()
+    records = [
+        _rec(dc_voltage_v=620.0, dc_current_a=10.0),
+        _rec(dc_voltage_v=630.0, dc_current_a=10.0),
+    ]
+    await _check_voltage_imbalance(r, "INV001", records)
+    assert r.findings == []

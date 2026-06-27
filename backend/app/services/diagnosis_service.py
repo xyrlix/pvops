@@ -96,11 +96,21 @@ async def diagnose_station(station_id: int) -> Dict[str, Any]:
 
     # 执行各项诊断规则
     for inverter_id, records in inverter_groups.items():
+        # 规则 1-5：基础指标
         await _check_power_generation(result, inverter_id, records)
         await _check_pr_performance(result, inverter_id, records)
         await _check_communication_gap(result, inverter_id, records)
         await _check_fault_codes(result, inverter_id, records)
         await _check_voltage_current(result, inverter_id, records)
+        # 规则 6-15：扩展指标
+        await _check_high_module_temperature(result, inverter_id, records)
+        await _check_night_power_consumption(result, inverter_id, records)
+        await _check_power_factor(result, inverter_id, records)
+        await _check_sudden_power_drop(result, inverter_id, records)
+        await _check_repeated_fault(result, inverter_id, records)
+        await _check_irradiance_power_mismatch(result, inverter_id, records)
+        await _check_weather_data_gap(result, inverter_id, records)
+        await _check_voltage_imbalance(result, inverter_id, records)
 
     # 计算综合健康度
     if result.findings:
@@ -336,3 +346,244 @@ async def _check_voltage_current(
                 "排查损坏组件",
             ],
         })
+
+async def _check_high_module_temperature(
+    result: DiagnosisResult,
+    inverter_id: str,
+    records: List[InverterData],
+) -> None:
+    """检测逆变器温度异常."""
+    # InverterData 没有 module_temp，根据 irradiance + ambient_temp 推断
+    if not records:
+        return
+    avg_ambient = sum(r.ambient_temp_c or 0 for r in records) / len(records)
+    # 估算模块温度 ≈ 环境温度 + 辐照 * 0.03
+    peak_irradiance = max(r.irradiance_w_m2 or 0 for r in records)
+    estimated_module_temp = avg_ambient + peak_irradiance * 0.03
+    if estimated_module_temp > 75:
+        result.findings.append({
+            "category": "温度异常",
+            "severity": "warning",
+            "title": f"逆变器 {inverter_id} 预估模块温度偏高",
+            "description": f"基于辐照 {peak_irradiance:.0f} W/m² 和环境温度 {avg_ambient:.1f} °C，"
+                          f"预估组件温度达 {estimated_module_temp:.1f} °C（阈值 75°C）。",
+            "evidence": [
+                f"峰辐辐照：{peak_irradiance:.1f} W/m²",
+                f"平均环境温度：{avg_ambient:.1f} °C",
+                f"预估模块温度：{estimated_module_temp:.1f} °C",
+            ],
+            "root_cause": "高温导致组件效率下降，长期高温还会加速组件老化。",
+            "suggestions": [
+                "检查通风散热条件",
+                "清理组件表面灰尘",
+                "考虑增加散热设施",
+            ],
+        })
+
+
+async def _check_night_power_consumption(
+    result: DiagnosisResult,
+    inverter_id: str,
+    records: List[InverterData],
+) -> None:
+    """夜间功率不应 > 0（检查是否停机后有负荷）."""
+    night = [r for r in records if r.irradiance_w_m2 < 10 and r.active_power_kw > 0.5]
+    if len(night) >= 3:
+        first = night[0]
+        result.findings.append({
+            "category": "待机异常",
+            "severity": "warning",
+            "title": f"逆变器 {inverter_id} 夜间仍有功率输出",
+            "description": f"夜间（辐照 < 10 W/m²）检测到 {len(night)} 次功率 > 0.5 kW。",
+            "evidence": [
+                f"时间：{first.timestamp.strftime('%Y-%m-%d %H:%M')}",
+                f"辐照度：{first.irradiance_w_m2:.1f} W/m²",
+                f"有功功率：{first.active_power_kw:.2f} kW",
+            ],
+            "root_cause": "可能计量异常或逆变器未完全关机。",
+            "suggestions": [
+                "检查逆变器开关状态",
+                "确认电力计量装置正常",
+            ],
+        })
+
+
+async def _check_power_factor(
+    result: DiagnosisResult,
+    inverter_id: str,
+    records: List[InverterData],
+) -> None:
+    """功率因数异常检测（部分逆变器可通过无功功率计算 PF）. """
+    # 无 PF 字段，根据 active_power + reactive_power 计算
+    for r in records:
+        if not hasattr(r, "reactive_power_kvar") or r.active_power_kw is None:
+            continue
+        ap = r.active_power_kw
+        rp = getattr(r, "reactive_power_kvar", 0) or 0
+        if ap < 1:
+            continue
+        pf = abs(ap) / ((ap ** 2 + rp ** 2) ** 0.5) if (ap ** 2 + rp ** 2) > 0 else 1
+        if pf < 0.85:
+            result.findings.append({
+                "category": "电能质量",
+                "severity": "warning",
+                "title": f"逆变器 {inverter_id} 功率因数偏低",
+                "description": f"功率因数 {pf:.3f}（低于 0.85），无功功率 {rp:.2f} kvar。",
+                "evidence": [
+                    f"有功功率：{ap:.2f} kW",
+                    f"无功功率：{rp:.2f} kvar",
+                    f"功率因数：{pf:.3f}",
+                ],
+                "root_cause": "可能原因：逆变器无功补偿异常或电网侧负载不平衡。",
+                "suggestions": [
+                    "检查逆变器无功设置",
+                    "确认电网电压/频率是否超限",
+                ],
+            })
+            break  # 一条就够了
+
+
+async def _check_sudden_power_drop(
+    result: DiagnosisResult,
+    inverter_id: str,
+    records: List[InverterData],
+) -> None:
+    """相邻时间点功率突降 > 50%."""
+    if len(records) < 3:
+        return
+    sorted_recs = sorted(records, key=lambda r: r.timestamp)
+    for i in range(1, len(sorted_recs)):
+        prev = sorted_recs[i - 1]
+        curr = sorted_recs[i]
+        if (prev.active_power_kw or 0) < 5:
+            continue
+        ratio = (curr.active_power_kw or 0) / max(prev.active_power_kw, 0.01)
+        if ratio < 0.4:  # 掉到 40% 以下
+            result.findings.append({
+                "category": "发电突降",
+                "severity": "critical",
+                "title": f"逆变器 {inverter_id} 功率突降",
+                "description": f"功率从 {prev.active_power_kw:.1f} kW 突降至 {curr.active_power_kw:.1f} kW。",
+                "evidence": [
+                    f"之前：{prev.timestamp.strftime('%Y-%m-%d %H:%M')} → {prev.active_power_kw:.2f} kW，辐照 {prev.irradiance_w_m2:.0f} W/m²",
+                    f"之后：{curr.timestamp.strftime('%Y-%m-%d %H:%M')} → {curr.active_power_kw:.2f} kW，辐照 {curr.irradiance_w_m2:.0f} W/m²",
+                ],
+                "root_cause": "可能原因：逆变器异常停机、交流侧跳闸、直流侧断开。",
+                "suggestions": [
+                    "立即检查逆变器运行状态",
+                    "检查交流侧开关和线缆",
+                    "检查直流侧组串连接",
+                ],
+            })
+            return  # 一次就够了
+
+
+async def _check_repeated_fault(
+    result: DiagnosisResult,
+    inverter_id: str,
+    records: List[InverterData],
+) -> None:
+    """同一故障码重复出现 > 3 次."""
+    fault_counts: Dict[int, int] = {}
+    for r in records:
+        fc = r.fault_code or 0
+        if fc > 0:
+            fault_counts[fc] = fault_counts.get(fc, 0) + 1
+    for fc, cnt in fault_counts.items():
+        if cnt >= 3:
+            result.findings.append({
+                "category": "重复故障",
+                "severity": "warning",
+                "title": f"逆变器 {inverter_id} 故障码 {fc} 出现 {cnt} 次",
+                "description": f"24 小时内同一故障码重复出现 {cnt} 次，建议确认是否需要更换部件。",
+                "evidence": [f"故障码：{fc}（出现次数：{cnt}）"],
+                "root_cause": "重复故障通常意味硬件问题而非偶发。",
+                "suggestions": [
+                    f"查阅故障码 {fc} 的技术手册",
+                    "如持续出现，安排维修现场检查",
+                ],
+            })
+
+
+async def _check_irradiance_power_mismatch(
+    result: DiagnosisResult,
+    inverter_id: str,
+    records: List[InverterData],
+) -> None:
+    """白天高辐照但功率异常低（PR < 50% 且辐照 > 400 W/m²）."""
+    mismatches = [r for r in records if r.irradiance_w_m2 > 400
+                  and r.active_power_kw is not None
+                  and r.active_power_kw / max(r.irradiance_w_m2 / 1000 * 1000, 0.01) < 0.5]
+    if len(mismatches) >= 3:
+        latest = mismatches[0]
+        theoretical = latest.irradiance_w_m2 / 1000 * 1000
+        pr = latest.active_power_kw / theoretical if theoretical > 0 else 0
+        result.findings.append({
+            "category": "发电异常",
+            "severity": "critical",
+            "title": f"逆变器 {inverter_id} 高辐照低功率",
+            "description": f"辐照 {latest.irradiance_w_m2:.0f} W/m² 但 PR 仅 {pr*100:.0f}%。",
+            "evidence": [
+                f"时间：{latest.timestamp.strftime('%Y-%m-%d %H:%M')}",
+                f"辐照度：{latest.irradiance_w_m2:.1f} W/m²",
+                f"PR：{pr*100:.1f}%",
+            ],
+            "root_cause": "可能原因：MPPT 异常、组件遮挡或逆变器限功率运行。",
+            "suggestions": [
+                "检查组串是否被遮挡",
+                "检查 MPPT 跟踪状态",
+                "检查逆变器是否限功率运行",
+            ],
+        })
+
+
+async def _check_weather_data_gap(
+    result: DiagnosisResult,
+    inverter_id: str,
+    records: List[InverterData],
+) -> None:
+    """无天气数据（辐射/温度全 0）超过 6 小时."""
+    zero_weather = [r for r in records if (r.irradiance_w_m2 or 0) < 1
+                    and (r.ambient_temp_c or 0) < -10]
+    if len(zero_weather) > len(records) * 0.5:
+        result.findings.append({
+            "category": "数据质量",
+            "severity": "warning",
+            "title": f"逆变器 {inverter_id} 气象数据丢失",
+            "description": "超过 50% 的遥测记录中辐照/温度均在零值附近，气象站可能故障。",
+            "evidence": [
+                f"有效辐照记录数：{sum(1 for r in records if (r.irradiance_w_m2 or 0) > 10)} / {len(records)}",
+            ],
+            "root_cause": "气象站传感器故障、通信中断或校准偏差。",
+            "suggestions": [
+                "检查气象站状态",
+                "检查辐照计传感器",
+                "确认通信链路",
+            ],
+        })
+
+
+async def _check_voltage_imbalance(
+    result: DiagnosisResult,
+    inverter_id: str,
+    records: List[InverterData],
+) -> None:
+    """组串电压不匹配（多路 MPPT 电压差异 > 10%）."""
+    # 当前 InverterData 只有 dc_voltage_v（未区分多 MPPT）
+    # 当记录中有多值时检测
+    voltages = sorted(set(round(r.dc_voltage_v or 0, -1) for r in records if (r.dc_voltage_v or 0) > 100))
+    if len(voltages) >= 2:
+        vmax, vmin = max(voltages), min(voltages)
+        if vmin > 0 and (vmax - vmin) / vmin > 0.1:
+            result.findings.append({
+                "category": "电气异常",
+                "severity": "warning",
+                "title": f"逆变器 {inverter_id} 多路 MPPT 电压不匹配",
+                "description": f"最大电压 {vmax:.0f}V，最小 {vmin:.0f}V，差异 {(vmax-vmin)/vmin*100:.1f}%。",
+                "evidence": [f"电压值：{voltages}"],
+                "root_cause": "不同组串的组件数量/型号不一致或局部遮挡。",
+                "suggestions": [
+                    "确认各 MPPT 路数组串配置一致",
+                    "检查被遮挡组串",
+                ],
+            })
