@@ -47,7 +47,7 @@
         </el-form-item>
       </el-form>
       <div class="login-footer">
-        <p>演示账号：admin / admin123</p>
+        <p>运维决策 · 安全可控</p>
       </div>
     </div>
   </div>

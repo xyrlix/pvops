@@ -69,7 +69,7 @@
           <div class="pv-topbar__time" :title="`服务器时间：${currentTime}`">{{ currentTime }}</div>
           <ThemeSwitcher />
           <el-tooltip content="个人中心" placement="bottom">
-            <div class="pv-topbar__avatar" style="cursor:pointer" @click="$router.push('/profile')">管</div>
+            <div class="pv-topbar__avatar" style="cursor:pointer" @click="goProfile">管</div>
           </el-tooltip>
         </div>
       </header>
@@ -85,6 +85,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import { Fold, Expand } from '@element-plus/icons-vue'
 import { useStationStore } from '@/stores/station'
 import { dashboardApi } from '@/services/api'
@@ -97,11 +98,13 @@ const MOBILE_BREAKPOINT = 900
 const currentTime = ref('')
 let timer: ReturnType<typeof setInterval> | null = null
 
+const router = useRouter()
 const isCollapsed = ref(false)
 const isMobile = ref(false)
 const mobileOpen = ref(false)
 
 const stationStore = useStationStore()
+const goProfile = () => router.push('/profile')
 
 const checkScreen = () => {
   isMobile.value = window.innerWidth <= MOBILE_BREAKPOINT
