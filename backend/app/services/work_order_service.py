@@ -10,6 +10,16 @@ from app.models.work_order import WorkOrder
 from app.services import knowledge_service
 
 
+# ─── 租户隔离辅助 ──────────────────────────────────────────
+
+
+def _apply_tenant_filter(query, tenant_id: Optional[int]):
+    """给 query 注入 tenant_id 过滤；tenant_id=None 时跳过（超管跨租户）."""
+    if tenant_id is None:
+        return query
+    return query.where(WorkOrder.tenant_id == tenant_id)
+
+
 async def create_work_order(
     session: AsyncSession,
     title: str,
@@ -19,8 +29,9 @@ async def create_work_order(
     created_by: Optional[str] = None,
     station_id: Optional[int] = None,
     alarm_id: Optional[int] = None,
+    tenant_id: Optional[int] = None,
 ) -> WorkOrder:
-    """创建工单."""
+    """创建工单（自动归属当前 tenant）."""
     work_order = WorkOrder(
         title=title,
         description=description,
@@ -29,6 +40,7 @@ async def create_work_order(
         created_by=created_by,
         station_id=station_id,
         alarm_id=alarm_id,
+        tenant_id=tenant_id,
         status="pending",
         feedback=[],
     )
@@ -43,9 +55,10 @@ async def list_work_orders(
     station_id: Optional[int] = None,
     status: Optional[str] = None,
     limit: int = 100,
+    tenant_id: Optional[int] = None,
 ) -> List[WorkOrder]:
-    """获取工单列表."""
-    query = select(WorkOrder)
+    """获取工单列表（按 tenant 过滤）."""
+    query = _apply_tenant_filter(select(WorkOrder), tenant_id)
     if station_id:
         query = query.where(WorkOrder.station_id == station_id)
     if status:
@@ -54,9 +67,14 @@ async def list_work_orders(
     return list(result.scalars().all())
 
 
-async def get_work_order(session: AsyncSession, work_order_id: int) -> Optional[WorkOrder]:
-    """获取工单详情."""
-    result = await session.execute(select(WorkOrder).where(WorkOrder.id == work_order_id))
+async def get_work_order(
+    session: AsyncSession,
+    work_order_id: int,
+    tenant_id: Optional[int] = None,
+) -> Optional[WorkOrder]:
+    """获取工单详情（按 tenant 过滤；跨租户返回 None）."""
+    query = _apply_tenant_filter(select(WorkOrder), tenant_id).where(WorkOrder.id == work_order_id)
+    result = await session.execute(query)
     return result.scalar_one_or_none()
 
 
@@ -66,9 +84,11 @@ async def update_work_order_status(
     status: str,
     comment: Optional[str] = None,
     solution: Optional[str] = None,
+    tenant_id: Optional[int] = None,
 ) -> Optional[WorkOrder]:
     """更新工单状态并追加反馈."""
-    result = await session.execute(select(WorkOrder).where(WorkOrder.id == work_order_id))
+    query = _apply_tenant_filter(select(WorkOrder), tenant_id).where(WorkOrder.id == work_order_id)
+    result = await session.execute(query)
     work_order = result.scalar_one_or_none()
     if not work_order:
         return None
@@ -120,10 +140,11 @@ async def get_work_order_timeline(work_order_id: int) -> List[Dict]:
         return timeline
 
 
-async def archive_case(work_order_id: int) -> Optional[Dict]:
+async def archive_case(work_order_id: int, tenant_id: Optional[int] = None) -> Optional[Dict]:
     """将已完成工单沉淀为知识库案例."""
     async with AsyncSessionLocal() as session:
-        result = await session.execute(select(WorkOrder).where(WorkOrder.id == work_order_id))
+        query = _apply_tenant_filter(select(WorkOrder), tenant_id).where(WorkOrder.id == work_order_id)
+        result = await session.execute(query)
         work_order = result.scalar_one_or_none()
         if not work_order or work_order.status != "completed":
             return None
