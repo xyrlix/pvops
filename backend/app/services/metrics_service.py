@@ -94,7 +94,70 @@ async def batch_insert_inverter_data(data_list: List[Dict]) -> int:
 # 高级指标（对标竞品大屏）
 # ---------------------------------------------------------------------------
 
-DEFAULT_ELECTRICITY_PRICE = 0.42  # 元/kWh
+DEFAULT_ELECTRICITY_PRICE = 0.42  # 元/kWh（可通过 .env ELECTRICITY_PRICE 覆盖）
+
+
+_ELECTRICITY_PRICE: Optional[float] = None
+
+
+def _get_price() -> float:
+    """获取电价（优先 env，回退 0.42 元/kWh）."""
+    import os
+    global _ELECTRICITY_PRICE
+    if _ELECTRICITY_PRICE is None:
+        try:
+            _ELECTRICITY_PRICE = float(os.getenv("ELECTRICITY_PRICE", "0.42"))
+        except (ValueError, TypeError):
+            _ELECTRICITY_PRICE = 0.42
+    return _ELECTRICITY_PRICE
+
+
+# 温度系数（晶硅典型值 -0.0045 / °C，可通过 .env PV_TEMP_COEFF 覆盖）
+_TEMP_COEFF: Optional[float] = None
+
+
+def _get_temp_coeff() -> float:
+    import os
+    global _TEMP_COEFF
+    if _TEMP_COEFF is None:
+        try:
+            _TEMP_COEFF = float(os.getenv("PV_TEMP_COEFF", "-0.0045"))
+        except (ValueError, TypeError):
+            _TEMP_COEFF = -0.0045
+    return _TEMP_COEFF
+
+
+def _pr_with_temp_correction(
+    actual_energy_kwh: float,
+    irradiance_kwh_m2: float,
+    capacity_kw: float,
+    avg_module_temp: float = 25.0,
+) -> float:
+    """PR 温度修正公式（IEEE 1547 / IEC 61724）.
+
+    PR = E_actual / (GHI * P / G_stc)
+    PR_corrected = PR / (1 + γ * (T_module - 25))
+
+    其中:
+    - E_actual: 实际发电量 (kWh)
+    - GHI: 总水平辐射量 (kWh/m²)
+    - P: 标称直流容量 (kWp)
+    - G_stc: 标准辐照 1 kW/m²
+    - γ: 温度系数（默认 -0.0045 / °C）
+    - T_module: 组件温度（无实测时 = 环境温度 + 25°C 经验估值）
+    """
+    if capacity_kw <= 0 or irradiance_kwh_m2 <= 0:
+        return 0.0
+    # 标准 PR
+    theoretical = irradiance_kwh_m2 * capacity_kw
+    pr = actual_energy_kwh / theoretical if theoretical > 0 else 0.0
+    # 温度修正
+    gamma = _get_temp_coeff()
+    t_diff = avg_module_temp - 25.0
+    correction = 1.0 + gamma * t_diff
+    if correction <= 0:
+        return pr
+    return min(pr / correction, 1.0)  # 上限 1.0
 
 
 async def _get_station_capacity(session: AsyncSession, station_id: int) -> float:
@@ -203,28 +266,48 @@ async def get_station_peer_ranking(station_id: int, metric: str = "health_score"
 
 
 async def get_station_efficiency(station_id: int) -> Dict:
-    """电站效率指标."""
+    """电站效率指标（PR 按 IEEE 61724 温度修正，等效小时按实际/装机）."""
     async with AsyncSessionLocal() as session:
         capacity = await _get_station_capacity(session, station_id)
         metrics = await get_latest_station_metrics(station_id)
         daily_energy = metrics.get("daily_energy_kwh") or 0
-        pr = metrics.get("pr") or 0
+        pr_raw = metrics.get("pr") or 0
 
         provider = get_data_provider()
         if daily_energy == 0:
-            # provider 在 mock 模式下生成演示数据；real 模式下返回 0 占位
             return await provider.get_efficiency(station_id, capacity)
 
+        # 等效小时 = 实际发电 / 装机容量
         equivalent_hours = daily_energy / capacity if capacity > 0 else 0
-        system_efficiency = pr * 100  # 简化
+
+        # 估算日总辐照（kWh/m²）：基于 pr_raw 和 daily_energy 反推
+        # 当 pr_raw 有值时使用，否则使用默认值
+        if pr_raw > 0 and capacity > 0:
+            # 从 daily_energy / (pr * capacity) 反推日辐照
+            daily_irradiance = daily_energy / (pr_raw * capacity)
+        else:
+            daily_irradiance = 4.5  # 中国平均等效日照小时（kWh/m²/day）
+
+        # 组件温度估算：环境温度 + 25°C（经验估，无实测时）
+        avg_module_temp = metrics.get("avg_module_temp_c", metrics.get("ambient_temp_c", 25)) + 25
+
+        # 温度修正 PR
+        pr_corrected = _pr_with_temp_correction(
+            daily_energy, daily_irradiance, capacity, avg_module_temp
+        )
+
+        system_efficiency = pr_corrected * 100
 
         return {
             "station_id": station_id,
             "capacity_kw": capacity,
             "daily_energy_kwh": daily_energy,
             "equivalent_hours": round(equivalent_hours, 2),
-            "pr": round(pr, 4),
+            "pr": round(pr_corrected, 4),
+            "pr_raw": round(pr_raw, 4),
             "system_efficiency": round(system_efficiency, 2),
+            "daily_irradiance": round(daily_irradiance, 2),
+            "temp_coefficient": _get_temp_coeff(),
         }
 
 
@@ -249,8 +332,10 @@ async def get_station_losses(station_id: int) -> Dict:
         fault_loss = total_loss * 0.1 if metrics.get("health_score", 100) < 80 else 0
         other_loss = max(0, total_loss - irradiance_loss - efficiency_loss - fault_loss)
 
+        price = _get_price()
+
         def to_cny(kwh: float) -> float:
-            return round(kwh * DEFAULT_ELECTRICITY_PRICE, 2)
+            return round(kwh * price, 2)
 
         return {
             "station_id": station_id,
