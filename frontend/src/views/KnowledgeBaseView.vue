@@ -70,7 +70,7 @@
                 <PvTag :type="row.status === 'active' ? 'success' : 'info'">{{ statusText(row.status) }}</PvTag>
               </template>
             </el-table-column>
-            <el-table-column prop="created_at" label="上传时间" width="160">
+            <el-table-column class-name="hide-on-mobile" prop="created_at" label="上传时间" width="160">
               <template #default="{ row }">
                 {{ formatDate(row.created_at) }}
               </template>

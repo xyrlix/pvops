@@ -159,6 +159,7 @@ html.dark .login-bg-effect::after {
 .login-box {
   position: relative;
   width: 420px;
+  max-width: calc(100vw - 32px);
   padding: 44px;
   background: var(--pv-surface);
   border: 1px solid var(--pv-border);
@@ -166,6 +167,23 @@ html.dark .login-bg-effect::after {
   box-shadow: var(--pv-shadow);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
+}
+
+@media (max-width: 700px) {
+  .login-box {
+    padding: 28px 24px;
+    border-radius: 16px;
+  }
+  .logo-icon {
+    width: 56px;
+    height: 56px;
+  }
+  .login-header {
+    margin-bottom: 24px;
+  }
+  .login-title {
+    font-size: 20px !important;
+  }
 }
 
 .login-header {

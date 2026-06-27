@@ -568,6 +568,76 @@ html:not(.light) .el-card {
   margin: 0 auto;
 }
 
+/* ─── 全局移动端适配（v2：每个 view 仍按需写 grid/scroll，这里做容器级兜底） ───── */
+
+/* 表格在窄屏允许横向滚动，避免被压扁 */
+@media (max-width: 900px) {
+  .pv-page {
+    padding: 14px;
+  }
+  /* Element Plus 表格在 mobile 默认就需要横向滚动；强制覆盖容器 */
+  .el-table {
+    overflow-x: auto !important;
+  }
+}
+
+@media (max-width: 700px) {
+  .pv-page {
+    padding: 10px;
+  }
+  /* Page header / 子标题缩字号 */
+  .pv-page-title {
+    font-size: 17px !important;
+  }
+  .pv-page-sub {
+    font-size: 10px !important;
+  }
+  /* PvCard 头部 padding 缩小 */
+  .el-card__header {
+    padding: 12px 14px !important;
+    font-size: 13px;
+  }
+  /* 弹窗宽屏设备上 520px，移动端撑满 */
+  .el-dialog {
+    width: 92vw !important;
+    max-width: 520px;
+    margin: 5vh auto !important;
+  }
+  /* 减少 grid 容器在 mobile 的最小尺寸 */
+  .stats-row,
+  .main-grid,
+  .bottom-grid {
+    grid-template-columns: 1fr !important;
+  }
+  /* PvKPI 数字字号 */
+  .pv-kpi__value {
+    font-size: 22px;
+  }
+  /* 表格列压缩：操作列只保留图标按钮 */
+  .hide-on-mobile {
+    display: none !important;
+  }
+  /* Element Plus el-table 通过 class-name 给 cell 加 hide 类时，
+     整个 td/th 都不渲染（避免出现空白列） */
+  .el-table .hide-on-mobile,
+  .el-table__header .hide-on-mobile,
+  .el-table__body .hide-on-mobile {
+    display: none !important;
+  }
+}
+
+/* Element Plus 表单 label 在 mobile 顶对齐 */
+@media (max-width: 700px) {
+  .el-form--label-top .el-form-item__label {
+    display: block;
+    text-align: left;
+    padding: 0 0 6px;
+  }
+  .el-form-item__label-wrap {
+    margin-bottom: 4px;
+  }
+}
+
 /* 状态横幅条 */
 .pv-strip {
   display: flex;

@@ -68,8 +68,8 @@
                 <PvTag :type="row.status === 'pending' ? 'danger' : row.status === 'in_progress' ? 'warning' : 'success'" :label="statusText(row.status)" />
               </template>
             </el-table-column>
-            <el-table-column prop="assignee" label="负责人" width="130" />
-            <el-table-column prop="created_at" label="创建时间" width="160">
+            <el-table-column class-name="hide-on-mobile" prop="assignee" label="负责人" width="130" />
+            <el-table-column class-name="hide-on-mobile" prop="created_at" label="创建时间" width="160">
               <template #default="{ row }">
                 {{ formatTime(row.created_at) }}
               </template>

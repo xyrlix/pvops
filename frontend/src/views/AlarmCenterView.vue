@@ -116,8 +116,8 @@
                 <PvTag :type="row.priority" :label="priorityText(row.priority)" />
               </template>
             </el-table-column>
-            <el-table-column prop="rule_name" label="规则" width="130" />
-            <el-table-column prop="description" label="描述" min-width="220" />
+            <el-table-column prop="rule_name" label="规则" width="130" class-name="hide-on-mobile" />
+            <el-table-column prop="description" label="描述" min-width="220" class-name="hide-on-mobile" />
             <el-table-column prop="created_at" label="发生时间" width="160">
               <template #default="{ row }">
                 {{ formatTime(row.created_at) }}
@@ -139,6 +139,7 @@
                 <el-button
                   v-if="row.status === 'open'"
                   size="small"
+                  class="hide-on-mobile"
                   @click="ackAlarm(row.id)"
                 >确认</el-button>
                 <el-button
@@ -146,12 +147,14 @@
                   size="small"
                   type="danger"
                   plain
+                  class="hide-on-mobile"
                   @click="closeAlarm(row.id)"
                 >关闭</el-button>
                 <el-button
                   size="small"
                   type="info"
                   plain
+                  class="hide-on-mobile"
                   @click="askAi(row)"
                 >问 AI</el-button>
               </template>

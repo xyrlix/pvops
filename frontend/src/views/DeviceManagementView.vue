@@ -41,9 +41,9 @@
                 <PvTag :type="'info'" :label="typeLabel(row.device_type)" size="small" />
               </template>
             </el-table-column>
-            <el-table-column prop="vendor" label="厂商" />
-            <el-table-column prop="model" label="型号" />
-            <el-table-column prop="protocol" label="协议" width="110" />
+            <el-table-column prop="vendor" label="厂商" class-name="hide-on-mobile" />
+            <el-table-column prop="model" label="型号" class-name="hide-on-mobile" />
+            <el-table-column prop="protocol" label="协议" width="110" class-name="hide-on-mobile" />
             <el-table-column label="状态" width="90">
               <template #default="{ row }">
                 <PvTag :type="row.status === 'active' ? 'running' : 'inactive'" :label="row.status === 'active' ? '运行' : '停用'" size="small" />

@@ -8,7 +8,7 @@
     <PvCard title="电站列表" icon="OfficeBuilding" :loading="stationStore.loading" glow>
       <template #actions>
         <el-button type="primary" @click="showCreateDialog = true">
-          <el-icon><Plus /></el-icon>新增电站
+          <el-icon><Plus /></el-icon><span class="hide-on-mobile">新增电站</span>
         </el-button>
       </template>
 
@@ -16,7 +16,7 @@
         <el-table-column prop="name" label="电站名称" min-width="160" />
         <el-table-column prop="code" label="电站编码" min-width="130" />
         <el-table-column prop="capacity_kw" label="装机容量(kW)" min-width="140" />
-        <el-table-column prop="location" label="位置" min-width="200" />
+        <el-table-column prop="location" label="位置" min-width="200" class-name="hide-on-mobile" />
         <el-table-column label="状态" width="110">
           <template #default="{ row }">
             <PvTag :type="row.status === 'active' ? 'running' : 'inactive'" :label="row.status === 'active' ? '运行中' : '停用'" />
@@ -25,7 +25,7 @@
         <el-table-column label="操作" width="210" fixed="right">
           <template #default="{ row }">
             <el-button size="small" type="primary" plain @click="viewDetail(row.id)">详情</el-button>
-            <el-button size="small" type="danger" plain @click="deleteStation(row.id)">删除</el-button>
+            <el-button size="small" type="danger" plain class="hide-on-mobile" @click="deleteStation(row.id)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>

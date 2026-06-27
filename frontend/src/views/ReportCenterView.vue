@@ -57,7 +57,7 @@
         </el-table-column>
         <el-table-column prop="alarm_count" label="告警数" width="100" />
         <el-table-column prop="summary" label="总结" min-width="220" show-overflow-tooltip />
-        <el-table-column prop="created_at" label="生成时间" width="160">
+        <el-table-column class-name="hide-on-mobile" prop="created_at" label="生成时间" width="160">
           <template #default="{ row }">
             {{ formatTime(row.created_at) }}
           </template>
