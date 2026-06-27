@@ -4,9 +4,10 @@ from sqlalchemy import Column, DateTime, Float, Integer, String
 from sqlalchemy.sql import func
 
 from app.core.database import Base
+from app.models.base import TenantScopedMixin
 
 
-class Station(Base):
+class Station(Base, TenantScopedMixin):
     """电站表."""
 
     __tablename__ = "stations"

@@ -46,7 +46,13 @@ async def login(request: Request, form_data: UserLogin) -> dict:
 
         access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
         access_token = create_access_token(
-            data={"sub": user.username, "role": user.role},
+            data={
+                "sub": user.username,
+                "role": user.role,
+                # 多租户隔离：把 tenant_id 嵌进 JWT。
+                # superadmin 用户 tenant_id 为 None 时，tenant 中间件仍回退到默认租户。
+                "tenant_id": user.tenant_id,
+            },
             expires_delta=access_token_expires,
         )
 

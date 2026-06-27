@@ -4,9 +4,10 @@ from sqlalchemy import Column, DateTime, ForeignKey, Integer, JSON, String, Text
 from sqlalchemy.sql import func
 
 from app.core.database import Base
+from app.models.base import TenantScopedMixin
 
 
-class WorkOrder(Base):
+class WorkOrder(Base, TenantScopedMixin):
     """工单表."""
 
     __tablename__ = "work_orders"

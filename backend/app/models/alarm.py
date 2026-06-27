@@ -4,9 +4,10 @@ from sqlalchemy import Column, DateTime, Integer, String, Text
 from sqlalchemy.sql import func
 
 from app.core.database import Base
+from app.models.base import TenantScopedMixin
 
 
-class Alarm(Base):
+class Alarm(Base, TenantScopedMixin):
     """告警表."""
 
     __tablename__ = "alarms"
