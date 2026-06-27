@@ -37,7 +37,7 @@
                 :class="{ active: theme === opt.value }"
                 @click="setTheme(opt.value)"
               >
-                <el-icon :size="20">{{ opt.icon }}</el-icon>
+                <el-icon :size="20"><component :is="opt.icon" /></el-icon>
                 <span>{{ opt.label }}</span>
               </div>
             </div>

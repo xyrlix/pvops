@@ -172,41 +172,37 @@ title="待处理工单" icon="Tickets" :loading="dashboardLoading"
       </div>
     </div>
 
-    <!-- 底部行 -->
-    <div class="bottom-grid">
-      <!-- 左侧：健康度热力图 -->
-      <div class="bottom-left">
-        <PvCard
+    <!-- 热力图（独占一行） -->
+    <div class="section-row">
+      <PvCard
 title="月度健康度热力图（6 月）" icon="Grid" :loading="dashboardLoading"
-          subtitle="每格=一天 · 颜色=健康度"
-        >
-          <!-- 自定义热力图：横向时间轴，纵向电站 -->
-          <PvEmpty v-if="!heatmapRows.length" description="暂无电站数据" />
-          <div v-else class="pv-heatmap">
-            <div v-for="row in heatmapRows" :key="row.name" class="pv-heatmap-row">
-              <div class="pv-heatmap-label">{{ row.name }}</div>
-              <div
-                v-for="(cell, ci) in row.cells"
-                :key="ci"
-                class="pv-heatmap-cell"
-                :class="`pv-heatmap-cell--${cell.tone}`"
-                :title="`${row.name} · ${cell.score != null ? cell.score.toFixed(0) : '--'} · ${cell.tone === 'green' ? '健康' : cell.tone === 'yellow' ? '亚健康' : '异常'}`"
-              />
-            </div>
+        subtitle="每格=一天 · 颜色=健康度"
+      >
+        <PvEmpty v-if="!heatmapRows.length" description="暂无电站数据" />
+        <div v-else class="pv-heatmap">
+          <div v-for="row in heatmapRows" :key="row.name" class="pv-heatmap-row">
+            <div class="pv-heatmap-label">{{ row.name }}</div>
+            <div
+              v-for="(cell, ci) in row.cells"
+              :key="ci"
+              class="pv-heatmap-cell"
+              :class="`pv-heatmap-cell--${cell.tone}`"
+              :title="`${row.name} · ${cell.score != null ? cell.score.toFixed(0) : '--'} · ${cell.tone === 'green' ? '健康' : cell.tone === 'yellow' ? '亚健康' : '异常'}`"
+            />
           </div>
-          <div v-if="heatmapRows.length" class="pv-heatmap-legend">
-            <span class="lg">健康(≥80)</span>
-            <span class="ly">亚健康(60-80)</span>
-            <span class="lr">异常(&lt;60)</span>
-            <span style="margin-left:auto;color:rgba(255,255,255,0.2)">← {{ heatmapRows[0]?.cells?.length || 0 }} 天 · 每日一格</span>
-          </div>
-        </PvCard>
-      </div>
+        </div>
+        <div v-if="heatmapRows.length" class="pv-heatmap-legend">
+          <span class="lg">健康(≥80)</span>
+          <span class="ly">亚健康(60-80)</span>
+          <span class="lr">异常(&lt;60)</span>
+          <span style="margin-left:auto;color:rgba(255,255,255,0.2)">← {{ heatmapRows[0]?.cells?.length || 0 }} 天 · 每日一格</span>
+        </div>
+      </PvCard>
+    </div>
 
-      <!-- 右侧：储能 + 电力市场 -->
-      <div class="bottom-right">
-        <!-- 储能监控 -->
-        <PvCard
+    <!-- 储能监控（独占一行） -->
+    <div class="section-row">
+      <PvCard
 title="储能监控 · 嘉兴XX站" icon="Battery" :loading="dashboardLoading"
           subtitle="运行中"
         >
@@ -256,8 +252,11 @@ title="储能监控 · 嘉兴XX站" icon="Battery" :loading="dashboardLoading"
           </div>
         </PvCard>
 
-        <!-- 电力市场 -->
-        <PvCard
+    </div>
+
+    <!-- 电力市场（独占一行） -->
+    <div class="section-row">
+      <PvCard
 title="电力市场 · 现货价格" icon="TrendCharts" :loading="dashboardLoading"
           subtitle="山东节点"
         >
@@ -297,8 +296,7 @@ title="电力市场 · 现货价格" icon="TrendCharts" :loading="dashboardLoadi
           <div style="margin-top:8px;padding:8px 12px;background:rgba(245,166,35,0.08);border-radius:6px;font-size:12px;color:rgba(255,255,255,0.7)">
             🤖 AI 建议策略：<strong style="color:var(--pv-warning)">10:00-11:30 高价时段多放电 +15%</strong>，预计多赚 <strong style="color:var(--pv-warning)">¥380</strong>
           </div>
-        </PvCard>
-      </div>
+      </PvCard>
     </div>
   </DashboardLayout>
 </template>
@@ -548,22 +546,21 @@ onMounted(() => {
   gap: 16px;
 }
 
-.bottom-grid {
+/* bottom-grid deprecated */ {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 16px;
 }
 
 @media (max-width: 1100px) {
-  .bottom-grid {
+  /* bottom-grid deprecated */ {
     grid-template-columns: 1fr;
   }
 }
 
-.bottom-right {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+/* bottom-right replaced by section-row */
+.section-row {
+  margin-bottom: 20px;
 }
 
 .trade-chart {
