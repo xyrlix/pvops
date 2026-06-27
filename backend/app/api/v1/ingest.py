@@ -83,7 +83,7 @@ async def ingest_telemetry_batch(request: Request, payloads: list[dict[str, Any]
     try:
         for payload in payloads:
             try:
-                await payload_guard(payload)
+                payload_guard(payload)
                 await runner._write_payload(payload)
             except Exception as e:
                 failed.append({"payload": payload, "error": str(e)})

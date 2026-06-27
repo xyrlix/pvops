@@ -22,7 +22,7 @@ class LocalVectorStore(VectorStore):
     无 PGVector/Embedding 时使用，适合本地开发验证流程。
     """
 
-    def __init__(self, db_path: str = None):
+    def __init__(self, db_path: str | None = None):
         self.db_path = db_path or DEFAULT_DB
 
     async def init(self) -> None:

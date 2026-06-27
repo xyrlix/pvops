@@ -165,7 +165,7 @@ def mock_string_dispersion(station_id: int, strings: list[dict]) -> list[dict]:
             }
         )
 
-    values = [d["current_a"] for d in data]
+    values = [float(d.get("current_a", 0) or 0) for d in data]
     avg = sum(values) / len(values)
     dispersion = (max(values) - min(values)) / avg if avg > 0 else 0
     for d in data:

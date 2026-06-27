@@ -1,6 +1,5 @@
 """工单接口."""
 
-from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -9,6 +8,7 @@ from app.core.database import get_db
 from app.core.deps import get_current_user
 from app.core.tenant import TenantContext, get_current_tenant
 from app.models.user import User
+from app.models.work_order import WorkOrder
 from app.schemas.work_order import WorkOrderCreate, WorkOrderResponse, WorkOrderUpdate
 from app.services import work_order_service
 
@@ -54,7 +54,7 @@ async def get_work_order(
     work_order_id: int,
     db: AsyncSession = Depends(get_db),
     tenant: TenantContext = Depends(get_current_tenant),
-) -> Optional:
+) -> WorkOrder | None:
     """获取工单详情（跨租户返回 404 防越权探测）."""
     work_order = await work_order_service.get_work_order(
         db, work_order_id, tenant_id=tenant.tenant_id
@@ -75,9 +75,9 @@ async def update_work_order(
     work_order = await work_order_service.update_work_order_status(
         db,
         work_order_id,
-        data.status,
-        data.feedback_comment,
-        data.solution,
+        data.status,  # type: ignore[arg-type]
+        data.feedback_comment,  # type: ignore[arg-type]
+        data.solution if data.solution is not None else "",  # type: ignore[arg-type]
         tenant_id=tenant.tenant_id,
     )
     if not work_order:

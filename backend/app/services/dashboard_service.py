@@ -95,7 +95,7 @@ async def get_risk_top_stations(limit: int = 5) -> list[dict]:
     return overview[:limit]
 
 
-async def get_alarm_stats(station_id: int = None) -> dict:
+async def get_alarm_stats(station_id: int | None = None) -> dict:
     """告警统计."""
     async with AsyncSessionLocal() as session:
         query = select(Alarm.level, func.count(Alarm.id)).where(Alarm.status == "open")

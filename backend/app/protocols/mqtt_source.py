@@ -63,11 +63,12 @@ class MqttSourceAdapter(BaseProtocolAdapter):
     async def connect(self) -> None:
         from paho.mqtt.client import Client
 
-        self._client = Client(callback_api_version=2, client_id=self.client_id)
-        self._client.on_connect = self._on_connect
-        self._client.on_message = self._on_message
-        self._client.connect(self.host, self.port, keepalive=60)
-        self._client.loop_start()
+        client = Client(callback_api_version=2, client_id=self.client_id)
+        client.on_connect = self._on_connect
+        client.on_message = self._on_message
+        client.connect(self.host, self.port, keepalive=60)
+        client.loop_start()
+        self._client = client
 
     async def disconnect(self) -> None:
         if self._client:

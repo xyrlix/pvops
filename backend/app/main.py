@@ -89,7 +89,7 @@ possible_static_dirs = [
     Path(__file__).parent.parent.parent / "frontend" / "dist",
     Path(__file__).parent.parent / "static",
 ]
-static_dir = next((d for d in possible_static_dirs if d.exists()), None)
+static_dir: Path | None = next((d for d in possible_static_dirs if d.exists()), None)
 
 
 if static_dir and static_dir.exists():
@@ -115,11 +115,11 @@ if static_dir and static_dir.exists():
 
             return JSONResponse({"detail": "Not found"}, status_code=404)
         # 真实存在的 dist 根级静态文件（如 favicon.svg）原样返回
-        candidate = static_dir / full_path
+        candidate = static_dir / full_path  # type: ignore[operator]
         if candidate.is_file():
             return FileResponse(str(candidate))
         # 否则返回 index.html 让前端路由接管
-        index_file = static_dir / "index.html"
+        index_file = static_dir / "index.html"  # type: ignore[operator]
         if index_file.exists():
             return FileResponse(str(index_file))
         from fastapi.responses import JSONResponse

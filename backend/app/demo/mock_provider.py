@@ -219,7 +219,7 @@ class MockDataProvider(DataProvider):
                     "capacity_kw": s.get("capacity_kw") or 10,
                 }
             )
-        values = [d["current_a"] for d in data]
+        values = [float(d.get("current_a", 0) or 0) for d in data]
         avg = sum(values) / len(values)
         dispersion = (max(values) - min(values)) / avg if avg > 0 else 0
         for d in data:

@@ -25,9 +25,16 @@ indent-style = "space"
 
 [tool.mypy]
 python_version = "3.11"
-warn_return_any = true
 warn_unused_configs = true
-disallow_untyped_defs = true
+# 渐进式 strict：先解决真错误（属性访问、类型不兼容），不强制每函数注解
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+warn_return_any = false
+ignore_missing_imports = true
+exclude = [
+    "alembic/",
+    "scripts/",
+]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

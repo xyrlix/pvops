@@ -16,7 +16,7 @@ DEFAULT_QUEUE_DB = os.path.join(os.path.dirname(__file__), "..", "..", "collecto
 class LocalQueue:
     """基于 SQLite 的本地队列，用于网络中断时暂存采集数据."""
 
-    def __init__(self, db_path: str = None):
+    def __init__(self, db_path: str | None = None):
         self.db_path = db_path or DEFAULT_QUEUE_DB
 
     async def init(self) -> None:

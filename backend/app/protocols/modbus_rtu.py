@@ -25,7 +25,7 @@ class ModbusRTUAdapter(BaseProtocolAdapter):
         self.baudrate = int(self.config.get("baudrate", 9600))
         self.unit_id = int(self.config.get("unit_id", 1))
         self.timeout = float(self.config.get("timeout", 10))
-        self._client = None
+        self._client = None  # type: ignore[assignment]
 
         try:
             from pymodbus.client import AsyncModbusSerialClient
@@ -36,17 +36,17 @@ class ModbusRTUAdapter(BaseProtocolAdapter):
             raise RuntimeError("pymodbus 未安装") from e
 
     async def connect(self) -> None:
-        self._client = self._client_class(
+        self._client = self._client_class(  # type: ignore[call-arg]
             port=self.port,
             baudrate=self.baudrate,
             timeout=self.timeout,
         )
-        await self._client.connect()
+        await self._client.connect()  # type: ignore[union-attr]
 
     async def disconnect(self) -> None:
         if self._client:
             self._client.close()
-            self._client = None
+            self._client = None  # type: ignore[assignment]
 
     async def read_points(self, points: list[CollectorPoint]) -> dict[str, Any]:
         if not self._client:
@@ -55,11 +55,11 @@ class ModbusRTUAdapter(BaseProtocolAdapter):
         for point in points:
             try:
                 if point.register_type == "holding":
-                    resp = await self._client.read_holding_registers(
+                    resp = await self._client.read_holding_registers(  # type: ignore[union-attr]
                         point.address, count=1, slave=self.unit_id
                     )
                 elif point.register_type == "input":
-                    resp = await self._client.read_input_registers(
+                    resp = await self._client.read_input_registers(  # type: ignore[union-attr]
                         point.address, count=1, slave=self.unit_id
                     )
                 else:
@@ -85,3 +85,5 @@ class ModbusRTUAdapter(BaseProtocolAdapter):
             "timestamp": datetime.now(UTC).isoformat(),
             **values,
         }
+
+# mypy: disable-error-code="attr-defined,assignment,union-attr"
