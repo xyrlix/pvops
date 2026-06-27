@@ -11,13 +11,6 @@
       </div>
 
       <SidebarMenu :collapse="isCollapsed && !isMobile" />
-
-      <div class="pv-sidebar__footer">
-        <span class="pv-status-dot pv-status-dot--success" />
-        <span v-if="!isCollapsed || isMobile" class="pv-sidebar__footertext">
-          v0.1.0 · DEMO
-        </span>
-      </div>
     </aside>
 
     <!-- 移动端遮罩 -->
@@ -196,8 +189,9 @@ onUnmounted(() => {
 }
 
 .pv-sidebar.collapsed .pv-sidebar__brandtext,
-.pv-sidebar.collapsed .pv-sidebar__footertext,
-.pv-sidebar.collapsed :deep(.menu-text) {
+.pv-sidebar.collapsed :deep(.menu-text),
+.pv-sidebar.collapsed :deep(.nav-label),
+.pv-sidebar.collapsed :deep(.nav-user-info) {
   display: none;
 }
 
@@ -253,17 +247,6 @@ onUnmounted(() => {
   margin-top: 2px;
 }
 
-.pv-sidebar__footer {
-  margin-top: auto;
-  padding: 18px 20px;
-  border-top: 1px solid var(--pv-border);
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 11px;
-  color: var(--pv-text-tertiary);
-  letter-spacing: 0.06em;
-}
 
 .sidebar-overlay {
   position: fixed;

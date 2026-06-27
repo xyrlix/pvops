@@ -27,7 +27,8 @@
       <div class="nav-avatar">{{ userInitial }}</div>
       <div v-if="!collapse" class="nav-user-info">
         <div class="nav-user-name">{{ userName }}</div>
-        <div class="nav-user-role">管理员</div>
+        <div class="nav-user-role">{{ roleLabel }}</div>
+        <div class="nav-user-version">v0.1.0</div>
       </div>
     </router-link>
   </div>
@@ -44,8 +45,10 @@ withDefaults(defineProps<{ collapse?: boolean }>(), { collapse: false })
 const route = useRoute()
 const authStore = useAuthStore()
 
+const roleMap: Record<string, string> = { admin: '管理员', manager: '经理', operator: '运维', viewer: '只读', superadmin: '超级管理员' }
 const userInitial = computed(() => (authStore.user?.full_name || authStore.user?.username || '管')[0])
 const userName = computed(() => authStore.user?.full_name || authStore.user?.username || '管理员')
+const roleLabel = computed(() => roleMap[authStore.user?.role || ''] || '管理员')
 
 const mainNav = [
   { path: '/', label: '总览大屏', icon: Odometer, badge: undefined },
@@ -199,5 +202,14 @@ const isActive = (item: { path: string }) => {
   color: var(--pv-text-tertiary);
   font-family: var(--pv-font-mono);
   letter-spacing: 0.06em;
+}
+
+.nav-user-version {
+  font-size: 9px;
+  color: var(--pv-text-tertiary);
+  opacity: 0.4;
+  font-family: var(--pv-font-mono);
+  letter-spacing: 0.04em;
+  margin-top: 1px;
 }
 </style>
