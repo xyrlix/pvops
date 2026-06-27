@@ -12,7 +12,6 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from app.services import work_order_service
 from app.services.work_order_service import (
     create_work_order,
     update_work_order_status,
@@ -22,7 +21,7 @@ from app.services.work_order_service import (
 # ─── helpers ────────────────────────────────────────────────
 
 
-def _mock_session_for_wo(work_order: Optional[Any]) -> Any:
+def _mock_session_for_wo(work_order: Any | None) -> Any:
     """构造返回特定 WorkOrder 的 AsyncSession mock."""
     session = MagicMock()
     result = MagicMock()

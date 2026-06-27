@@ -1,4 +1,15 @@
-"""知识库文档处理服务."""
+"""知识库文档处理服务.
+
+文档解析策略：
+- PDF：优先 pdfplumber（保留表格）→ pypdf（纯文本）→ 降级提示
+- DOCX：用标准库 zipfile + XML 解析，保留段落换行（不再粗暴去 \s+）
+- TXT/MD：直接读取，按行合并空行
+
+文本分块策略：
+- 优先按段落（\n\n）切分，段落内按句号 / 句末标点切分
+- 块大小 ~800 字符（中文），相邻块保留 100 字符重叠
+- 跳过空块，过短块（<50 字符）合并到前一块
+"""
 
 import logging
 import os
@@ -24,42 +35,123 @@ def _sanitize_filename(filename: str) -> str:
     return re.sub(r"[^\w.\-]+", "_", filename)
 
 
+# ─── 文本分块 ─────────────────────────────────────────────
+
+
 def _chunk_text(text: str, chunk_size: int = 800, overlap: int = 100) -> List[str]:
-    """按字符长度切分文本."""
-    chunks = []
-    start = 0
-    while start < len(text):
-        end = start + chunk_size
-        chunks.append(text[start:end])
-        start = end - overlap
-        if start >= len(text):
-            break
-    return chunks
+    """按段落 → 句子 → 字符三层切分."""
+    if not text or not text.strip():
+        return []
+
+    # 1. 按空行切段
+    paragraphs = [p.strip() for p in re.split(r"\n\s*\n", text) if p.strip()]
+    chunks: List[str] = []
+    current = ""
+
+    for para in paragraphs:
+        # 单段太长：按句号/问号/感叹号切
+        if len(para) > chunk_size * 1.5:
+            sentences = re.split(r"(?<=[。！？.!?\?])\s*", para)
+            for sent in sentences:
+                if not sent.strip():
+                    continue
+                if not current:
+                    current = sent
+                elif len(current) + len(sent) <= chunk_size:
+                    current += sent
+                else:
+                    chunks.append(current.strip())
+                    # 重叠：把 current 末尾 overlap 字符接到下一块开头
+                    current = current[-overlap:] + sent if overlap < len(current) else sent
+            continue
+
+        # 段长度 + 当前块 ≤ 阈值
+        if not current:
+            current = para
+        elif len(current) + len(para) + 2 <= chunk_size:
+            current = current + "\n\n" + para
+        else:
+            chunks.append(current.strip())
+            current = current[-overlap:] + "\n\n" + para if overlap < len(current) else para
+
+    if current.strip():
+        # 合并过短的尾部
+        if chunks and len(current.strip()) < 50:
+            chunks[-1] = chunks[-1] + "\n\n" + current.strip()
+        else:
+            chunks.append(current.strip())
+
+    return [c for c in chunks if c.strip()]
+
+
+# ─── DOCX 解析（保留段落） ─────────────────────────────────
 
 
 def _extract_docx_text(file_path: str) -> str:
-    """使用标准库解析 DOCX 文本（无需 python-docx）."""
+    """用标准库 zipfile 解析 DOCX，按段落换行（不再粗暴合并）."""
     try:
         with zipfile.ZipFile(file_path, "r") as zf:
             xml = zf.read("word/document.xml").decode("utf-8", errors="ignore")
-        # 简单去除 XML 标签
+        # 把段落标签 </w:p> 替换为双换行（保持段落边界）
+        xml = re.sub(r"</w:p>", "\n\n", xml)
+        xml = re.sub(r"<w:br[^>]*/?>", "\n", xml)
+        # 表格行 → 单换行
+        xml = re.sub(r"</w:tr>", "\n", xml)
+        xml = re.sub(r"</w:tc>", " | ", xml)
+        # 去除所有其他标签
         text = re.sub(r"<[^>]+>", "", xml)
-        return re.sub(r"\s+", " ", text).strip()
+        # 实体解码
+        text = text.replace("&amp;", "&").replace("&lt;", "<").replace("&gt;", ">").replace("&quot;", '"')
+        # 清理多余空白（保留段落换行）
+        text = re.sub(r"[ \t]+", " ", text)
+        text = re.sub(r"\n{3,}", "\n\n", text)
+        return text.strip()
     except Exception as e:
         logger.warning(f"解析 DOCX 失败: {e}")
         return ""
 
 
+# ─── PDF 解析（pdfplumber 优先） ────────────────────────────
+
+
 def _extract_pdf_text(file_path: str) -> str:
-    """PDF 解析占位：优先尝试 pypdf，否则返回提示信息."""
+    """PDF 解析：优先 pdfplumber（保留表格）→ pypdf → 提示."""
+    # 1. pdfplumber：表格保留
+    try:
+        import pdfplumber
+
+        parts: List[str] = []
+        with pdfplumber.open(file_path) as pdf:
+            for page in pdf.pages:
+                page_text = page.extract_text() or ""
+                if page_text.strip():
+                    parts.append(page_text)
+
+                # 表格作为单独段落保留（"col | col" 格式）
+                tables = page.extract_tables()
+                for tbl in tables:
+                    if not tbl:
+                        continue
+                    rows = [" | ".join(str(c or "").strip() for c in row) for row in tbl]
+                    parts.append("\n".join(rows))
+        if parts:
+            return "\n\n".join(parts)
+    except ImportError:
+        logger.debug("pdfplumber 未安装，回退 pypdf")
+    except Exception as e:
+        logger.warning(f"pdfplumber 解析失败: {e}")
+
+    # 2. pypdf fallback
     try:
         import pypdf
 
         reader = pypdf.PdfReader(file_path)
-        return "\n".join(page.extract_text() or "" for page in reader.pages)
+        return "\n\n".join(
+            (page.extract_text() or "").strip() for page in reader.pages
+        )
     except ImportError:
         logger.warning("pypdf 未安装，PDF 文本提取不可用")
-        return "[PDF 解析需要安装 pypdf]"
+        return "[PDF 解析需要安装 pdfplumber 或 pypdf]"
     except Exception as e:
         logger.warning(f"解析 PDF 失败: {e}")
         return ""
