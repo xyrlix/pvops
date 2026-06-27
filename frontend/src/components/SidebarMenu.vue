@@ -1,154 +1,203 @@
 <template>
-  <el-menu
-    :default-active="$route.path"
-    router
-    class="menu"
-    :collapse="collapse"
-    collapse-transition
-    background-color="transparent"
-    :text-color="menuText"
-    :active-text-color="menuActive"
-  >
-    <el-menu-item index="/">
-      <el-icon><Odometer /></el-icon>
-      <span>总览大屏</span>
-    </el-menu-item>
-    <el-menu-item index="/agent">
-      <el-icon><ChatDotRound /></el-icon>
-      <span>AI 智能体</span>
-    </el-menu-item>
-    <el-menu-item index="/stations">
-      <el-icon><OfficeBuilding /></el-icon>
-      <span>电站管理</span>
-    </el-menu-item>
-    <el-menu-item index="/alarms">
-      <el-icon><Warning /></el-icon>
-      <span>告警中心</span>
-    </el-menu-item>
-    <el-menu-item index="/workorders">
-      <el-icon><Tickets /></el-icon>
-      <span>运维工单</span>
-    </el-menu-item>
-    <el-menu-item index="/reports">
-      <el-icon><Document /></el-icon>
-      <span>运维简报</span>
-    </el-menu-item>
-    <el-menu-item index="/knowledge">
-      <el-icon><Collection /></el-icon>
-      <span>知识库</span>
-    </el-menu-item>
-    <el-sub-menu index="/devices">
-      <template #title>
-        <el-icon><SetUp /></el-icon>
-        <span>设备</span>
-      </template>
-      <el-menu-item index="/devices/manage">设备管理</el-menu-item>
-      <el-menu-item index="/devices">设备分析</el-menu-item>
-    </el-sub-menu>
-  </el-menu>
+  <div class="sidebar-menu">
+    <!-- 导航项 -->
+    <div class="nav-group">
+      <div v-if="!collapse" class="nav-group__title">导航</div>
+      <router-link v-for="item in mainNav" :key="item.path" :to="item.path" class="nav-item" :class="{ active: isActive(item) }">
+        <el-icon :size="20"><component :is="item.icon" /></el-icon>
+        <span v-if="!collapse" class="nav-label">{{ item.label }}</span>
+        <span v-if="item.badge && !collapse" class="nav-badge" :class="`badge-${item.badgeLevel || 'info'}`">{{ item.badge }}</span>
+      </router-link>
+    </div>
+
+    <div v-if="!collapse" class="nav-divider" />
+
+    <div class="nav-group">
+      <div v-if="!collapse" class="nav-group__title">管理</div>
+      <router-link v-for="item in mgmtNav" :key="item.path" :to="item.path" class="nav-item" :class="{ active: isActive(item) }">
+        <el-icon :size="20"><component :is="item.icon" /></el-icon>
+        <span v-if="!collapse" class="nav-label">{{ item.label }}</span>
+      </router-link>
+    </div>
+
+    <div class="nav-spacer" />
+
+    <!-- 底部用户 -->
+    <router-link to="/profile" class="nav-item nav-user" :class="{ active: isActive({ path: '/profile' }) }">
+      <div class="nav-avatar">{{ userInitial }}</div>
+      <div v-if="!collapse" class="nav-user-info">
+        <div class="nav-user-name">{{ userName }}</div>
+        <div class="nav-user-role">管理员</div>
+      </div>
+    </router-link>
+  </div>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { Odometer, OfficeBuilding, Warning, Tickets, Document, SetUp, Collection } from '@element-plus/icons-vue'
-import { useTheme } from '@/composables/useTheme'
+import { useRoute } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
+import { Odometer, ChatDotRound, Warning, Tickets, OfficeBuilding, Document, Collection, SetUp } from '@element-plus/icons-vue'
 
 withDefaults(defineProps<{ collapse?: boolean }>(), { collapse: false })
 
-const { resolvedTheme } = useTheme()
+const route = useRoute()
+const authStore = useAuthStore()
 
-const menuText = computed(() => (resolvedTheme.value === 'dark' ? '#94a3b8' : '#64748b'))
-const menuActive = computed(() => (resolvedTheme.value === 'dark' ? '#00f0ff' : '#0891b2'))
+const userInitial = computed(() => (authStore.user?.full_name || authStore.user?.username || '管')[0])
+const userName = computed(() => authStore.user?.full_name || authStore.user?.username || '管理员')
+
+const mainNav = [
+  { path: '/', label: '总览大屏', icon: Odometer, badge: undefined },
+  { path: '/agent', label: 'AI 智能体', icon: ChatDotRound, badge: 'NEW', badgeLevel: 'info' },
+  { path: '/alarms', label: '告警中心', icon: Warning, badge: undefined },
+  { path: '/workorders', label: '运维工单', icon: Tickets, badge: undefined },
+]
+
+const mgmtNav = [
+  { path: '/stations', label: '电站管理', icon: OfficeBuilding },
+  { path: '/devices/manage', label: '设备管理', icon: SetUp },
+  { path: '/reports', label: '运维简报', icon: Document },
+  { path: '/knowledge', label: '知识库', icon: Collection },
+]
+
+const isActive = (item: { path: string }) => {
+  if (item.path === '/') return route.path === '/'
+  return route.path.startsWith(item.path)
+}
 </script>
 
 <style scoped>
-.menu {
-  border-right: none;
-  padding: 16px;
-  background: transparent;
+.sidebar-menu {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  padding: 4px 12px 8px;
+  gap: 2px;
 }
 
-.menu :deep(.el-menu-item) {
-  height: 54px;
-  margin-bottom: 10px;
-  border-radius: 14px;
-  font-size: 14px;
-  font-weight: 600;
+.nav-group__title {
+  font-size: 10px;
+  font-weight: 700;
   color: var(--pv-text-tertiary);
-  transition: all 0.25s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  padding: 12px 12px 6px;
 }
 
-.menu :deep(.el-menu-item:hover) {
-  background: rgba(8, 145, 178, 0.06);
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  color: var(--pv-text-secondary);
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.18s ease;
+  cursor: pointer;
+  position: relative;
+}
+
+.nav-item:hover {
+  background: var(--pv-stripe);
   color: var(--pv-text-primary);
 }
 
-html.dark .menu :deep(.el-menu-item:hover) {
-  background: rgba(0, 240, 255, 0.06);
-  color: #e0faff;
-}
-
-.menu :deep(.el-menu-item.is-active) {
-  background: linear-gradient(90deg, rgba(8, 145, 178, 0.14), rgba(8, 145, 178, 0.03));
+.nav-item.active {
+  background: linear-gradient(90deg, rgba(96, 165, 250, 0.12), transparent);
   color: var(--pv-primary);
-  box-shadow:
-    inset 3px 0 0 var(--pv-primary),
-    0 0 20px rgba(8, 145, 178, 0.1);
-  text-shadow: 0 0 12px rgba(8, 145, 178, 0.3);
-}
-
-html.dark .menu :deep(.el-menu-item.is-active) {
-  background: linear-gradient(90deg, rgba(0, 240, 255, 0.18), rgba(0, 240, 255, 0.03));
-  box-shadow:
-    inset 3px 0 0 #00f0ff,
-    0 0 20px rgba(0, 240, 255, 0.15);
-  text-shadow: 0 0 12px rgba(0, 240, 255, 0.5);
-}
-
-.menu :deep(.el-menu-item .el-icon) {
-  font-size: 19px;
-  margin-right: 12px;
-}
-
-.menu :deep(.el-sub-menu__title) {
-  height: 54px;
-  border-radius: 14px;
-  font-size: 14px;
   font-weight: 600;
-  color: var(--pv-text-tertiary);
-  transition: all 0.25s ease;
 }
 
-.menu :deep(.el-sub-menu__title:hover) {
-  background: rgba(8, 145, 178, 0.06);
+.nav-item.active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 6px;
+  bottom: 6px;
+  width: 3px;
+  border-radius: 2px;
+  background: var(--pv-primary);
+  box-shadow: var(--pv-glow-primary);
+}
+
+.nav-label {
+  flex: 1;
+  min-width: 0;
+}
+
+.nav-badge {
+  font-size: 9px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 6px;
+  letter-spacing: 0.04em;
+  font-family: var(--pv-font-mono);
+}
+
+.badge-info {
+  background: rgba(56, 189, 248, 0.15);
+  color: var(--pv-info);
+}
+
+.badge-warning {
+  background: rgba(251, 191, 36, 0.15);
+  color: var(--pv-warning);
+}
+
+.nav-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--pv-border), transparent);
+  margin: 6px 12px;
+}
+
+.nav-spacer {
+  flex: 1;
+}
+
+.nav-user {
+  margin-top: 4px;
+  border-top: 1px solid var(--pv-border);
+  padding-top: 12px;
+}
+
+.nav-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, var(--pv-primary), var(--pv-accent));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #0B1120;
+  font-weight: 700;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.nav-user-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.nav-user-name {
+  font-size: 13px;
+  font-weight: 600;
   color: var(--pv-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-html.dark .menu :deep(.el-sub-menu__title:hover) {
-  background: rgba(0, 240, 255, 0.06);
-  color: #e0faff;
-}
-
-.menu :deep(.el-sub-menu.is-active .el-sub-menu__title) {
-  color: var(--pv-primary);
-  text-shadow: 0 0 12px rgba(8, 145, 178, 0.25);
-}
-
-html.dark .menu :deep(.el-sub-menu.is-active .el-sub-menu__title) {
-  text-shadow: 0 0 12px rgba(0, 240, 255, 0.4);
-}
-
-.menu :deep(.el-sub-menu .el-menu-item) {
-  height: 46px;
-  margin-bottom: 6px;
-  padding-left: 52px !important;
-}
-
-.menu :deep(.el-sub-menu .el-menu-item.is-active) {
-  box-shadow: inset 3px 0 0 var(--pv-primary), 0 0 16px rgba(8, 145, 178, 0.08);
-}
-
-html.dark .menu :deep(.el-sub-menu .el-menu-item.is-active) {
-  box-shadow: inset 3px 0 0 #00f0ff, 0 0 16px rgba(0, 240, 255, 0.12);
+.nav-user-role {
+  font-size: 10px;
+  color: var(--pv-text-tertiary);
+  font-family: var(--pv-font-mono);
+  letter-spacing: 0.06em;
 }
 </style>

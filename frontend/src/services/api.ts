@@ -323,3 +323,12 @@ export const reportApi = {
       ? (await loadMock()).reportMock.exportPdf()
       : apiClient.get(`/reports/${id}/pdf`, { responseType: 'blob' }),
 }
+
+// ─── AI Agent ──────────────────────────────────────────────
+
+export const agentApi = {
+  getBriefing: async () =>
+    USE_MOCK
+      ? (await loadMock()).agentMock.getBriefing()
+      : apiClient.get('/agent/briefing'),
+}

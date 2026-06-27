@@ -89,6 +89,8 @@ interface DigestResponse {
   }
 }
 
+import { agentApi } from '@/services/api'
+
 const router = useRouter()
 
 const items = ref<DigestItem[]>([])
@@ -153,11 +155,7 @@ const refresh = async (manual = false) => {
   if (loading.value) return
   loading.value = true
   try {
-    const res = (await fetch('/api/v1/agent/briefing', {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem('token') || ''}`,
-      },
-    }).then((r) => r.json())) as DigestResponse
+    const res = (await agentApi.getBriefing()) as unknown as DigestResponse
     items.value = res.items || []
     agent.value = res.agent
     generatedAt.value = res.generated_at

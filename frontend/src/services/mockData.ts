@@ -454,3 +454,65 @@ export const deviceMock = {
     devices: DEMO_DEVICES(stationId).map((d) => ({ ...d, children: [] })),
   }),
 }
+
+// ─── AI Agent 简报 (Pages 演示) ─────────────────────────
+
+export const agentMock = {
+  getBriefing: async () => {
+    const rng = seededRandom(todaySeed('briefing', 1))
+    const alarmCount = 2 + Math.floor(rng() * 3)
+    const woCount = 1 + Math.floor(rng() * 2)
+    return {
+      items: [
+        {
+          level: 'critical',
+          category: 'alarm',
+          title: `浙江A站 3号逆变器无功率输出（故障码 ${Math.floor(rng() * 10) + 5}）`,
+          detail: `结合辐照 ${(600 + rng() * 200).toFixed(0)} W/m² 与 ${Math.floor(rng() * 4) + 1} 次故障码重复出现`,
+          action: '立即诊断 / 创建工单',
+          ref: { type: 'alarm' as const, id: 101 },
+        },
+        {
+          level: 'warning',
+          category: 'health',
+          title: `嘉兴站连续 ${Math.floor(rng() * 3) + 3} 天 PR 低于 0.75`,
+          detail: `较上周下降 ${(5 + rng() * 8).toFixed(1)}%，建议安排现场巡检`,
+          action: '查看电站详情',
+          ref: { type: 'station' as const, id: 3 },
+        },
+        {
+          level: 'info',
+          category: 'workorder',
+          title: `工单 #WO-${Math.floor(rng() * 9000) + 1000}: ${['INV005 逆变器异常巡检', '组串离散率偏高排查', '气象站数据中断修复'][Math.floor(rng() * 3)]}`,
+          detail: `状态 pending · 已等待 ${Math.floor(rng() * 48) + 2} 小时`,
+          action: '处理工单',
+          ref: { type: 'workorder' as const, id: Math.floor(rng() * 100) },
+        },
+        {
+          level: 'info',
+          category: 'knowledge',
+          title: `知识库新增 ${1 + Math.floor(rng() * 3)} 篇文档`,
+          detail: `华为 SUN2000 故障码手册更新、上海电站 SOP 标准流程`,
+          action: '查看知识库',
+          ref: { type: 'doc' as const, id: 1 },
+        },
+        {
+          level: 'info',
+          category: 'summary',
+          title: `今日发电量预估 +${(5 + rng() * 8).toFixed(1)}%`,
+          detail: `6 座电站全部在线，系统运行正常 · 累计节约 CO₂ ${(12 + rng() * 5).toFixed(0)} 吨`,
+          action: undefined,
+          ref: undefined,
+        },
+      ],
+      generated_at: new Date().toISOString(),
+      agent: 'DailyBriefingAgent (Demo)',
+      raw_summary: {
+        critical_alarms_count: alarmCount,
+        outstanding_workorders_count: woCount,
+        stations_with_alerts: Math.floor(rng() * 3) + 1,
+        new_docs_count: Math.floor(rng() * 3),
+      },
+    }
+  },
+}
