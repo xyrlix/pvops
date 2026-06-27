@@ -35,4 +35,14 @@ def create_adapter(
 
         return MqttSourceAdapter(device_code, config)
 
+    if protocol == "huawei_sun2000":
+        from app.protocols.huawei_sun2000 import HuaweiSUN2000Adapter
+
+        return HuaweiSUN2000Adapter(device_code, config)
+
+    if protocol == "sungrow_sg":
+        from app.protocols.sungrow_sg import SungrowSGAdapter
+
+        return SungrowSGAdapter(device_code, config)
+
     raise ValueError(f"不支持的协议类型: {protocol}")

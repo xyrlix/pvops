@@ -48,6 +48,9 @@ def _build_settings_cls():
             # 启动时自动 seed 演示数据（生产环境应为 false）
             seed_demo_on_startup: bool = True
 
+            # 默认设备协议（simulator / huawei_sun2000 / sungrow_sg / modbus_tcp / modbus_rtu / mqtt_source）
+            default_device_protocol: str = "simulator"
+
             # 边缘网关 token（/ingest/telemetry 头 X-Gateway-Token）。
             # 空 = 跳过校验（仅推荐开发）。生产必须显式设置，建议 32+ 字符高熵随机。
             ingest_gateway_token: str = ""
@@ -97,6 +100,7 @@ def _build_settings_cls():
         cors_allow_origins: str = "*"
         use_mock_data: bool = True
         seed_demo_on_startup: bool = True
+        default_device_protocol: str = "simulator"
 
         # 边缘网关 token（/ingest/telemetry 头 X-Gateway-Token）
         ingest_gateway_token: str = ""
