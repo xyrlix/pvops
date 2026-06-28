@@ -1,4 +1,3 @@
-
 import logging
 from datetime import datetime, timedelta
 from typing import Any
@@ -504,7 +503,7 @@ async def _check_repeated_fault(
     for r in records:
         fc = r.fault_code or 0
         if fc > 0:
-                fault_counts[int(fc)] = fault_counts.get(int(fc), 0) + 1
+            fault_counts[int(fc)] = fault_counts.get(int(fc), 0) + 1
     for fc, cnt in fault_counts.items():
         if cnt >= 3:
             result.findings.append(
