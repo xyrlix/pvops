@@ -252,7 +252,7 @@ const fetchAlarms = async () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     summary.value = sumData as unknown as any[]
   } catch (err) {
-    console.error('获取告警失败:', err)
+    console.error(err)
   } finally {
     loading.value = false
     statsLoading.value = false

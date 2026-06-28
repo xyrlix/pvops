@@ -138,7 +138,7 @@ const fetchReports = async () => {
     const data = (await reportApi.list(undefined, filterType.value || undefined)) as unknown as any[]
     reports.value = data
   } catch (err) {
-    console.error('获取报告失败:', err)
+    console.error(err)
   } finally {
     loading.value = false
   }

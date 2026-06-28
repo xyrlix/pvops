@@ -397,7 +397,7 @@ const loadInverters = async () => {
     const data = (await metricApi.getStationInverters(selectedStationId.value)) as unknown as InverterItem[]
     inverters.value = data
   } catch (err) {
-    console.error('加载逆变器失败:', err)
+    console.error(err)
   } finally {
     loadingInverters.value = false
   }
@@ -414,7 +414,7 @@ const loadStrings = async () => {
     strings.value = data
     initStringChart()
   } catch (err) {
-    console.error('加载组串失败:', err)
+    console.error(err)
   } finally {
     loadingStrings.value = false
   }
@@ -436,7 +436,7 @@ const loadPeerBaseline = async () => {
     peerBaseline.value = baseline
     peerRank.value = ranking
   } catch (err) {
-    console.error('加载群体基线失败:', err)
+    console.error(err)
   } finally {
     loadingBaseline.value = false
   }

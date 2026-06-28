@@ -130,7 +130,7 @@ const loadDevices = async () => {
     )) as unknown as DeviceItem[]
     devices.value = data
   } catch (err) {
-    console.error('加载设备失败:', err)
+    console.error(err)
   }
 }
 
@@ -140,7 +140,7 @@ const loadTopology = async () => {
     const data = (await deviceApi.topology(selectedStationId.value)) as unknown as DeviceItem[]
     topology.value = data
   } catch (err) {
-    console.error('加载拓扑失败:', err)
+    console.error(err)
   }
 }
 

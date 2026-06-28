@@ -303,7 +303,7 @@ const loadData = async () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       recentAlarms.value = (alarmRes as unknown as any[]).slice(0, 5)
     } catch (err) {
-      console.error('加载高级指标失败:', err)
+      console.error(err)
     }
   } finally {
     stationLoading.value = false

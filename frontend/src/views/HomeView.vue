@@ -444,7 +444,7 @@ async function fetchHeatmap() {
       return { name: s.name, cells }
     })
   } catch (err) {
-    console.error('获取热力图数据失败:', err)
+    console.error(err)
   }
 }
 
@@ -470,7 +470,7 @@ const fetchDashboard = async () => {
     aiInsight.value = (insightData as any).insight || aiInsight.value
     overviewKpi.value = kpiData as unknown as KpiData
   } catch (err) {
-    console.error('获取总览失败:', err)
+    console.error(err)
   } finally {
     dashboardLoading.value = false
     kpiLoading.value = false
@@ -492,7 +492,7 @@ const fetchWorkOrders = async () => {
       deadline: '剩余 36h',
     }))
   } catch (err) {
-    console.error('获取工单失败:', err)
+    console.error(err)
   }
 }
 

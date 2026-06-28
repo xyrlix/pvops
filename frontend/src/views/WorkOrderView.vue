@@ -250,7 +250,7 @@ const fetchWorkOrders = async () => {
     const data = (await workOrderApi.list()) as unknown as any[]
     workOrders.value = data
   } catch (err) {
-    console.error('获取工单失败:', err)
+    console.error(err)
   } finally {
     loading.value = false
     statsLoading.value = false
