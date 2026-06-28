@@ -4,7 +4,7 @@
  * 深色为默认，light 通过 html.light 切换。
  */
 
-/* ─── Light（保留，但默认走 dark）────────────────────────────── */
+/* ─── Light────────────────────────────────────── */
 
 html.light {
   color-scheme: light;
@@ -18,21 +18,21 @@ html.light {
   --pv-danger: #C0392B;
   --pv-info: #0ea5e9;
 
-  --pv-bg: #f1f5f9;
-  --pv-bg-deep: #e2e8f0;
-  --pv-surface: rgba(255, 255, 255, 0.92);
+  --pv-bg: #f8fafc;
+  --pv-bg-deep: #f1f5f9;
+  --pv-surface: #ffffff;
   --pv-surface-solid: #ffffff;
-  --pv-border: rgba(15, 23, 42, 0.08);
-  --pv-border-strong: rgba(15, 23, 42, 0.16);
+  --pv-border: rgba(15, 23, 42, 0.10);
+  --pv-border-strong: rgba(15, 23, 42, 0.20);
   --pv-text-primary: #0f172a;
-  --pv-text-secondary: #475569;
-  --pv-text-tertiary: #94a3b8;
+  --pv-text-secondary: #334155;
+  --pv-text-tertiary: #64748b;
 
-  --pv-shadow: 0 4px 24px rgba(15, 23, 42, 0.08);
-  --pv-shadow-lg: 0 12px 48px rgba(15, 23, 42, 0.12);
-  --pv-glow-primary: 0 0 24px rgba(15, 76, 129, 0.22);
-  --pv-glow-danger: 0 0 24px rgba(192, 57, 43, 0.22);
-  --pv-glow-success: 0 0 24px rgba(46, 125, 91, 0.22);
+  --pv-shadow: 0 4px 24px rgba(15, 23, 42, 0.06);
+  --pv-shadow-lg: 0 12px 48px rgba(15, 23, 42, 0.10);
+  --pv-glow-primary: 0 0 24px rgba(15, 76, 129, 0.15);
+  --pv-glow-danger: 0 0 24px rgba(192, 57, 43, 0.15);
+  --pv-glow-success: 0 0 24px rgba(46, 125, 91, 0.15);
 
   --pv-grid-line: rgba(15, 23, 42, 0.04);
   --pv-stripe: rgba(15, 23, 42, 0.03);
@@ -51,8 +51,8 @@ html.light {
   --el-text-color-primary: #0f172a;
   --el-text-color-regular: #1f2937;
   --el-text-color-secondary: #475569;
-  --el-text-color-placeholder: #94a3b8;
-  --el-text-color-disabled: #cbd5e1;
+  --el-text-color-placeholder: #64748b;
+  --el-text-color-disabled: #94a3b8;
   --el-border-color: rgba(15, 23, 42, 0.12);
   --el-border-color-light: rgba(15, 23, 42, 0.08);
   --el-border-color-lighter: rgba(15, 23, 42, 0.05);
@@ -1258,3 +1258,23 @@ html.light .el-tag {
   font-size: 8px;
   color: rgba(255, 255, 255, 0.7);
 }
+
+/* ─── 浅色模式覆盖（深色稿中硬编码的 rgba(255) 文本）───── */
+
+html.light .pv-ai-banner__text { color: var(--pv-text-primary); }
+html.light .pv-risk-name { color: var(--pv-text-primary); }
+html.light .pv-risk-detail { color: var(--pv-text-secondary); }
+html.light .pv-risk-rank--4,
+html.light .pv-risk-rank--5 { background: var(--pv-stripe); color: var(--pv-text-tertiary); }
+html.light .pv-diag-card { background: var(--pv-surface); border-color: var(--pv-border); }
+html.light .pv-diag-value { color: var(--pv-text-secondary); }
+html.light .pv-evidence { background: var(--pv-stripe); border-color: var(--pv-border); color: var(--pv-text-secondary); }
+html.light .pv-wo-card { background: var(--pv-surface); border-color: var(--pv-border); }
+html.light .pv-wo-card:hover { border-color: var(--pv-border-strong); background: var(--pv-stripe); }
+html.light .pv-wo-title { color: var(--pv-text-primary); }
+html.light .pv-wo-meta { color: var(--pv-text-tertiary); }
+html.light .pv-diag-title { color: var(--pv-text-primary); }
+html.light .pv-stat-card { background: var(--pv-surface); }
+html.light .pv-stat-card__value { color: var(--pv-text-primary); }
+html.light .pv-heatmap-label { color: var(--pv-text-secondary); }
+html.light .pv-heatmap-legend { color: var(--pv-text-tertiary); }
