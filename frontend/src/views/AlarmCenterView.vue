@@ -344,6 +344,12 @@ onMounted(() => {
   margin-bottom: 22px;
 }
 
+/* 防止 el-row :gutter 负边距导致的横向溢出 */
+.section-row {
+  width: 100%;
+  overflow: hidden;
+}
+
 .stat-card {
   padding: 18px;
   border-radius: 14px;
@@ -359,6 +365,19 @@ onMounted(() => {
   transform: translateY(-3px);
   border-color: var(--pv-border-strong);
 }
+
+/* 表格横向滚动修复：列太多时允许横向滚动 */
+.el-table {
+  overflow-x: auto !important;
+  max-width: 100%;
+}
+
+/* 告警列表表格容器确保不溢出 */
+.section-row .el-table {
+  display: block;
+}
+
+/* 移动端表格列压缩 — 次要列隐藏由 .hide-on-mobile 处理 */
 
 .stat-card::before {
   content: '';
