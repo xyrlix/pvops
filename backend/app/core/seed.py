@@ -5,15 +5,19 @@
 
 from __future__ import annotations
 
+import asyncio
 import logging
+from pathlib import Path
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 
 from app.core.database import AsyncSessionLocal
 from app.core.security import get_password_hash
 from app.models.device import Device, Inverter, StringUnit
+from app.models.knowledge import KnowledgeDoc
 from app.models.station import Station
 from app.models.user import User
+from app.services.knowledge_service import _chunk_text
 
 logger = logging.getLogger(__name__)
 
@@ -22,13 +26,58 @@ DEMO_ADMIN_USERNAME = "admin"
 
 
 async def seed_initial_data() -> None:
-    """初始化默认管理员和演示电站 + 演示设备资产."""
+    """初始化默认管理员和演示电站 + 演示设备资产 + 种子知识库文档."""
     async with AsyncSessionLocal() as session:
         await _ensure_admin(session)
         station_id = await _ensure_demo_station(session)
         if station_id is not None:
             await _ensure_demo_devices(session, station_id)
         await session.commit()
+
+    # 知识库种子文档：首次启动时导入
+    await _seed_knowledge_docs()
+
+
+async def _seed_knowledge_docs() -> None:
+    """导入 seed/ 目录下的预置知识文档（跳过已导入的）。"""
+    from sqlalchemy import select
+
+    logger.info("检查知识库种子文档…")
+    async with AsyncSessionLocal() as session:
+        count = (await session.execute(select(func.count()).select_from(KnowledgeDoc))).scalar() or 0
+    if count > 0:
+        logger.info("知识库已有 %d 篇文档，跳过种子导入", count)
+        return
+
+    seed_dir = Path(__file__).parent.parent.parent / "seed"
+    if not seed_dir.exists():
+        logger.warning("seed 目录不存在: %s", seed_dir)
+        return
+
+    files = sorted(f for f in seed_dir.iterdir() if f.suffix in (".md", ".txt", ".pdf", ".docx"))
+    if not files:
+        return
+
+    from app.services import knowledge_service
+
+    for fp in files:
+        try:
+            content = fp.read_bytes()
+            doc = await knowledge_service.save_upload(fp.name, content)
+            text = (await asyncio.to_thread(fp.read_text, encoding="utf-8")) if fp.suffix in (".md", ".txt") else ""
+            if not text:
+                text = (await asyncio.to_thread(fp.read_text, encoding="utf-8")) if doc.content_text else ""
+            if text:
+                await knowledge_service.create_chunks(doc.id, text)
+                async with AsyncSessionLocal() as session:
+                    db_doc = await session.get(KnowledgeDoc, doc.id)
+                    if db_doc:
+                        db_doc.content_text = text
+                        db_doc.chunk_count = len(_chunk_text(text))
+                        await session.commit()
+                logger.info("  导入知识库: %s (%d 块)", fp.name, db_doc.chunk_count)
+        except Exception as exc:
+            logger.error("  导入失败: %s — %s", fp.name, exc)
 
 
 async def _ensure_admin(session) -> None:
