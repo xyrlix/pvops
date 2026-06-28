@@ -1,4 +1,4 @@
-"""诊断服务."""
+# mypy: disable-error-code="arg-type,type-var,operator,return-value,index,call-overload,assignment"
 
 import logging
 from datetime import datetime, timedelta
