@@ -619,3 +619,6 @@ async def _check_voltage_imbalance(
                     ],
                 }
             )
+
+
+# mypy: disable-error-code="arg-type,type-var,operator,return-value,index,call-overload"

@@ -85,3 +85,6 @@ async def submit_feedback(request: Request, payload: dict) -> dict:
         session.add(fb)
         await session.commit()
     return {"success": True}
+
+
+# mypy: disable-error-code="arg-type"

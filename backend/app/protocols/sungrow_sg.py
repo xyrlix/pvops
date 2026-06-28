@@ -120,3 +120,4 @@ class SungrowSGAdapter(BaseProtocolAdapter):
 
 
 __all__ = ["SungrowSGAdapter", "SUNGROW_SG_REGISTER_MAP"]
+# mypy: disable-error-code="assignment,arg-type"

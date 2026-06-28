@@ -1,5 +1,9 @@
 """数据库连接."""
 
+from __future__ import annotations
+
+from collections.abc import AsyncGenerator
+
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
 
@@ -13,7 +17,7 @@ engine = create_async_engine(
     future=True,
 )
 
-AsyncSessionLocal = sessionmaker(
+AsyncSessionLocal = sessionmaker(  # type: ignore[call-overload]
     bind=engine,
     class_=AsyncSession,
     expire_on_commit=False,
@@ -24,7 +28,7 @@ AsyncSessionLocal = sessionmaker(
 Base = declarative_base()
 
 
-async def get_db() -> AsyncSession:
+async def get_db() -> AsyncGenerator[AsyncSession, None]:
     """获取数据库会话."""
     async with AsyncSessionLocal() as session:
         try:

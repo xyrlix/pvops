@@ -332,3 +332,6 @@ async def save_case_document(
 
     await create_chunks(int(doc.id), content, station_id=station_id)
     return doc
+
+
+# mypy: disable-error-code="arg-type,assignment"

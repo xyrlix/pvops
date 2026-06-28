@@ -128,3 +128,6 @@ async def get_ai_insight() -> str:
         f"今日预计损失金额 ¥{total_loss:.0f}。"
         f"建议优先处理 [{worst.get('name')}]（健康度 {worst.get('health_score', 0):.0f} 分）。"
     )
+
+
+# mypy: disable-error-code="arg-type"

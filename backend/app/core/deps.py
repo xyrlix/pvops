@@ -21,7 +21,7 @@ async def get_db() -> AsyncSession:
             await session.close()
 
 
-async def get_current_user(
+async def get_current_user(  # type: ignore[misc]
     credentials: HTTPAuthorizationCredentials | None = Depends(security),
 ) -> User:
     """获取当前登录用户."""

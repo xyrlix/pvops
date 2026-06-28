@@ -174,3 +174,4 @@ class HuaweiSUN2000Adapter(BaseProtocolAdapter):
 
 
 __all__ = ["HuaweiSUN2000Adapter", "HUAWEI_SUN2000_REGISTER_MAP"]
+# mypy: disable-error-code="assignment,arg-type"

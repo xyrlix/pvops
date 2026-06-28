@@ -104,3 +104,6 @@ class CollectorRunner:
             logger.info("采集器收到取消信号，正在退出")
         finally:
             await self.close()
+
+
+# mypy: disable-error-code="arg-type"

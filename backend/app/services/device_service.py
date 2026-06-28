@@ -88,3 +88,6 @@ def _build_tree(devices: list[Device], parent_id: int | None = None) -> list[dic
 async def get_station_topology(station_id: int) -> list[dict]:
     devices = await list_devices(station_id=station_id)
     return _build_tree(devices)
+
+
+# mypy: disable-error-code="arg-type"

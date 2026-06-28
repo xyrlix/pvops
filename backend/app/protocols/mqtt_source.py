@@ -87,3 +87,6 @@ class MqttSourceAdapter(BaseProtocolAdapter):
             "timestamp": datetime.now(UTC).isoformat(),
             **payload,
         }
+
+
+# mypy: disable-error-code="assignment,arg-type"

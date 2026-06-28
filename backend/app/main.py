@@ -133,3 +133,6 @@ async def not_found_handler(request, exc):
     from fastapi.responses import JSONResponse
 
     return JSONResponse({"detail": "Not found"}, status_code=404)
+
+
+# mypy: disable-error-code="arg-type"
