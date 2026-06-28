@@ -44,7 +44,9 @@ async def _seed_knowledge_docs() -> None:
 
     logger.info("检查知识库种子文档…")
     async with AsyncSessionLocal() as session:
-        count = (await session.execute(select(func.count()).select_from(KnowledgeDoc))).scalar() or 0
+        count = (
+            await session.execute(select(func.count()).select_from(KnowledgeDoc))
+        ).scalar() or 0
     if count > 0:
         logger.info("知识库已有 %d 篇文档，跳过种子导入", count)
         return
@@ -64,9 +66,17 @@ async def _seed_knowledge_docs() -> None:
         try:
             content = fp.read_bytes()
             doc = await knowledge_service.save_upload(fp.name, content)
-            text = (await asyncio.to_thread(fp.read_text, encoding="utf-8")) if fp.suffix in (".md", ".txt") else ""
+            text = (
+                (await asyncio.to_thread(fp.read_text, encoding="utf-8"))
+                if fp.suffix in (".md", ".txt")
+                else ""
+            )
             if not text:
-                text = (await asyncio.to_thread(fp.read_text, encoding="utf-8")) if doc.content_text else ""
+                text = (
+                    (await asyncio.to_thread(fp.read_text, encoding="utf-8"))
+                    if doc.content_text
+                    else ""
+                )
             if text:
                 await knowledge_service.create_chunks(doc.id, text)
                 async with AsyncSessionLocal() as session:

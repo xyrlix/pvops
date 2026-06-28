@@ -46,6 +46,7 @@ async def seed_file(file_path: str) -> None:
     # 1. 先检查是否已存在同名文档（避免重复导入）
     async with AsyncSessionLocal() as session:
         from sqlalchemy import select
+
         result = await session.execute(
             select(KnowledgeDoc).where(KnowledgeDoc.filename == filename)
         )
@@ -82,10 +83,7 @@ async def main() -> None:
         logger.warning("seed 目录不存在: %s", SEED_DIR)
         return
 
-    files = sorted(
-        f for f in os.listdir(SEED_DIR)
-        if f.endswith((".md", ".txt", ".pdf", ".docx"))
-    )
+    files = sorted(f for f in os.listdir(SEED_DIR) if f.endswith((".md", ".txt", ".pdf", ".docx")))
     if not files:
         logger.warning("seed 目录无可用文档")
         return
