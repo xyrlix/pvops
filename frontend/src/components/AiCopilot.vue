@@ -6,7 +6,7 @@
 
     <el-drawer
       v-model="copilotStore.isOpen"
-      title="AI 运维助手"
+      title="AI 智能体"
       direction="rtl"
       size="420px"
       :with-header="true"

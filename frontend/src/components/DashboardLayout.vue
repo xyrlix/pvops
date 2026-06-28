@@ -39,7 +39,7 @@
             <div v-if="$slots.title" class="pv-topbar__title">
               <slot name="title" />
             </div>
-            <div v-else class="pv-topbar__title">光伏电站智能运营系统</div>
+            <div v-else class="pv-topbar__title">PVOps 智能运维</div>
             <div v-if="$slots.subtitle" class="pv-topbar__sub">
               <slot name="subtitle" />
             </div>

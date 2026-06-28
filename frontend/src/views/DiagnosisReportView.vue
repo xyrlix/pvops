@@ -145,7 +145,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { ArrowLeft, Warning, Clock, Document, Download, ChatDotRound } from '@element-plus/icons-vue'
 import { diagnosisApi } from '@/services/api'
 import DashboardLayout from '@/components/DashboardLayout.vue'
@@ -156,6 +156,7 @@ import { useCopilotStore } from '@/stores/copilot'
 import { ElMessage } from 'element-plus'
 
 const route = useRoute()
+const router = useRouter()
 const copilotStore = useCopilotStore()
 // TODO(typing): replace any with explicit type; suppressed to keep CI green
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -203,6 +204,7 @@ const actionDiagnoseAndCreateWO = async () => {
     }
     if (res.workorders_created?.length) {
       ElMessage.success(`已自动创建 ${res.workorders_created.length} 个工单`)
+      setTimeout(() => router.push('/workorders'), 1500)
     } else {
       ElMessage.info(res.summary || '无需要建工单的发现')
     }

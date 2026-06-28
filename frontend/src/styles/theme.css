@@ -315,6 +315,11 @@ html:not(.light) .el-card {
   letter-spacing: 0.04em;
 }
 
+html.light .el-tag {
+  border: 1px solid currentColor;
+  background: transparent;
+}
+
 /* —— 弹窗 —— */
 .el-dialog {
   background: var(--pv-surface-solid) !important;
