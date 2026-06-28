@@ -1,4 +1,3 @@
-# mypy: disable-error-code="arg-type,type-var,operator,return-value,index,call-overload,assignment"
 
 import logging
 from datetime import datetime, timedelta
@@ -241,7 +240,7 @@ async def _check_communication_gap(
         return
 
     # 按时间正序
-    sorted_records = sorted(records, key=lambda r: r.timestamp)
+    sorted_records = sorted(records, key=lambda r: r.timestamp)  # type: ignore[arg-type,return-value]
     max_gap = timedelta(minutes=0)
     gap_start = None
 
@@ -466,7 +465,7 @@ async def _check_sudden_power_drop(
     """相邻时间点功率突降 > 50%."""
     if len(records) < 3:
         return
-    sorted_recs = sorted(records, key=lambda r: r.timestamp)
+    sorted_recs = sorted(records, key=lambda r: r.timestamp)  # type: ignore[arg-type,return-value]
     for i in range(1, len(sorted_recs)):
         prev = sorted_recs[i - 1]
         curr = sorted_recs[i]
@@ -505,7 +504,7 @@ async def _check_repeated_fault(
     for r in records:
         fc = r.fault_code or 0
         if fc > 0:
-            fault_counts[fc] = fault_counts.get(fc, 0) + 1
+                fault_counts[int(fc)] = fault_counts.get(int(fc), 0) + 1
     for fc, cnt in fault_counts.items():
         if cnt >= 3:
             result.findings.append(
