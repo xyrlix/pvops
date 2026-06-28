@@ -85,7 +85,7 @@ const handleCommand = (command: string) => {
   justify-content: center;
   font-weight: 800;
   font-size: 15px;
-  color: #fff;
+  color: var(--pv-bg);
   background: linear-gradient(135deg, var(--pv-primary), #0066ff);
   box-shadow: 0 0 16px var(--pv-glow-primary);
 }

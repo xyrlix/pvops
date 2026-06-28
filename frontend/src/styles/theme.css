@@ -246,8 +246,7 @@ body {
   transition: var(--pv-transition);
 }
 
-html.dark .el-card,
-html:not(.light) .el-card {
+html.dark .el-card {
   background: rgba(255, 255, 255, 0.04) !important;
 }
 
@@ -1278,3 +1277,129 @@ html.light .pv-stat-card { background: var(--pv-surface); }
 html.light .pv-stat-card__value { color: var(--pv-text-primary); }
 html.light .pv-heatmap-label { color: var(--pv-text-secondary); }
 html.light .pv-heatmap-legend { color: var(--pv-text-tertiary); }
+
+/* ─── 浅色模式全覆盖（修复所有硬编码 rgba(255) 的问题）───── */
+
+html.light .stats-row .stat-unit,
+html.light .pv-stat-card__unit {
+  color: var(--pv-text-tertiary) !important;
+}
+html.light .risk-section-title {
+  color: var(--pv-text-secondary);
+}
+html.light .heatmap-legend-text {
+  color: var(--pv-text-tertiary);
+}
+html.light .strategy-time-label {
+  color: var(--pv-text-tertiary);
+}
+
+/* SidebarMenu 底部用户 */
+html.light .nav-user-role,
+html.light .nav-user-version {
+  color: var(--pv-text-tertiary);
+}
+
+/* 工单卡片和诊断卡片中的硬编码白字 */
+html.light .diag-card,
+html.light .wo-card {
+  background: var(--pv-surface);
+  border-color: var(--pv-border);
+}
+html.light .diag-value,
+html.light .wo-title,
+html.light .diag-title {
+  color: var(--pv-text-primary);
+}
+html.light .wo-meta,
+html.light .diag-label,
+html.light .evidence-item {
+  color: var(--pv-text-secondary);
+}
+
+/* 弹窗内容 */
+html.light .el-dialog__body {
+  color: var(--pv-text-primary);
+}
+
+/* el-descriptions */
+html.light .el-descriptions__title,
+html.light .el-descriptions__label {
+  color: var(--pv-text-primary);
+}
+html.light .el-descriptions__content {
+  color: var(--pv-text-secondary);
+}
+
+/* 报警面板 */
+html.light .alarm-item-title {
+  color: var(--pv-text-primary);
+}
+html.light .alarm-item-detail {
+  color: var(--pv-text-secondary);
+}
+
+/* 电池储能面板 */
+html.light .battery-label,
+html.light .pv-battery-info__label {
+  color: var(--pv-text-secondary);
+}
+html.light .pv-battery-info__val {
+  color: var(--pv-text-primary);
+}
+
+/* 交易/策略 */
+html.light .strategy-profit {
+  color: var(--pv-success);
+}
+html.light .strategy-time {
+  color: var(--pv-text-primary);
+}
+
+/* 表头 */
+html.light .el-table__header th.el-table__cell {
+  color: var(--pv-text-primary);
+}
+
+/* 步骤条 */
+html.light .el-step__title {
+  color: var(--pv-text-secondary);
+}
+
+/* PvTag 文字 */
+html.light .el-tag {
+  color: var(--pv-text-primary);
+}
+html.light .el-tag.el-tag--warning {
+  color: #0B1120;
+}
+html.light .el-tag.el-tag--danger {
+  color: #fff;
+}
+html.light .el-tag.el-tag--success {
+  color: var(--pv-text-primary);
+}
+html.light .el-tag.el-tag--info {
+  color: var(--pv-text-primary);
+}
+
+/* 散点图/气泡图 */
+html.light .pv-bubble__name {
+  color: #0f172a;
+}
+html.light .pv-bubble__loss {
+  color: #475569;
+}
+
+/* 统计卡颜色值覆盖以确保可读 */
+html.light .pv-stat-card__value--blue { color: #1d4ed8; }
+html.light .pv-stat-card__value--green { color: #15803d; }
+html.light .pv-stat-card__value--orange { color: #c2410c; }
+html.light .pv-stat-card__value--red { color: #b91c1c; }
+html.light .pv-stat-card__value--purple { color: #7c3aed; }
+html.light .pv-stat-card { background: var(--pv-surface); }
+
+/* AiCopilot 按钮文字 */
+html.light .ai-float-btn {
+  color: #fff;
+}

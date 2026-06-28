@@ -69,7 +69,7 @@ withDefaults(
 }
 
 .pv-card:hover {
-  border-color: rgba(255, 255, 255, 0.1);
+  border-color: var(--pv-border-strong);
 }
 
 .pv-card-header {
@@ -91,7 +91,7 @@ withDefaults(
 .pv-card-title {
   font-size: 14px;
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.85);
+  color: var(--pv-text-primary);
   display: flex;
   align-items: center;
   gap: 8px;
@@ -108,7 +108,7 @@ withDefaults(
 
 .pv-card-subtitle {
   font-size: 11px;
-  color: rgba(255, 255, 255, 0.35);
+  color: var(--pv-text-tertiary);
   font-weight: 500;
   font-family: var(--pv-font-mono);
   letter-spacing: 0.04em;

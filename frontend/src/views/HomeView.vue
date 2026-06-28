@@ -7,7 +7,7 @@
         <div class="pv-stat-card__value pv-stat-card__value--blue">
           <PvSkeleton v-if="kpiLoading" variant="text" :rows="1" />
           <template v-else>
-            {{ overviewKpi.station_count }}<span style="font-size:14px;font-weight:400;color:rgba(255,255,255,0.3)"> 座</span>
+            {{ overviewKpi.station_count }}<span style="font-size:14px;font-weight:400;color:var(--pv-text-tertiary)"> 座</span>
           </template>
         </div>
         <div class="pv-stat-card__change pv-stat-card__change--up">↑ 本月新增 3 座</div>
@@ -18,7 +18,7 @@
           <PvSkeleton v-if="kpiLoading" variant="text" :rows="1" />
           <template v-else>
             {{ formatNumber(overviewKpi.total_daily_energy_kwh / 1000, 1) }}
-            <span style="font-size:14px;font-weight:400;color:rgba(255,255,255,0.3)"> MWh</span>
+            <span style="font-size:14px;font-weight:400;color:var(--pv-text-tertiary)"> MWh</span>
           </template>
         </div>
         <div class="pv-stat-card__change pv-stat-card__change--up">↑ 较昨日 +12.3%</div>
@@ -29,7 +29,7 @@
           <PvSkeleton v-if="kpiLoading" variant="text" :rows="1" />
           <template v-else>
             ¥{{ formatNumber(todayRevenue / 10000, 2) }}
-            <span style="font-size:14px;font-weight:400;color:rgba(255,255,255,0.3)"> 万</span>
+            <span style="font-size:14px;font-weight:400;color:var(--pv-text-tertiary)"> 万</span>
           </template>
         </div>
         <div class="pv-stat-card__change pv-stat-card__change--up">↑ 储能套利 ¥1,280</div>
@@ -40,7 +40,7 @@
           <PvSkeleton v-if="kpiLoading" variant="text" :rows="1" />
           <template v-else>
             {{ abnormalCount }}
-            <span style="font-size:14px;font-weight:400;color:rgba(255,255,255,0.3)"> 台</span>
+            <span style="font-size:14px;font-weight:400;color:var(--pv-text-tertiary)"> 台</span>
           </template>
         </div>
         <div class="pv-stat-card__change pv-stat-card__change--down">↓ 较上周 -3 台</div>
@@ -51,7 +51,7 @@
           <PvSkeleton v-if="kpiLoading" variant="text" :rows="1" />
           <template v-else>
             {{ aiAccuracy }}
-            <span style="font-size:14px;font-weight:400;color:rgba(255,255,255,0.3)">%</span>
+            <span style="font-size:14px;font-weight:400;color:var(--pv-text-tertiary)">%</span>
           </template>
         </div>
         <div class="pv-stat-card__change pv-stat-card__change--up">↑ 持续提升中</div>
@@ -72,8 +72,8 @@ title="集团总览 · 场站健康度气泡图" icon="Coordinate" :loading="das
           <BubbleChart :data="bubbleData" :height="320" />
 
           <!-- 风险 TOP 5 -->
-          <div style="margin-top:16px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.06)">
-            <div style="font-size:13px;color:rgba(255,255,255,0.7);font-weight:600;margin-bottom:10px">⚠️ 高风险电站 TOP 5</div>
+          <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--pv-border)">
+            <div style="font-size:13px;color:var(--pv-text-secondary);font-weight:600;margin-bottom:10px">⚠️ 高风险电站 TOP 5</div>
             <div class="pv-risk-list">
               <div
                 v-for="(item, index) in riskStations.slice(0, 5)"
@@ -138,7 +138,7 @@ title="AI 智能诊断" icon="Cpu" :loading="dashboardLoading"
             </div>
             <div style="margin-top:10px;display:flex;gap:8px">
               <el-button type="warning" size="small">✓ 生成工单</el-button>
-              <el-button size="small" style="background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.5);border:1px solid rgba(255,255,255,0.08)">反馈纠错</el-button>
+              <el-button size="small" style="background:var(--pv-stripe);color:var(--pv-text-tertiary);border:1px solid var(--pv-border)">反馈纠错</el-button>
             </div>
           </div>
         </PvCard>
@@ -195,7 +195,7 @@ title="月度健康度热力图（6 月）" icon="Grid" :loading="dashboardLoadi
           <span class="lg">健康(≥80)</span>
           <span class="ly">亚健康(60-80)</span>
           <span class="lr">异常(&lt;60)</span>
-          <span style="margin-left:auto;color:rgba(255,255,255,0.2)">← {{ heatmapRows[0]?.cells?.length || 0 }} 天 · 每日一格</span>
+          <span style="margin-left:auto;color:var(--pv-text-tertiary)">← {{ heatmapRows[0]?.cells?.length || 0 }} 天 · 每日一格</span>
         </div>
       </PvCard>
     </div>
@@ -244,10 +244,10 @@ title="储能监控 · 嘉兴XX站" icon="Battery" :loading="dashboardLoading"
             <div class="pv-strategy-seg pv-strategy-seg--discharge" style="width:17%">峰放</div>
             <div class="pv-strategy-seg pv-strategy-seg--idle" style="width:17%">闲</div>
           </div>
-          <div style="font-size:11px;color:rgba(255,255,255,0.35);display:flex;justify-content:space-between">
+          <div style="font-size:11px;color:var(--pv-text-tertiary);display:flex;justify-content:space-between">
             <span>00:00</span><span>06:00</span><span>12:00</span><span>18:00</span><span>24:00</span>
           </div>
-          <div style="margin-top:10px;padding:8px 12px;background:rgba(52,211,153,0.08);border-radius:6px;font-size:12px;color:rgba(255,255,255,0.7)">
+          <div style="margin-top:10px;padding:8px 12px;background:rgba(52,211,153,0.08);border-radius:6px;font-size:12px;color:var(--pv-text-secondary)">
             💰 预计明日套利 <strong style="color:#34D399">¥1,250</strong>  |  本月累计 <strong style="color:#34D399">¥31,800</strong>
           </div>
         </PvCard>
@@ -286,14 +286,14 @@ title="电力市场 · 现货价格" icon="TrendCharts" :loading="dashboardLoadi
               <path d="M0,70 Q20,65 30,55 T60,30 T90,20 T120,25 T150,45 T180,65 T210,75 T240,60 T270,35 T300,15 T330,30 L340,30 L340,100 L0,100Z" fill="url(#tradeGrad)"/>
               <path d="M0,70 Q20,65 30,55 T60,30 T90,20 T120,25 T150,45 T180,65 T210,75 T240,60 T270,35 T300,15 T330,30 L340,30" fill="none" stroke="#60A5FA" stroke-width="2"/>
               <circle cx="300" cy="15" r="3" fill="#60A5FA"/>
-              <line x1="0" y1="80" x2="340" y2="80" stroke="rgba(255,255,255,0.06)" stroke-width="1" stroke-dasharray="4,4"/>
-              <text x="335" y="78" fill="rgba(255,255,255,0.15)" font-size="8" text-anchor="end">平均</text>
+              <line x1="0" y1="80" x2="340" y2="80" stroke="var(--pv-grid-line)" stroke-width="1" stroke-dasharray="4,4"/>
+              <text x="335" y="78" fill="var(--pv-text-tertiary)" font-size="8" text-anchor="end">平均</text>
             </svg>
           </div>
-          <div style="font-size:11px;color:rgba(255,255,255,0.35);display:flex;justify-content:space-between">
+          <div style="font-size:11px;color:var(--pv-text-tertiary);display:flex;justify-content:space-between">
             <span>00:00</span><span>06:00</span><span>12:00</span><span>18:00</span><span>24:00</span>
           </div>
-          <div style="margin-top:8px;padding:8px 12px;background:rgba(245,166,35,0.08);border-radius:6px;font-size:12px;color:rgba(255,255,255,0.7)">
+          <div style="margin-top:8px;padding:8px 12px;background:rgba(245,166,35,0.08);border-radius:6px;font-size:12px;color:var(--pv-text-secondary)">
             🤖 AI 建议策略：<strong style="color:var(--pv-warning)">10:00-11:30 高价时段多放电 +15%</strong>，预计多赚 <strong style="color:var(--pv-warning)">¥380</strong>
           </div>
       </PvCard>

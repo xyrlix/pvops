@@ -255,7 +255,7 @@ const submitFeedback = (index: number, rating: 'good' | 'bad') => {
   align-items: center;
   justify-content: center;
   background: linear-gradient(135deg, #00f0ff, #bd34fe);
-  color: #fff;
+  color: var(--pv-bg);
   cursor: pointer;
   box-shadow: 0 0 24px rgba(0, 240, 255, 0.45);
   animation: float-pulse 2.5s ease-in-out infinite;

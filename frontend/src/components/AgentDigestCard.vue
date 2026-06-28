@@ -238,7 +238,7 @@ onUnmounted(() => {
 }
 .tag-critical {
   background: var(--pv-danger);
-  color: #fff;
+  color: var(--pv-bg);
 }
 .tag-warning {
   background: var(--pv-warning);
