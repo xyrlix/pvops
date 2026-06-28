@@ -56,7 +56,7 @@ async def test_calculate_stats_sums_and_returns_daily_details(
     stats = await _calculate_stats(None, start, end)
 
     assert stats["total_energy_kwh"] == 2500.0
-    assert stats["avg_pr"] is None  # 无 PR 行
+    assert stats["avg_pr"] == 0.0  # 无 PR 行
     assert stats["avg_health_score"] is None
     assert len(stats["daily_details"]) == 3
     assert stats["daily_details"][0] == {

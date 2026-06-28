@@ -75,7 +75,7 @@ async def test_check_alarms_triggers_power_zero(monkeypatch: pytest.MonkeyPatch)
 
     created: list = []
 
-    async def fake_create(session, station_id, inverter_id, level, title, desc, code):
+    async def fake_create(session, station_id, inverter_id, level, title, desc, code, tenant_id=None):
         alarm = SimpleNamespace(
             station_id=station_id,
             inverter_id=inverter_id,
@@ -108,7 +108,7 @@ async def test_check_alarms_triggers_fault_code(monkeypatch: pytest.MonkeyPatch)
 
     created: list = []
 
-    async def fake_create(session, station_id, inverter_id, level, title, desc, code):
+    async def fake_create(session, station_id, inverter_id, level, title, desc, code, tenant_id=None):
         a = SimpleNamespace(code=code, level=level)
         created.append(a)
         return a
@@ -134,7 +134,7 @@ async def test_check_alarms_triggers_low_pr(monkeypatch: pytest.MonkeyPatch) -> 
 
     created: list = []
 
-    async def fake_create(session, station_id, inverter_id, level, title, desc, code):
+    async def fake_create(session, station_id, inverter_id, level, title, desc, code, tenant_id=None):
         a = SimpleNamespace(code=code, level=level)
         created.append(a)
         return a
@@ -164,7 +164,7 @@ async def test_check_alarms_clean_state_no_alerts(monkeypatch: pytest.MonkeyPatc
 
     created: list = []
 
-    async def fake_create(session, station_id, inverter_id, level, title, desc, code):
+    async def fake_create(session, station_id, inverter_id, level, title, desc, code, tenant_id=None):
         created.append(SimpleNamespace(code=code, level=level))
         return SimpleNamespace(code=code, level=level)
 

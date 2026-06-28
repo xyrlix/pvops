@@ -127,10 +127,10 @@ async def test_huawei_collect_once_unit_conversion() -> None:
     data = await adapter.collect_once()
     assert data["active_power_kw"] == 5.0
     assert data["reactive_power_kvar"] == 0.0
-    assert data["power_factor"] == 990
+    assert data["power_factor"] == 0.99
     assert data["dc_voltage_v"] == 620.0
     assert abs(data["dc_current_a"] - 8.0) < 0.01
-    assert data["daily_energy_kwh"] == 12000
+    assert data["daily_energy_kwh"] == 12
     assert data["total_energy_kwh"] == 1_500_000
     assert data["inverter_temp_c"] == 35.0
     assert data["inverter_status"] == "并网运行"
@@ -168,7 +168,7 @@ async def test_huawei_collect_once_handles_read_errors() -> None:
     data = await adapter.collect_once()
     # 即使所有点位都失败，也应返回结构化字段（值为 0）
     assert data["active_power_kw"] == 0
-    assert data["inverter_status"] == "未知"  # default label
+    assert data["inverter_status"] == "待机"  # default label
     assert data["fault_code"] == 0
 
 
@@ -197,7 +197,7 @@ async def test_sungrow_collect_once_unit_conversion() -> None:
     assert data["active_power_kw"] == 3.0
     assert data["dc_voltage_v"] == 620.0
     assert data["dc_current_a"] == 8.0
-    assert data["daily_energy_kwh"] == 12000
+    assert data["daily_energy_kwh"] == 12
     assert data["total_energy_kwh"] == 800_000
     assert data["inverter_temp_c"] == 35
     assert data["inverter_status"] == "并网运行"

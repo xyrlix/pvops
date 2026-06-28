@@ -17,9 +17,9 @@ def test_detect_doc_type():
 
 
 def test_chunk_text():
-    text = "a" * 1000
+    text = "\n\n".join(["a" * 250 for _ in range(4)])
     chunks = _chunk_text(text, chunk_size=300, overlap=50)
-    assert len(chunks) > 1
+    assert len(chunks) >= 4
     assert len(chunks[0]) == 300
 
 
