@@ -41,7 +41,7 @@ async def create_work_order(
         description=data.description,
         priority=data.priority,
         assignee=data.assignee,
-        created_by=current_user.username,
+        created_by=str(current_user.username),
         station_id=data.station_id,
         alarm_id=data.alarm_id,
         tenant_id=tenant.tenant_id,

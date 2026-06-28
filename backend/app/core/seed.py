@@ -78,7 +78,7 @@ async def _seed_knowledge_docs() -> None:
                     else ""
                 )
             if text:
-                await knowledge_service.create_chunks(doc.id, text)
+                await knowledge_service.create_chunks(int(doc.id), text)
                 async with AsyncSessionLocal() as session:
                     db_doc = await session.get(KnowledgeDoc, doc.id)
                     if db_doc:

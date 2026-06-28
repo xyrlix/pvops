@@ -1,5 +1,7 @@
 """依赖注入."""
 
+from collections.abc import AsyncGenerator
+
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy import select
@@ -12,7 +14,7 @@ from app.models.user import User
 security = HTTPBearer(auto_error=False)
 
 
-async def get_db() -> AsyncSession:
+async def get_db() -> AsyncGenerator[AsyncSession, None]:
     """获取数据库会话."""
     async with AsyncSessionLocal() as session:
         try:
