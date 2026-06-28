@@ -33,7 +33,7 @@ async def generate_report(
     if report_type not in ("daily", "weekly", "monthly"):
         raise HTTPException(status_code=400, detail="报告类型必须是 daily/weekly/monthly")
     return await report_service.generate_report(
-        report_type, data.station_id, created_by=current_user.username
+        report_type, data.station_id, created_by=str(current_user.username)
     )
 
 

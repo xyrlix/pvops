@@ -330,5 +330,5 @@ async def save_case_document(
         await session.commit()
         await session.refresh(doc)
 
-    await create_chunks(doc.id, content, station_id=station_id)
+    await create_chunks(int(doc.id), content, station_id=station_id)
     return doc
