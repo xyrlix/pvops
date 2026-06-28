@@ -38,7 +38,7 @@
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
-import { Odometer, ChatDotRound, Warning, Tickets, OfficeBuilding, Document, Collection, SetUp } from '@element-plus/icons-vue'
+import { Odometer, ChatDotRound, Warning, Tickets, OfficeBuilding, Document, Collection, TrendCharts, Coin } from '@element-plus/icons-vue'
 
 withDefaults(defineProps<{ collapse?: boolean }>(), { collapse: false })
 
@@ -59,10 +59,13 @@ const mainNav = [
 
 const mgmtNav = [
   { path: '/stations', label: '电站管理', icon: OfficeBuilding },
-  { path: '/devices/manage', label: '设备管理', icon: SetUp },
+  { path: '/energy-storage', label: '储能监控', icon: Coin },
+  { path: '/power-trade', label: '电力市场', icon: TrendCharts },
   { path: '/reports', label: '运维简报', icon: Document },
   { path: '/knowledge', label: '知识库', icon: Collection },
 ]
+
+// Note: Coin and TrendCharts are from element-plus/icons-vue
 
 const isActive = (item: { path: string }) => {
   if (item.path === '/') return route.path === '/'

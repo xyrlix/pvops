@@ -82,6 +82,18 @@ const router = createRouter({
       component: () => import('@/views/ProfileView.vue'),
       meta: { requiresAuth: true },
     },
+    {
+      path: '/energy-storage',
+      name: 'energy-storage',
+      component: () => import('@/views/EnergyStorageView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/power-trade',
+      name: 'power-trade',
+      component: () => import('@/views/PowerTradeView.vue'),
+      meta: { requiresAuth: true },
+    },
   ],
 })
 
