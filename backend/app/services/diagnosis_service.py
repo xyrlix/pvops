@@ -365,7 +365,7 @@ async def _check_high_module_temperature(
         return
     avg_ambient = sum(r.ambient_temp_c or 0 for r in records) / len(records)
     # 估算模块温度 ≈ 环境温度 + 辐照 * 0.03
-    peak_irradiance = max(r.irradiance_w_m2 or 0 for r in records)
+    peak_irradiance = max(r.irradiance_w_m2 or 0 for r in records)  # type: ignore[type-var]
     estimated_module_temp = avg_ambient + peak_irradiance * 0.03
     if estimated_module_temp > 75:
         result.findings.append(
@@ -433,7 +433,7 @@ async def _check_power_factor(
         rp = getattr(r, "reactive_power_kvar", 0) or 0
         if ap < 1:
             continue
-        pf = abs(ap) / ((ap**2 + rp**2) ** 0.5) if (ap**2 + rp**2) > 0 else 1
+        pf = abs(ap) / ((ap**2 + rp**2) ** 0.5) if (ap**2 + rp**2) > 0 else 1  # type: ignore[operator]
         if pf < 0.85:
             result.findings.append(
                 {
@@ -470,7 +470,7 @@ async def _check_sudden_power_drop(
         curr = sorted_recs[i]
         if (prev.active_power_kw or 0) < 5:
             continue
-        ratio = (curr.active_power_kw or 0) / max(prev.active_power_kw, 0.01)
+        ratio = (curr.active_power_kw or 0) / max(prev.active_power_kw, 0.01)  # type: ignore[call-overload]
         if ratio < 0.4:  # 掉到 40% 以下
             result.findings.append(
                 {
@@ -533,7 +533,7 @@ async def _check_irradiance_power_mismatch(
         for r in records
         if r.irradiance_w_m2 > 400
         and r.active_power_kw is not None
-        and r.active_power_kw / max(r.irradiance_w_m2 / 1000 * 1000, 0.01) < 0.5
+        and r.active_power_kw / max(r.irradiance_w_m2 / 1000 * 1000, 0.01) < 0.5  # type: ignore[call-overload]
     ]
     if len(mismatches) >= 3:
         latest = mismatches[0]
@@ -544,11 +544,11 @@ async def _check_irradiance_power_mismatch(
                 "category": "发电异常",
                 "severity": "critical",
                 "title": f"逆变器 {inverter_id} 高辐照低功率",
-                "description": f"辐照 {latest.irradiance_w_m2:.0f} W/m² 但 PR 仅 {pr*100:.0f}%。",
+                "description": f"辐照 {latest.irradiance_w_m2:.0f} W/m² 但 PR 仅 {pr*100:.0f}%。",  # type: ignore[operator]
                 "evidence": [
                     f"时间：{latest.timestamp.strftime('%Y-%m-%d %H:%M')}",
                     f"辐照度：{latest.irradiance_w_m2:.1f} W/m²",
-                    f"PR：{pr*100:.1f}%",
+                    f"PR：{pr*100:.1f}%",  # type: ignore[operator]
                 ],
                 "root_cause": "可能原因：MPPT 异常、组件遮挡或逆变器限功率运行。",
                 "suggestions": [
