@@ -54,21 +54,23 @@
       </el-col>
       <el-col :xs="24" :lg="16">
         <PvCard title="告警聚合" subtitle="按规则/电站聚合未处理告警" icon="DataLine" glow>
-          <el-table :data="summary" stripe>
-            <el-table-column prop="rule_name" label="规则" min-width="180" />
-            <el-table-column prop="level" label="等级" width="100">
-              <template #default="{ row }">
-                <PvTag :type="row.level === 'critical' ? 'urgent' : 'high'" :label="row.level === 'critical' ? '严重' : '警告'" />
-              </template>
-            </el-table-column>
-            <el-table-column prop="station_id" label="电站ID" width="100" />
-            <el-table-column prop="count" label="发生次数" width="110" />
-            <el-table-column prop="latest_at" label="最近时间" width="160">
-              <template #default="{ row }">
-                {{ formatTime(row.latest_at) }}
-              </template>
-            </el-table-column>
-          </el-table>
+          <div class="table-scroll">
+            <el-table :data="summary" stripe>
+              <el-table-column prop="rule_name" label="规则" min-width="180" />
+              <el-table-column prop="level" label="等级" width="100">
+                <template #default="{ row }">
+                  <PvTag :type="row.level === 'critical' ? 'urgent' : 'high'" :label="row.level === 'critical' ? '严重' : '警告'" />
+                </template>
+              </el-table-column>
+              <el-table-column prop="station_id" label="电站ID" width="100" />
+              <el-table-column prop="count" label="发生次数" width="110" />
+              <el-table-column prop="latest_at" label="最近时间" width="160">
+                <template #default="{ row }">
+                  {{ formatTime(row.latest_at) }}
+                </template>
+              </el-table-column>
+            </el-table>
+          </div>
         </PvCard>
       </el-col>
     </el-row>
@@ -98,6 +100,7 @@
             >批量关闭</el-button>
           </template>
           <PvStateView :state="alarmsTableState" variant="table" :rows="6" empty-text="暂无告警" @retry="fetchAlarms">
+            <div class="table-scroll">
             <el-table
               v-if="alarms.length"
               :data="alarms"
@@ -161,6 +164,7 @@
               </template>
             </el-table-column>
           </el-table>
+            </div>
           </PvStateView>
         </PvCard>
       </el-col>
@@ -347,7 +351,18 @@ onMounted(() => {
 /* 防止 el-row :gutter 负边距导致的横向溢出 */
 .section-row {
   width: 100%;
+  max-width: 100%;
   overflow: hidden;
+}
+
+/* 把 el-row 默认的负 margin 撑回去 */
+.el-row {
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+}
+.el-row [class*="el-col-"] {
+  padding-left: 8px !important;
+  padding-right: 8px !important;
 }
 
 .stat-card {
@@ -366,15 +381,15 @@ onMounted(() => {
   border-color: var(--pv-border-strong);
 }
 
-/* 表格横向滚动修复：列太多时允许横向滚动 */
-.el-table {
-  overflow-x: auto !important;
+/* 表格横向滚动 */
+.table-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
   max-width: 100%;
 }
 
-/* 告警列表表格容器确保不溢出 */
-.section-row .el-table {
-  display: block;
+.table-scroll .el-table {
+  min-width: 700px;  /* 确保列不会挤太窄 */
 }
 
 /* 移动端表格列压缩 — 次要列隐藏由 .hide-on-mobile 处理 */
