@@ -8,7 +8,10 @@ from app.llm.factory import LLMClient, get_chat_llm
 def test_llm_client_without_key_returns_config_prompt():
     client = LLMClient(
         provider_name="openai",
-        provider=object(), api_key="", base_url="https://api.openai.com/v1", model="gpt-4"
+        provider=object(),
+        api_key="",
+        base_url="https://api.openai.com/v1",
+        model="gpt-4",
     )
     response = client.chat(messages=[{"role": "user", "content": "hi"}])
     assert "请配置 LLM API Key" in response
