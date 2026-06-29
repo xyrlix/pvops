@@ -16,7 +16,8 @@ def reset_repo():
     reset_repository()
 
 
-def test_factory_returns_sqlite_by_default():
+@pytest.mark.asyncio
+async def test_factory_returns_sqlite_by_default():
     """默认配置返回 SQLite 仓库."""
     settings = get_settings()
     original = settings.tsdb_backend
@@ -28,7 +29,8 @@ def test_factory_returns_sqlite_by_default():
         settings.tsdb_backend = original
 
 
-def test_factory_returns_tdengine_when_configured():
+@pytest.mark.asyncio
+async def test_factory_returns_tdengine_when_configured():
     """配置 tdengine 时返回 TDengine 仓库对象（taosws 可能未安装）."""
     settings = get_settings()
     original = settings.tsdb_backend

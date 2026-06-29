@@ -130,7 +130,7 @@ async def test_huawei_collect_once_unit_conversion() -> None:
     assert data["power_factor"] == 0.99
     assert data["dc_voltage_v"] == 620.0
     assert abs(data["dc_current_a"] - 8.0) < 0.01
-    assert data["daily_energy_kwh"] == 12
+    assert data["daily_energy_kwh"] == 12.0  # register 2=12000 × 0.001 → 12 kWh
     assert data["total_energy_kwh"] == 1_500_000
     assert data["inverter_temp_c"] == 35.0
     assert data["inverter_status"] == "并网运行"
@@ -197,7 +197,7 @@ async def test_sungrow_collect_once_unit_conversion() -> None:
     assert data["active_power_kw"] == 3.0
     assert data["dc_voltage_v"] == 620.0
     assert data["dc_current_a"] == 8.0
-    assert data["daily_energy_kwh"] == 12
+    assert data["daily_energy_kwh"] == 12.0  # register 2=12000 × 0.001 → 12 kWh
     assert data["total_energy_kwh"] == 800_000
     assert data["inverter_temp_c"] == 35
     assert data["inverter_status"] == "并网运行"
