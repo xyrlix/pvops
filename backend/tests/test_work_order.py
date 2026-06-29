@@ -160,6 +160,6 @@ async def test_update_status_solution_does_not_duplicate_marker() -> None:
     await update_work_order_status(session, 3, status="in_progress", solution="step1")
     await update_work_order_status(session, 3, status="completed", solution="step2")
     # After 2 updates with solution, there should be 2 markers
-        assert wo.description.count("【解决方案】") == 2
+    assert wo.description.count("【解决方案】") == 2
     assert "step1" in wo.description
     assert "step2" in wo.description
