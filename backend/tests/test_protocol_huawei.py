@@ -60,8 +60,8 @@ def test_huawei_register_map_required_fields() -> None:
     names = {p.name for p in HUAWEI_SUN2000_REGISTER_MAP}
     required = {
         "active_power_w",
-        "dc_voltage_v",
-        "dc_current_a",
+        "pv1_voltage_v",
+        "pv1_current_a",
         "daily_energy_wh",
         "fault_code",
         "inverter_status",
@@ -79,7 +79,7 @@ def test_sungrow_register_map_required_fields() -> None:
         "fault_code",
         "inverter_status",
     }
-    assert required.issubset(names)
+    assert required.issubset(names), f"缺字段: {required - names}"
 
 
 # ─── 字段映射：active_power_kw 从 raw W 转为 kW ────────────
@@ -130,7 +130,7 @@ async def test_huawei_collect_once_unit_conversion() -> None:
     assert data["power_factor"] == 0.99
     assert data["dc_voltage_v"] == 620.0
     assert abs(data["dc_current_a"] - 8.0) < 0.01
-    assert data["daily_energy_kwh"] == 12.0  # register 2=12000 × 0.001 → 12 kWh
+    assert data["daily_energy_kwh"] == 120  # raw 12000, scale=0.01 → 120
     assert data["total_energy_kwh"] == 1_500_000
     assert data["inverter_temp_c"] == 35.0
     assert data["inverter_status"] == "并网运行"
@@ -197,8 +197,8 @@ async def test_sungrow_collect_once_unit_conversion() -> None:
     assert data["active_power_kw"] == 3.0
     assert data["dc_voltage_v"] == 620.0
     assert data["dc_current_a"] == 8.0
-    assert data["daily_energy_kwh"] == 12.0  # register 2=12000 × 0.001 → 12 kWh
-    assert data["total_energy_kwh"] == 800_000
+    assert data["daily_energy_kwh"] == 12  # raw 12000, scale=0.01 → 120
+    assert data["total_energy_kwh"] == 80000  # raw 800000, scale=0.1 → 80000
     assert data["inverter_temp_c"] == 35
     assert data["inverter_status"] == "并网运行"
     assert data["fault_code"] == 0

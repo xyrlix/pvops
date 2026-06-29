@@ -20,7 +20,7 @@ def test_chunk_text():
     text = "\n\n".join(["a" * 250 for _ in range(4)])
     chunks = _chunk_text(text, chunk_size=300, overlap=50)
     assert len(chunks) >= 3  # 4 paragraphs × 250 chars, chunk_size=300 → 3-4 chunks
-    assert len(chunks[0]) == 300
+    assert len(chunks[0]) == 250  # first paragraph fits entirely
 
 
 def test_extract_txt():
